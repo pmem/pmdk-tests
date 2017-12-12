@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+# Archive files
+googletest-*.zip
+pugixml-*.tar.gz
+
+# Build folder
+build/
