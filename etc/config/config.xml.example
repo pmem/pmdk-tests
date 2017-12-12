@@ -1,0 +1,5 @@
+<configuration>
+	<localConfiguration>
+		<testDir>example\path</testDir>
+	</localConfiguration>
+</configuration>
