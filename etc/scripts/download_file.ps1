@@ -1,5 +1,5 @@
 #
-# Copyright 2017, Intel Corporation
+# Copyright 2017-2018, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,12 +31,61 @@
 
 param (
   [string]$URL,
-  [string]$PATH
+  [string]$PATH,
+  [string]$SHA256HASH
 )
 
-# Create directory which will contain created file
-$DIR_TO_CREATE = (Split-Path $PATH)
-New-Item $DIR_TO_CREATE -ItemType directory -Force | Out-Null
+# disable Error printing when command fails
+$ErrorActionPreference = "SilentlyContinue"
 
-# Download file
-(New-Object Net.WebClient).DownloadFile("${URL}", "${PATH}")
+# Replace "/" with "\" so Split-Path can work with replace
+$PATH = $PATH.replace("/", "\")
+
+# Get main repo directory and short destination path
+$REPODIR = (Split-Path $PSScriptRoot | Split-Path)
+$SHORTPATH = $PATH.replace("$REPODIR", "")
+
+# Checks if file is correct (exists and has correct SHA256 checksum)
+Function Is-File-Correct
+{
+	if (-Not (Test-Path "$PATH"))
+	{
+		return $false
+	}
+
+	$HASH = (Get-FileHash "$PATH" -Algorithm SHA256 | Select-Object -ExpandProperty Hash)
+	if ("$HASH" -eq "$SHA256HASH")
+	{
+		return $true
+	}
+	return $false
+}
+
+# If file is already downloaded then exit
+if (Is-File-Correct)
+{
+	exit 0
+}
+
+# Create download destination directory if it does not exist
+$DIRTOCREATE = (Split-Path $PATH)
+
+if (-Not (Test-Path "$DIRTOCREATE"))
+{
+	New-Item $DIRTOCREATE -ItemType directory -Force | Out-Null
+}
+
+Write-Host -NoNewLine "Downloading file $URL to $SHORTPATH... "
+
+# If file is incorrect then download it again
+for ($i = 1; $i -le 10; $i++)
+{
+	(New-Object Net.WebClient).DownloadFile("${URL}", "${PATH}")
+	if (Is-File-Correct)
+	{
+		Write-Host "success"
+		exit 0
+	}
+}
+
+exit 1

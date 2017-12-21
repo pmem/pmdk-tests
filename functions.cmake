@@ -1,5 +1,5 @@
 #
-# Copyright 2017, Intel Corporation
+# Copyright 2017-2018, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -40,24 +40,31 @@ function(set_source_groups FILTER_PREFIX)
 	endforeach()
 endfunction(set_source_groups)
 
-function(powershell_download_file URL PATH)
-	execute_process(COMMAND powershell ".\\powershell_download_file.ps1 -URL '${URL}' -PATH '${PATH}'" WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/etc/scripts")
+function(download_file URL PATH SHA256HASH)
+	execute_process(COMMAND powershell ".\\download_file.ps1 -URL '${URL}' -PATH '${PATH}' -SHA256HASH '${SHA256HASH}'" WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/etc/scripts"
+		RESULT_VARIABLE DOWNLOAD_RESULT)
+	if ("${DOWNLOAD_RESULT}" GREATER "0")
+		message(FATAL_ERROR "Downloading file ${URL} failed")
+	endif ()
 endfunction()
 
 function(download_gtest)
 	include(ExternalProject)
 	set(GTEST_VERSION 1.8.0)
+	set(GTEST_SHA256HASH f3ed3b58511efd272eb074a3a6d6fb79d7c2e6a0e374323d1e6bcbcc1ef141bf)
 
 	# CMake uses curl to download files, however on Windows systems HTTP_PROXY and similar environment variables
 	# are not set, which means that it will fail when we are behind a proxy
+	# issue link : https://gitlab.kitware.com/cmake/cmake/issues/17592
 	# Enable Multiprocess build with Visual Studio
 	# Also we need to set gtest's CMake variable, so it will use /MD flag to build the library
 	# On Linux we need to pass build type to CMake
 	if (WIN32)
 		set(FORCE_SHARED_CRT_WINDOWS "-Dgtest_force_shared_crt=ON")
 		set(BUILD_FLAGS_WINDOWS "-DCMAKE_CXX_FLAGS=/MP")
-		powershell_download_file("https://github.com/google/googletest/archive/release-${GTEST_VERSION}.zip"
-			"${CMAKE_SOURCE_DIR}\\ext\\gtest\\googletest-${GTEST_VERSION}.zip")
+		download_file("https://github.com/google/googletest/archive/release-${GTEST_VERSION}.zip"
+			"${CMAKE_SOURCE_DIR}\\ext\\gtest\\googletest-${GTEST_VERSION}.zip"
+			"${GTEST_SHA256HASH}")
 	else ()
 		set(BUILD_TYPE_LINUX "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 	endif ()
@@ -71,7 +78,7 @@ function(download_gtest)
 	ExternalProject_Add(
 		gtest
 		URL ${GTEST_URL}
-		URL_HASH SHA256=f3ed3b58511efd272eb074a3a6d6fb79d7c2e6a0e374323d1e6bcbcc1ef141bf
+		URL_HASH SHA256=${GTEST_SHA256HASH}
 		DOWNLOAD_NAME googletest-${GTEST_VERSION}.zip
 		DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/ext/gtest
 		PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext/gtest
@@ -100,16 +107,19 @@ endfunction()
 function(download_pugixml)
 	include(ExternalProject)
 	set(PUGIXML_VERSION 1.8.1)
-
+	set(PUGIXML_SHA256HASH 00d974a1308e85ca0677a981adc1b2855cb060923181053fb0abf4e2f37b8f39)
+	
 	# CMake uses curl to download files, however on Windows systems HTTP_PROXY and similar environment variables
 	# are not set, which means that it will fail when we are behind a proxy
+	# issue link : https://gitlab.kitware.com/cmake/cmake/issues/17592
 	# Enable Multiprocess build with Visual Studio
 	# Enable exception-handling in pugiXML
 	# On Linux we need to pass build type to CMake
 	if (WIN32)
 		set(BUILD_FLAGS_WINDOWS "-DCMAKE_CXX_FLAGS=/MP /EHsc")
-		powershell_download_file("https://github.com/zeux/pugixml/releases/download/v1.8.1/pugixml-${PUGIXML_VERSION}.tar.gz"
-			"${CMAKE_SOURCE_DIR}\\ext\\pugixml\\pugixml-${PUGIXML_VERSION}.tar.gz")
+		download_file("https://github.com/zeux/pugixml/releases/download/v1.8.1/pugixml-${PUGIXML_VERSION}.tar.gz"
+			"${CMAKE_SOURCE_DIR}\\ext\\pugixml\\pugixml-${PUGIXML_VERSION}.tar.gz"
+			"${PUGIXML_SHA256HASH}")
 	else ()
 		set(BUILD_TYPE_LINUX "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 	endif ()
@@ -123,7 +133,7 @@ function(download_pugixml)
 	ExternalProject_Add(
 		pugixml
 		URL ${PUGIXML_URL}
-		URL_HASH SHA256=00d974a1308e85ca0677a981adc1b2855cb060923181053fb0abf4e2f37b8f39
+		URL_HASH SHA256=${PUGIXML_SHA256HASH}
 		DOWNLOAD_NAME pugixml-${PUGIXML_VERSION}.tar.gz
 		DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/ext/pugixml
 		PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext/pugixml
