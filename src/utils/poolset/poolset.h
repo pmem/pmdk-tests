@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,9 @@
 extern std::unique_ptr<LocalConfiguration> local_config;
 using replica = std::initializer_list<std::string>;
 
+/*
+ * Poolset -- class that represents pool set file.
+ */
 class Poolset final {
  private:
   int replica_counter_ = 0;
@@ -74,9 +77,16 @@ class Poolset final {
   const Replica &GetReplica(unsigned index) const {
     return replicas_.at(index);
   }
+  /*
+   * GetReplicas -- returns the vector of all replicas specified in the pool set
+   * file.
+   */
   const std::vector<Replica> &GetReplicas() const {
     return this->replicas_;
   };
+  /*
+   * GetParts -- returns the vector of all parts specified in the pool set file.
+   */
   std::vector<Part> GetParts() const;
   std::vector<std::string> GetContent() const;
 };
