@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,6 +33,10 @@
 #ifndef PMDK_TESTS_SRC_UTILS_NON_COPYABLE_NON_COPYABLE_H_
 #define PMDK_TESTS_SRC_UTILS_NON_COPYABLE_NON_COPYABLE_H_
 
+/*
+ * NonCopyable -- class that disables copying for itself and its derived
+ * classes - copy constructor and copy assignment operator are deleted.
+ */
 class NonCopyable {
  public:
   NonCopyable() = default;

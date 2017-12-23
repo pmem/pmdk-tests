@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,11 +37,19 @@
 #include "pugixml.hpp"
 #include "read_config.h"
 
+/*
+ * LocalConfiguration -- class that provides access to configuration file.
+ */
 class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
  private:
   friend class ReadConfig<LocalConfiguration>;
   std::string test_dir_;
   ApiC api_c_;
+  /*
+   * FillConfigFields -- checks that TestDir exists, creates folder 'pmdk_tests'
+   * and assigns this path to test_dir_. Returns 0 on success, prints error
+   * message and returns -1 otherwise.
+   */
   int FillConfigFields(pugi::xml_node &&root);
 
  public:

@@ -128,8 +128,8 @@ std::vector<long long> ApiC::GetFilesSize(
   return sizes;
 }
 
-int ApiC::SetFilePermission(const std::string &path, int permissions) {
-  int ret = chmod(path.c_str(), permissions);
+int ApiC::SetFilePermission(const std::string &path, int permission) {
+  int ret = chmod(path.c_str(), permission);
 
   if (ret != 0) {
     std::cerr << "Unable to change file permission: " << strerror(errno)

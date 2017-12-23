@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +42,7 @@
 
 int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   if (static_cast<off_t>(length) < 0) {
-    std::cerr << "length should be > 0" << std::endl;
+    std::cerr << "length should be >= 0" << std::endl;
     return -1;
   }
 
@@ -56,7 +56,7 @@ int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   int ret = posix_fallocate(fd, 0, static_cast<off_t>(length));
 
   if (ret != 0) {
-    std::cerr << "Unable to allocate disk space: " << strerror(errno)
+    std::cerr << "Unable to allocate disk space: " << strerror(ret)
               << std::endl;
     close(fd);
     RemoveFile(path);
@@ -65,7 +65,7 @@ int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   return ret;
 }
 
-int ApiC::GetExecutablePath(std::string &path) {
+int ApiC::GetExecutableDirectory(std::string &path) {
   char file_path[FILENAME_MAX + 1] = {0};
   ssize_t count = readlink("/proc/self/exe", file_path, FILENAME_MAX);
 
@@ -79,9 +79,9 @@ int ApiC::GetExecutablePath(std::string &path) {
   return 0;
 }
 
-long long ApiC::GetFreeSpaceT(const std::string &dir) {
+long long ApiC::GetFreeSpaceT(const std::string &path) {
   struct statvfs fs;
-  if (statvfs(dir.c_str(), &fs) != 0) {
+  if (statvfs(path.c_str(), &fs) != 0) {
     std::cerr << "Unable to get file system statistics: " << strerror(errno)
               << std::endl;
     return -1;
@@ -90,8 +90,8 @@ long long ApiC::GetFreeSpaceT(const std::string &dir) {
   return fs.f_bsize * fs.f_bavail;
 }
 
-int ApiC::CreateDirectoryT(const std::string &dir) {
-  if (mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
+int ApiC::CreateDirectoryT(const std::string &path) {
+  if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
     std::cerr << "mkdir failed: " << strerror(errno) << std::endl;
     return -1;
   }
@@ -147,8 +147,8 @@ int ApiC::CleanDirectory(const std::string &dir) {
   return ret;
 }
 
-int ApiC::RemoveDirectoryT(const std::string &dir) {
-  int ret = rmdir(dir.c_str());
+int ApiC::RemoveDirectoryT(const std::string &path) {
+  int ret = rmdir(path.c_str());
 
   if (ret != 0) {
     std::cerr << "Unable to remove directory: " << strerror(errno) << std::endl;

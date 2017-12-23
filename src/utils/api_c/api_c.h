@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,28 +42,113 @@
 #include <vector>
 
 class ApiC final : NonCopyable {
-public:
-  static int GetExecutablePath(std::string &path);
+ public:
+  /*
+   * GetExecutableDirectory -- assigns a path to a folder containing the
+   * executable file to the input argument. Returns 0 on success, -1 otherwise.
+   */
+  static int GetExecutableDirectory(std::string &path);
+
+  /*
+   * CreateFileT -- creates file in given path and writes content. Returns 0 on
+   * success, prints error message and returns -1 otherwise.
+   */
   static int CreateFileT(const std::string &path, const std::string &content);
+
+  /*
+   * CreateFileT -- creates file in given path and writes content. Returns 0 on
+   * success, prints error message and returns -1 otherwise.
+   */
   static int CreateFileT(const std::string &path,
                          const std::vector<std::string> &content);
+
+  /*
+   * AllocateFileSpace -- allocates disk space in specified path. Size of
+   * allocation is equal to given length(specified in bytes). Returns 0 on
+   * success, prints error message and returns -1 otherwise.
+   */
   static int AllocateFileSpace(const std::string &path, size_t length);
+
+  /*
+   * ReadFile -- opens given file and reads its content. Returns 0 on success,
+   * prints error message and returns -1 otherwise.
+   */
   static int ReadFile(const std::string &path, std::string &content);
+
+  /*
+   * RegularFileExists -- checks that file in given path is regular. Returns
+   * true on success, prints error message (if errno is different than ENOENT)
+	 * and returns false otherwise.
+   */
   static bool RegularFileExists(const std::string &path);
+
+  /*
+   * GetFileSize -- returns file size specified in bytes on success, prints
+   * error message and
+   * returns -1 otherwise.
+   */
   static long long GetFileSize(const std::string &path);
+
+  /*
+   * GetFileSize -- returns vector of file sizes specified in bytes on success,
+   * prints error message and returns empty vector otherwise.
+   */
   static std::vector<long long>
   GetFilesSize(const std::vector<std::string> &paths);
+
+  /*
+   * GetFilePermission -- returns UNIX-style file mode bits in decimal on
+   * success, prints error message and returns 0 otherwise.
+   */
   static unsigned short GetFilePermission(const std::string &path);
-  static int SetFilePermission(const std::string &path, int permissions);
+
+  /*
+   * SetFilePermission -- changes a file mode bits. Returns 0 on success, prints
+   * error message and returns -1 otherwise.
+   */
+  static int SetFilePermission(const std::string &path, int permission);
+
+  /*
+   * RemoveFile -- removes specified file. Returns 0 on success, prints error
+   * message and returns -1 otherwise.
+   */
   static int RemoveFile(const std::string &path);
-  static int CreateDirectoryT(const std::string &dir);
-  static bool DirectoryExists(const std::string &dir);
-  static int CleanDirectory(const std::string &dir);
-  static int RemoveDirectoryT(const std::string &dir);
-  static long long GetFreeSpaceT(const std::string &dir);
+
+  /*
+   * CreateDirectoryT -- creates a new directory with name 'path'. Returns 0 on
+   * success, prints error message and returns -1 otherwise.
+   */
+  static int CreateDirectoryT(const std::string &path);
+
+  /*
+   * DirectoryExists -- checks that directory under given 'path' exists. Returns
+   * true on success, prints error message (if errno is different than ENOENT)
+	 * and returns false otherwise.
+   */
+  static bool DirectoryExists(const std::string &path);
+
+  /*
+   * CleanDirectory -- recursively removes files and directories in given path.
+   * Returns 0 on success, prints error message and returns -1 otherwise.
+   */
+  static int CleanDirectory(const std::string &path);
+
+  /*
+   * RemoveDirectoryT -- removes directory under given 'path'. Returns 0 on
+   * success, prints error message and returns -1 otherwise.
+   */
+  static int RemoveDirectoryT(const std::string &path);
+
+  /*
+   * GetFreeSpaceT -- returns available free space in bytes for filesystem
+   * containing given path, prints error message and returns -1 otherwise.
+   */
+  static long long GetFreeSpaceT(const std::string &path);
+
   /* SetEnv -- adds tne environment variable name to the environment
    * with the value value. Returns 0 on success, -1 otherwise. */
   static int SetEnv(const std::string &name, const std::string &value);
+
   /* UnsetEnv -- deletes the variable name from the environment.
    * Returns 0 on success, -1 otherwise. */
   static int UnsetEnv(const std::string &name);
