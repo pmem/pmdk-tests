@@ -36,6 +36,11 @@
 #include <string>
 #include "non_copyable/non_copyable.h"
 
+/*
+ * Output -- template class contains information about exit code and standard
+ * output received from shell command line. Standard output can be char-like
+ * object.
+ */
 template <typename T = char>
 class Output final {
  private:

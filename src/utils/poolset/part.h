@@ -35,6 +35,10 @@
 
 #include <string>
 
+/*
+ * Part -- class that contains information about part size and part path in given
+ * pool set file.
+ */
 class Part final {
  private:
   std::string size_;

@@ -42,7 +42,7 @@
 
 int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   if (static_cast<off_t>(length) < 0) {
-    std::cerr << "length should be > 0" << std::endl;
+    std::cerr << "length should be >= 0" << std::endl;
     return -1;
   }
 
@@ -56,7 +56,7 @@ int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   int ret = posix_fallocate(fd, 0, static_cast<off_t>(length));
 
   if (ret != 0) {
-    std::cerr << "Unable to allocate disk space: " << strerror(errno)
+    std::cerr << "Unable to allocate disk space: " << strerror(ret)
               << std::endl;
     close(fd);
     RemoveFile(path);

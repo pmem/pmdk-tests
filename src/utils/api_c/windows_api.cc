@@ -38,7 +38,7 @@
 
 int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   if (length < 0) {
-    std::cerr << "length should be > 0" << std::endl;
+    std::cerr << "length should be >= 0" << std::endl;
     return -1;
   }
 

@@ -54,6 +54,11 @@ static inline size_t GetSize(std::string size) {
 
   return static_cast<size_t>(std::stoul(size));
 }
+/*
+ * ValidatePoolset -- checks that all parts in poolset exist, size of parts are
+ * correct and specified mode is set. Returns 0 on success, print error message
+ * and returns -1 otherwise.
+ */
 
 static inline int ValidatePoolset(const Poolset &poolset, int poolset_mode) {
   PoolsetManagement p_mgmt;
@@ -92,6 +97,11 @@ static inline int ValidatePoolset(const Poolset &poolset, int poolset_mode) {
 
   return ret;
 }
+/*
+ * ValidateFile -- checks that file in given path exists, size of file is the
+ * same as file_size argument and specified mode is set. Returns 0 on success,
+ * print error message and returns -1 otherwise.
+ */
 
 static inline int ValidateFile(const std::string &path, size_t file_size,
                                int file_mode) {

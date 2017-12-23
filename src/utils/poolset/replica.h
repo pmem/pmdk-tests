@@ -36,6 +36,10 @@
 #include <vector>
 #include "part.h"
 
+/*
+ * Replica -- class that contains information about replica section (PMEMPOOLSET
+ * and REPLICA) in given pool set file.
+ */
 class Replica final {
  private:
   std::string header_;

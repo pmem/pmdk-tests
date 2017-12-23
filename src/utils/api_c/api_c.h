@@ -43,23 +43,90 @@
 
 class ApiC final : NonCopyable {
  public:
+  /*
+   * GetExecutablePath -- assigns to the input argument a path to a folder
+   * containing the executable file. Returns 0 on success, -1 otherwise.
+   */
   static int GetExecutablePath(std::string &path);
+  /*
+   * CreateFileT -- creates file in given path and fills it with content. Returns
+   * 0 on success, prints error message and returns -1 otherwise.
+   */
   static int CreateFileT(const std::string &path, const std::string &content);
+  /*
+   * CreateFileT -- creates file in given path and fills it with content. Returns
+   * 0 on success, prints error message and returns -1 otherwise.
+   */
   static int CreateFileT(const std::string &path,
                          const std::vector<std::string> &content);
+  /*
+   * AllocateFileSpace -- allocates disk space in specifed path of given length.
+   * Returns 0 on success, prints error message and returns -1 otherwise.
+   */
   static int AllocateFileSpace(const std::string &path, size_t length);
+  /*
+   * ReadFile -- opens file in specified path and assigns content of the file.
+   * Returns 0 on success, prints error message and returns -1 otherwise.
+   */
   static int ReadFile(const std::string &path, std::string &content);
+  /*
+   * RegularFileExists -- checks that file in given path is regular. Returns true
+   * on success, prints error message (if errno is different than ENOENT) and
+   * returns false otherwise.
+   */
   static bool RegularFileExists(const std::string &path);
+  /*
+   * GetFileSize -- returns file size on success, prints error message and
+   * returns -1 otherwise.
+   */
   static long long GetFileSize(const std::string &path);
+  /*
+   * GetFileSize -- returns vector of file sizes on success, prints error message
+   * and returns empty vector otherwise.
+   */
   static std::vector<long long> GetFilesSize(
       const std::vector<std::string> &paths);
+  /*
+   * GetFilePermission -- returns file permission on success, prints error
+   * message and returns empty vector otherwise.
+   */
   static unsigned short GetFilePermission(const std::string &path);
+  /*
+   * SetFilePermission -- sets permission to the file in given path. Returns 0 on
+   * success, prints error message and returns -1 otherwise.
+   */
   static int SetFilePermission(const std::string &path, int permissions);
+  /*
+   * RemoveFile -- removes file in given path. Returns 0 on success, prints error
+   * message and returns -1 otherwise.
+   */
   static int RemoveFile(const std::string &path);
+  /*
+   * CreateDirectoryT -- creates directory in given dir. Returns 0 on success,
+   * prints error message and returns -1 otherwise.
+   */
   static int CreateDirectoryT(const std::string &dir);
+  /*
+   * DirectoryExists -- check that directory in given dir exists. Returns true on
+   * success, prints error message (if errno is different than ENOENT) and
+   * returns false otherwise.
+   */
   static bool DirectoryExists(const std::string &dir);
+  /*
+   * CleanDirectory -- search all files and directories in given dir and remove
+   * each of them. Returns 0 on success, prints error message and returns -1
+   * otherwise.
+   */
   static int CleanDirectory(const std::string &dir);
+  /*
+   * RemoveDirectoryT -- removes directory in given path. Returns 0 on success,
+   * prints error message and returns -1 otherwise.
+   */
   static int RemoveDirectoryT(const std::string &dir);
+  /*
+   * GetFreeSpaceT -- returns available free space in bytes, prints error message
+   * and returns -1 otherwise.
+   */
   static long long GetFreeSpaceT(const std::string &dir);
 };
 

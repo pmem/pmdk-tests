@@ -38,11 +38,19 @@
 #include <vector>
 
 namespace string_utils {
+/*
+ * Convert -- constructs the basic_string<To> with the content of input
+ * argument.
+ */
 template <typename To, typename From>
 std::basic_string<To> Convert(std::basic_string<From> f) {
   return std::basic_string<To>{f.begin(), f.end()};
 }
 
+/*
+ * Tokenize -- splits given basic_string<T> to specified container with new line
+ * delimiter.
+ */
 template <typename T, template <typename...> class container = std::vector>
 container<std::basic_string<T>> Tokenize(std::basic_string<T> str) {
   size_t pos;

@@ -43,6 +43,10 @@ const std::string SEPARATOR = "\\";
 const std::string SEPARATOR = "/";
 #endif  // _WIN32
 
+/*
+ * ReadConfig -- class based on CRTP pattern. Checks that config.xml file and
+ * necessary node exists.
+ */
 template <class DerivedConfig>
 class ReadConfig : public NonCopyable {
  private:
@@ -55,6 +59,11 @@ class ReadConfig : public NonCopyable {
   }
 
  public:
+  /*
+   * ReadConfigFile -- Checks that config.xml file and necessary node exists.
+   * Returns FillConfigFields (0 on success, print message and returns -1
+   * otherwise).
+   */
   int ReadConfigFile();
 };
 

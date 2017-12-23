@@ -33,6 +33,10 @@
 #ifndef PMDK_TESTS_SRC_UTILS_NON_COPYABLE_NON_COPYABLE_H_
 #define PMDK_TESTS_SRC_UTILS_NON_COPYABLE_NON_COPYABLE_H_
 
+/*
+ * NonCopyable -- class ensures that cannot copy this class and derived - copy
+ * constructor and assign operators are deleted.
+ */
 class NonCopyable {
  public:
   NonCopyable() = default;

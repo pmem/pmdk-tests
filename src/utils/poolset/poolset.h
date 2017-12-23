@@ -40,6 +40,9 @@
 extern std::unique_ptr<LocalConfiguration> local_config;
 using replica = std::initializer_list<std::string>;
 
+/*
+ * Poolset -- class that contains all the information on the pool set file.
+ */
 class Poolset final {
  private:
   int replica_counter_ = 0;
@@ -74,9 +77,16 @@ class Poolset final {
   const Replica &GetReplica(unsigned index) const {
     return replicas_.at(index);
   }
+  /*
+   * GetReplicas -- returns the vector of all replicas contained in the pool set
+   * file.
+   */
   const std::vector<Replica> &GetReplicas() const {
     return this->replicas_;
   };
+  /*
+   * GetParts -- returns the vector of all parts contained in the pool set file.
+   */
   std::vector<Part> GetParts() const;
   std::vector<std::string> GetContent() const;
 };

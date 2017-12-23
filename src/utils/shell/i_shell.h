@@ -57,6 +57,9 @@ struct PipeDeleter {
   }
 };
 
+/*
+ * IShell -- class that performs command lines.
+ */
 class IShell : NonCopyable {
  private:
   Output<char> output_;
@@ -65,11 +68,16 @@ class IShell : NonCopyable {
  public:
   IShell(){};
   IShell(bool print_log) : print_log_(print_log){};
-
+  /*
+   * GetLastOutput -- returns last received output.
+   */
   Output<char> GetLastOutput() const {
     return output_;
   }
-
+  /*
+   * ExecuteCommand -- performs command by creating pipe with read mode. Returns
+   * Output object on success, throw std::exception otherwise.
+   */
   Output<char> ExecuteCommand(const std::string &cmd);
 };
 

@@ -59,6 +59,11 @@ class PmempoolCreate : public ::testing::Test {
     return output_.GetContent();
   }
 
+  /*
+   * CreatePool -- creates pool using Persistent Memory Pool Management Tool.
+   * returns the exit code and assigns the output received by the Persistent
+   * Memory Pool Management Tool.
+   */
   int CreatePool(const PoolArgs &pool_args, const std::string &path);
 
   virtual void TearDown();

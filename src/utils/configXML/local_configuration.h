@@ -37,11 +37,20 @@
 #include "pugixml.hpp"
 #include "read_config.h"
 
+/*
+ * LocalConfiguration -- class that checks received config content and fill in
+ * the relevant data fields.
+ */
 class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
  private:
   friend class ReadConfig<LocalConfiguration>;
   std::string test_dir_;
   ApiC api_c_;
+  /*
+   * FillConfigFields -- checks that TestDir received exists, creates folder
+   * 'pmdk_tests' and assigns this path to test_dir_. Returns 0 on success,
+   * prints error message and returns -1 otherwise.
+   */
   int FillConfigFields(pugi::xml_node &&root);
 
  public:
