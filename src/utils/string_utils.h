@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,11 +38,19 @@
 #include <vector>
 
 namespace string_utils {
+/*
+ * Convert -- converts underlying char type of input string type provided by From
+ * argument to type provided by To type argument.
+ */
 template <typename To, typename From>
 std::basic_string<To> Convert(std::basic_string<From> f) {
   return std::basic_string<To>{f.begin(), f.end()};
 }
 
+/*
+ * Tokenize -- splits given basic_string<T> to specified container with new line
+ * as a delimiter.
+ */
 template <typename T, template <typename...> class container = std::vector>
 container<std::basic_string<T>> Tokenize(std::basic_string<T> str) {
   size_t pos;

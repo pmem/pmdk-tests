@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,9 @@
 
 #include <string>
 
+/*
+ * Part -- class that represents part of replica specified in pool set file.
+ */
 class Part final {
  private:
   std::string size_;

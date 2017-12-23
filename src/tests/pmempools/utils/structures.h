@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -133,6 +133,10 @@ const std::array<size_t, ConvertEnum<int>(PoolType::Count)> POOL_MIN_SIZES{
      static_cast<size_t>(PMEMBLK_MIN_POOL),
      static_cast<size_t>(PMEMLOG_MIN_POOL), 0}};
 
+/*
+ * ParseArg -- returns argument in supported format in Persistent Memory Pool
+ * Management Tool.
+ */
 static inline std::string ParseArg(Option option, OptionType arg_type,
                                    const std::string &value) {
   switch (arg_type) {
@@ -164,6 +168,10 @@ static inline std::string CombineArguments(const std::vector<Arg> &args) {
   return arguments;
 }
 
+/*
+ * GetPoolSize -- returns size of the pool in bytes. If size argument is not
+ * specified in PoolArgs returns PMEM<pool type>MIN_POOL.
+ */
 static inline size_t GetPoolSize(const PoolArgs &pool_args) {
   size_t size;
 
@@ -183,6 +191,11 @@ static inline size_t GetPoolSize(const PoolArgs &pool_args) {
   return POOL_MIN_SIZES[ConvertEnum<int>(pool_args.pool_type)];
 }
 
+/*
+ * GetPoolMode -- returns mode of the pool in decimal. If mode argument is not
+ * specified it returns
+ * default mode.
+ */
 static inline int GetPoolMode(const PoolArgs &pool_args) {
   int mode;
 
