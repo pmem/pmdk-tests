@@ -89,4 +89,4 @@ $ ../etc/scripts/run_tests.py -b ./PMEMPOOLS --timeout 15 -e "*VERBOSE*"
 ```
 
 ### Other Requirements ###
-Python scripts in pmdk-tests require Python 3.6.
+Python scripts in pmdk-tests are compatible with Python 3.4.
