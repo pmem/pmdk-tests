@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017, Intel Corporation
+# Copyright 2017-2018, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,7 +33,7 @@
 
 import xml.etree.ElementTree as ET
 import sys
-from subprocess import run, PIPE, TimeoutExpired
+from subprocess import check_output, TimeoutExpired, CalledProcessError, STDOUT
 from argparse import ArgumentParser
 from os import linesep, path
 from shutil import rmtree
@@ -47,8 +47,8 @@ def get_testdir_from_xml(binary_path):
     testdir_xpath = 'localConfiguration/testDir'
     elem = root.find(testdir_xpath)
     if elem is None:
-        sys.exit(f'config.xml file invalid.'
-                 f' Element {root.tag}/{testdir_xpath} not found.')
+        sys.exit('config.xml file invalid.'
+                 ' Element {}/{} not found.'.format(root.tag, testdir_xpath))
     workdir = elem.text
     return path.join(workdir, 'pmdk_tests')
 
@@ -60,7 +60,7 @@ def gtest_filter_rest(last_ran_test, all_tests, excluded):
     already_ran = all_tests[:all_tests.index(last_ran_test) + 1]
 
     for test in already_ran:
-        gtest_filter = gtest_filter + f'*.{test}:'
+        gtest_filter = gtest_filter + '*.{}:'.format(test)
     if excluded:
         gtest_filter = gtest_filter + excluded
     return gtest_filter
@@ -71,6 +71,7 @@ def get_last_ran_test(output):
     for line in reversed(output.splitlines()):
         if '[ RUN      ]' in line:
             return line.split('.')[1].strip()
+    return None
 
 
 def get_fails(output):
@@ -83,28 +84,29 @@ def get_fails(output):
 def execute(cmd, timeout, testdir):
     '''Execute command, handle timeout, return output and exit code.'''
     try:
-        proc = run(cmd, stdout=PIPE, timeout=timeout)
+        out = check_output(cmd, timeout=timeout, stderr=STDOUT).decode('utf-8')
     except TimeoutExpired as e:
         print(e.output.decode('utf-8'))
         rmtree(testdir, ignore_errors=True)
         sys.exit('Execution timed out.')
-    else:
-        out = proc.stdout.decode('utf-8')
-        returncode = proc.returncode
+    except CalledProcessError as e:
+        out = e.output.decode('utf-8')
         print(out)
-        return out, returncode
+        return out, e.returncode
+    else:
+        print(out)
+        return out, 0
 
 
 def get_all_tests_to_run(cmd):
     '''Call --gtest_list_tests on test binary and get all tests to be run.'''
-    list_tests_out = run(cmd + ['--gtest_list_tests'],
-                         stdout=PIPE).stdout.decode('utf-8')
+    list_tests_out = check_output(cmd + ['--gtest_list_tests']).decode('utf-8')
     all_tests = [line.split('#')[0].strip()
                  for line in list_tests_out.splitlines()
                  if '#' in line or not line.endswith('.')]
 
     if not all_tests:
-        sys.exit(f'No tests to run from {" ".join(cmd)}.')
+        sys.exit('No tests to run from {}.'.format(" ".join(cmd)))
 
     return all_tests
 
@@ -121,12 +123,13 @@ def last_test_terminated(out, returncode):
 def print_summary(failed, terminated, all_tests, binary):
     '''Print final execution summary.'''
     if failed:
-        print(f'Out of {len(all_tests)} tests ran from {path.basename(binary)}'
-              f' binary {len(failed)} failed:')
+        msg = 'Out of {} tests ran from {} binary {} failed:'
+        print(msg.format(len(all_tests), path.basename(binary), len(failed)))
         for test in failed:
             print(test)
 
-        print(f'{linesep}{len(terminated)} test(s) led to binary termination:')
+        print('{}{} test(s) led to binary termination:'
+              .format(linesep, len(terminated)))
         for test in terminated:
             print(test)
 
@@ -136,7 +139,8 @@ def execute_all_tests(binary, testdir, excluded, timeout):
     Resume execution omitting already ran tests until all tests are run \
     or timeout occurs.
     '''
-    cmd = [binary, f'--gtest_filter=-{excluded}'] if excluded else [binary]
+    cmd = [binary, '--gtest_filter=-{}'.format(excluded)]\
+        if excluded else [binary]
     all_tests = get_all_tests_to_run(cmd)
 
     failing_tests = []
@@ -145,10 +149,13 @@ def execute_all_tests(binary, testdir, excluded, timeout):
     out, returncode = execute(cmd, timeout, testdir)
     failing_tests.extend(get_fails(out))
     last_ran_test = get_last_ran_test(out)
+    if not last_ran_test:
+        sys.exit("Could not get last ran test from execution output.")
 
     while last_ran_test != all_tests[-1]:
-        print(f'{linesep}Test {last_ran_test} triggered execution'
-              f' termination. Resuming execution.')
+        print()
+        print('Test {} triggered execution termination. Resuming execution.'
+              .format(last_ran_test))
         terminating_tests.append(last_ran_test)
         rmtree(testdir, ignore_errors=True)
 
@@ -186,7 +193,7 @@ if __name__ == '__main__':
     timeout = args.timeout * 60 if args.timeout else None  # minutes to seconds
 
     # check binary path first for more informative error message
-    Path(args.gtest_binary).resolve(strict=True)
+    Path(args.gtest_binary).resolve()
 
     testdir = get_testdir_from_xml(args.gtest_binary)
 
