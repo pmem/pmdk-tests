@@ -30,6 +30,17 @@ For building a specific group of tests provide its target binary name:
 	$ make PMEMPOOLS
 ```
 
+##### PMDK Custom path
+If PMDK is installed in custom path, then additional arguments need to be specified.
+If pkg-config is available, then PKG_CONFIG_PATH environmental variable needs to be set to <PMDK_INSTALL_PATH>/lib/pkgconfig.
+```
+	$ PKG_CONFIG_PATH=<PMDK_INSTALL_PATH>/lib/pkgconfig cmake ..
+```
+If it's not available, then CMAKE_PREFIX_PATH needs to be specified. Relative paths are not supported with CMAKE_PREFIX_PATH.
+```
+	$ cmake .. -DCMAKE_PREFIX_PATH=<PMDK_INSTALL_PATH>
+```
+
 #### Building pmdk-tests on Windows ####
 Environment variables should be set according to [PMDK Windows installation guide](https://github.com/pmem/pmdk/tree/master/src/windows/setup#pmdk-for-windows-installation).
 
