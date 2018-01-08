@@ -1,5 +1,5 @@
 #
-# Copyright 2017, Intel Corporation
+# Copyright 2017-2018, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -97,11 +97,15 @@ else ()
 		pkg_check_modules(Libpmemlog REQUIRED libpmemlog)
 		pkg_check_modules(Libpmemobj REQUIRED libpmemobj)
 		pkg_check_modules(Libpmempool REQUIRED libpmempool)
+		include_directories(${Libpmemblk_INCLUDE_DIRS} ${Libpmemlog_INCLUDE_DIRS} ${Libpmemobj_INCLUDE_DIRS} ${Libpmempool_INCLUDE_DIRS})
+		link_directories(${Libpmemblk_LIBRARY_DIRS} ${Libpmemlog_LIBRARY_DIRS} ${Libpmemobj_LIBRARY_DIRS} ${Libpmempool_LIBRARY_DIRS})
 	else ()
 		find_library(Libpmemblk "pmemblk")
 		find_library(Libpmemlog "pmemlog")
 		find_library(Libpmemobj "pmemobj")
 		find_library(Libpmempool "pmempool")
+		include_directories(${CMAKE_PREFIX_PATH}/include)
+		include_directories(${CMAKE_PREFIX_PATH}/lib)
 	endif ()
 endif ()
 
