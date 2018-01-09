@@ -37,3 +37,7 @@ pugixml-*.tar.gz
 
 # Build folder
 build/
+
+# Python specific
+__pycache__/
+.idea/
