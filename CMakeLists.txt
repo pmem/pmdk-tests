@@ -49,6 +49,9 @@ find_package(PkgConfig QUIET)
 include(FindThreads)
 include(functions.cmake) # Function definitions
 
+option(DEVELOPER_MODE "enable developer checks" OFF)
+include(style-format.cmake)
+
 # Find and set GTest, PugiXML and PMDK libraries paths
 download_gtest()
 download_pugixml()
