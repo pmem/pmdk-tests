@@ -47,7 +47,7 @@ class Replica final {
   bool IsMasterReplica() const {
     return this->header_.compare("PMEMPOOLSET") == 0;
   };
-  std::vector<std::string> Split(const std::string& str) const;
+  std::vector<std::string> Split(const std::string &str) const;
 
  public:
   Replica(std::vector<std::string> content, const std::string &path, int count);

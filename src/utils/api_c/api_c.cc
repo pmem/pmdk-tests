@@ -34,7 +34,7 @@
 #include <io.h>
 #define chmod _chmod
 #define stat64 _stat64
-#endif // _WIN32
+#endif  // _WIN32
 
 #include "api_c.h"
 

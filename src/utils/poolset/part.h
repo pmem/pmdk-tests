@@ -42,7 +42,8 @@ class Part final {
 
  public:
   Part(const std::string &size, const std::string &path)
-      : size_(size), path_(path){}
+      : size_(size), path_(path) {
+  }
   const std::string &GetSize() const {
     return this->size_;
   };
