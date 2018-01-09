@@ -116,9 +116,13 @@ if (MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /D_CRT_SECURE_NO_WARNINGS /DNVML_UTF8_API /DGTEST_LANG_CXX11")
 	include_directories($ENV{PMDK_IncludePath})
 else ()
+	# Sets WORKAROUND_FLAGS variable which contains flags required to build with current configuration
+	check_workaround_flags_required()
+
 	# Disable RPATH so LD_LIBRARY_PATH can be used
 	set(CMAKE_SKIP_RPATH ON)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Drestrict=__restrict__ -Werror -Wall -Wextra -pedantic-errors -Wpedantic -std=c++11")
+
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Drestrict=__restrict__ -Werror -Wall -Wextra -pedantic-errors -Wpedantic -std=c++11 ${WORKAROUND_FLAGS}")
 endif ()
 
 include(src/CMakeLists.txt)

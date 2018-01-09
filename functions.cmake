@@ -158,3 +158,27 @@ function(download_pugixml)
 
 	include_directories(SYSTEM "${CMAKE_CURRENT_BINARY_DIR}/ext/pugixml/src/pugixml/src")
 endfunction()
+
+include(CheckCXXSourceCompiles)
+function(check_workaround_flags_required)
+	# Workaround for a bug in Ubuntu 17.10 and its GCC 5.4
+	# issue link : https://bugs.launchpad.net/ubuntu/+source/gcc-5/+bug/1739778
+	check_cxx_source_compiles("
+		#include <string>
+		#include <iostream>
+
+		int main()
+		{
+			std::cout << std::to_string(4) << std::endl;
+			return 0;
+		}
+	"
+	D_GLIBCXX_USE_C99_NOT_REQUIRED)
+
+	set(WORKAROUND_FLAGS "")
+	if (NOT D_GLIBCXX_USE_C99_NOT_REQUIRED)
+		set(WORKAROUND_FLAGS "${WORKAROUND_FLAGS} -D_GLIBCXX_USE_C99")
+	endif ()
+
+	set(WORKAROUND_FLAGS "${WORKAROUND_FLAGS}" PARENT_SCOPE)
+endfunction()
