@@ -1,5 +1,5 @@
 #
-# Copyright 2017, Intel Corporation
+# Copyright 2017-2018, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -76,7 +76,7 @@ function(download_gtest)
 		DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/ext/gtest
 		PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext/gtest
 		INSTALL_COMMAND ""
-		CMAKE_ARGS -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${FORCE_SHARED_CRT_WINDOWS} ${BUILD_FLAGS_WINDOWS} ${BUILD_TYPE_LINUX}
+		CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${FORCE_SHARED_CRT_WINDOWS} ${BUILD_FLAGS_WINDOWS} ${BUILD_TYPE_LINUX}
 	)
 	ExternalProject_Get_Property(gtest source_dir binary_dir)
 	add_library(libgtest IMPORTED STATIC GLOBAL)
@@ -128,7 +128,7 @@ function(download_pugixml)
 		DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/ext/pugixml
 		PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext/pugixml
 		INSTALL_COMMAND ""
-		CMAKE_ARGS -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${BUILD_FLAGS_WINDOWS} ${BUILD_TYPE_LINUX}
+		CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${BUILD_FLAGS_WINDOWS} ${BUILD_TYPE_LINUX}
 	)
 	ExternalProject_Get_Property(pugixml source_dir binary_dir)
 	add_library(libpugixml IMPORTED STATIC GLOBAL)
