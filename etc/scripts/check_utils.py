@@ -41,13 +41,13 @@ from difflib import unified_diff
 
 def read_file_lines(filepath):
     """Return a list of lines read from file."""
-    with open(filepath, 'r', encoding='utf-8', newline=os.linesep) as f:
+    with open(r'{}'.format(filepath), 'r', encoding='utf-8', newline=os.linesep) as f:
         return f.readlines()
 
 
 def write_to_file(filepath, lines):
     """Write lines to file."""
-    with open(filepath, 'w', encoding='utf-8') as f:
+    with open(r'{}'.format(filepath), 'w', encoding='utf-8') as f:
         f.write(''.join([line.replace('\r\n', '\n') for line in lines]))
 
 

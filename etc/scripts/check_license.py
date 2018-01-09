@@ -55,7 +55,7 @@ def validate_license_file(license_filepath):
 
 def check_license_date(filepath, copyright_line):
     """Check if license date in file matches file's last modification date."""
-    cmd = 'git log -1 --format="%ad" --date=format:"%Y" {}'.format(filepath)
+    cmd = 'git log -1 --format="%ad" --date=format:"%Y" "{}"'.format(filepath)
     cwd = path.dirname(path.abspath(filepath))
     returncode, out = check_utils.run(cmd, cwd=cwd, shell=True)
 

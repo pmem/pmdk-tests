@@ -148,7 +148,7 @@ def find_clang_format():
 
 def clang_format(filepath):
     """Apply clang-format to file."""
-    cmd = clang_format_bin + ' ' + filepath + ' -style={}'.format(CLANG_STYLE)
+    cmd = clang_format_bin + ' "' + filepath + '" -style={}'.format(CLANG_STYLE)
     returncode, out = check_utils.run(cmd, shell=True)
     if returncode != 0:
         sys.exit('{}{}{} exited with code {}.'
