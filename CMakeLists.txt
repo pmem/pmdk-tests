@@ -48,6 +48,7 @@ endif ()
 find_package(PkgConfig QUIET)
 include(FindThreads)
 include(functions.cmake) # Function definitions
+include(style-format.cmake)
 
 # Find and set GTest, PugiXML and PMDK libraries paths
 download_gtest()
