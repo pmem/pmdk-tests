@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +42,8 @@ class Part final {
 
  public:
   Part(const std::string &size, const std::string &path)
-      : size_(size), path_(path){}
+      : size_(size), path_(path) {
+  }
   const std::string &GetSize() const {
     return this->size_;
   };
