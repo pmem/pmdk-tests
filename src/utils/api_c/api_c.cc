@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
 #include <io.h>
 #define chmod _chmod
 #define stat64 _stat64
-#endif // _WIN32
+#endif  // _WIN32
 
 #include "api_c.h"
 
