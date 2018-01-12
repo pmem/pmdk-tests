@@ -43,5 +43,5 @@ add_executable(PMEMPOOLS
 
 set_source_groups("${PREFIX_FILTER}" ${pmempool_SRC})
 
-target_link_libraries(PMEMPOOLS Utils libgtest ${Libpmemblk} ${Libpmemlog} ${Libpmemobj} ${Libpmempool})
+target_link_libraries(PMEMPOOLS Utils libgtest ${Libpmem_LIBRARIES} ${Libpmemblk_LIBRARIES} ${Libpmemlog_LIBRARIES} ${Libpmemobj_LIBRARIES} ${Libpmempool_LIBRARIES})
 add_dependencies(PMEMPOOLS Utils libgtest)
