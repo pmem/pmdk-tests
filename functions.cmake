@@ -108,7 +108,7 @@ function(download_pugixml)
 	include(ExternalProject)
 	set(PUGIXML_VERSION 1.8.1)
 	set(PUGIXML_SHA256HASH 00d974a1308e85ca0677a981adc1b2855cb060923181053fb0abf4e2f37b8f39)
-	
+
 	# CMake uses curl to download files, however on Windows systems HTTP_PROXY and similar environment variables
 	# are not set, which means that it will fail when we are behind a proxy
 	# issue link : https://gitlab.kitware.com/cmake/cmake/issues/17592
