@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +42,7 @@
 #include "non_copyable/non_copyable.h"
 
 class ApiC final : NonCopyable {
- public:
+public:
   static int GetExecutablePath(std::string &path);
   static int CreateFileT(const std::string &path, const std::string &content);
   static int CreateFileT(const std::string &path,
@@ -51,8 +51,8 @@ class ApiC final : NonCopyable {
   static int ReadFile(const std::string &path, std::string &content);
   static bool RegularFileExists(const std::string &path);
   static long long GetFileSize(const std::string &path);
-  static std::vector<long long> GetFilesSize(
-      const std::vector<std::string> &paths);
+  static std::vector<long long>
+  GetFilesSize(const std::vector<std::string> &paths);
   static unsigned short GetFilePermission(const std::string &path);
   static int SetFilePermission(const std::string &path, int permissions);
   static int RemoveFile(const std::string &path);
@@ -61,6 +61,20 @@ class ApiC final : NonCopyable {
   static int CleanDirectory(const std::string &dir);
   static int RemoveDirectoryT(const std::string &dir);
   static long long GetFreeSpaceT(const std::string &dir);
+#ifdef _WIN32
+  static int CreateFileT(const std::wstring &path,
+                         const std::vector<std::wstring> &content,
+                         bool is_bom = false);
+  static int CreateFileT(const std::wstring &path, const std::wstring &content,
+                         bool is_bom = false);
+  static int ReadFile(const std::wstring &path, std::wstring &content);
+  static bool RegularFileExists(const std::wstring &path);
+  static unsigned short GetFilePermission(const std::wstring &path);
+  static int SetFilePermission(const std::wstring &path, int permissions);
+  static int RemoveFile(const std::wstring &path);
+  static bool DirectoryExists(const std::wstring &dir);
+  static long long GetFreeSpaceT(const std::wstring &dir);
+#endif
 };
 
 #endif  // !PMDK_TESTS_SRC_UTILS_API_C_API_C_H_

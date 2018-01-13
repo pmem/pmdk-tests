@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,54 +30,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_SHELL_I_SHELL_H_
-#define PMDK_TESTS_SRC_UTILS_SHELL_I_SHELL_H_
-
-#include <stdio.h>
-#include <cstdio>
-#include <exception>
-#include <memory>
-#include <string>
-#include "non_copyable/non_copyable.h"
-#include "output/output.h"
-#include "string_utils.h"
-
-const int BUFFER_SIZE = 128;
-
 #ifdef _WIN32
-#define popen _popen
-#define pclose _pclose
-#endif  // _WIN32
 
-struct PipeDeleter {
-  void operator()(FILE *pipe) {
-    if (pipe) {
-      pclose(pipe);
-    }
+#include "i_shell.h"
+
+Output<wchar_t> IShell::ExecuteCommand(const std::wstring &cmd) {
+  std::wstring command = L"PowerShell -Command " + cmd + L" 2>&1";
+
+  std::unique_ptr<FILE, PipeDeleter> pipe(_wpopen(command.c_str(), L"r"));
+
+  if (!pipe) {
+    throw std::exception("popen failed");
   }
-};
 
-class IShell : NonCopyable {
-private:
-  Output<char> output_;
-  bool print_log_ = false;
-#ifdef _WIN32
-  Output<wchar_t> w_output_;
+  wchar_t buffer[BUFFER_SIZE];
+  std::wstring out_buffer;
+
+  while (fgetws(buffer, BUFFER_SIZE, pipe.get())) {
+    out_buffer.append(buffer);
+  }
+
+  auto s_pipe = pipe.release();
+  int exit_code = pclose(s_pipe);
+  w_output_ = Output<wchar_t>(exit_code, out_buffer);
+
+  if (print_log_) {
+    std::wcout << out_buffer << std::endl;
+  }
+
+  return w_output_;
+}
+
 #endif // _WIN32
-
-public:
-  IShell(){};
-  IShell(bool print_log) : print_log_(print_log){};
-
-  Output<char> GetLastOutput() const { return output_; }
-
-  Output<char> ExecuteCommand(const std::string &cmd);
-
-#ifdef _WIN32
-  Output<wchar_t> GetWLastOutput() const { return w_output_; }
-
-  Output<wchar_t> ExecuteCommand(const std::wstring &cmd);
-#endif
-};
-
-#endif  // !PMDK_TESTS_SRC_UTILS_SHELL_I_SHELL_H_

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -194,6 +194,155 @@ int ApiC::RemoveDirectoryT(const std::string &dir) {
   }
 
   return 0;
+}
+
+int ApiC::CreateFileT(const std::wstring &path, const std::wstring &content,
+                      bool is_bom) {
+  std::locale utf8_locale;
+
+  if (is_bom) {
+    utf8_locale = std::locale(
+        std::locale(),
+        new std::codecvt_utf8<wchar_t, 0x10ffff,
+                              std::codecvt_mode::generate_header>());
+  } else {
+    utf8_locale =
+        std::locale(std::locale(),
+                    new std::codecvt_utf8<wchar_t, 0x10ffff,
+                                          std::codecvt_mode::consume_header>());
+  }
+
+  std::wofstream file{path, std::ios::out | std::ios::trunc};
+  file.imbue(utf8_locale);
+
+  if (!file.good()) {
+    std::wcerr << "File opening failed" << std::endl;
+    return -1;
+  }
+
+  file << content;
+
+  return 0;
+}
+
+int ApiC::CreateFileT(const std::wstring &path,
+                      const std::vector<std::wstring> &content,
+                      bool is_bom) {
+  std::wstring temp_content;
+
+  for (const auto &line : content) {
+    temp_content += line + L"\n";
+  }
+
+  return CreateFileT(path, temp_content, is_bom);
+}
+
+int ApiC::ReadFile(const std::wstring &path, std::wstring &content) {
+  std::wifstream file{path, std::ios::binary | std::ios::ate};
+
+  if (!file.good()) {
+    std::wcerr << "File opening failed" << std::endl;
+    return -1;
+  }
+
+  std::wstring line;
+
+  while (std::getline(file, line)) {
+    content += line;
+  }
+
+  return 0;
+}
+
+bool ApiC::RegularFileExists(const std::wstring &path) {
+  struct _stat64 file_stat;
+
+	  if (_wstat64(path.c_str(), &file_stat) != 0) {
+    switch (errno) {
+      case ENOENT:
+        break;
+      default:
+        std::wcerr << L"Unexpected error in _wstat. Errno: " << _wcserror(errno)
+                  << std::endl;
+    }
+
+    return false;
+  }
+		
+  return (file_stat.st_mode & S_IFREG) != 0;
+}
+
+unsigned short ApiC::GetFilePermission(const std::wstring &file) {
+  struct _stat64 file_stat;
+
+  int result = _wstat64(file.c_str(), &file_stat);
+
+  if (result != 0) {
+    std::wcerr << L"Unable to change file permission: " << _wcserror(errno)
+               << std::endl;
+
+    return 0;
+  }
+
+  file_stat.st_mode &= 0700;
+
+  return file_stat.st_mode;
+}
+
+int ApiC::SetFilePermission(const std::wstring &path, int permissions) {
+  int ret = _wchmod(path.c_str(), permissions);
+
+  if (ret != 0) {
+    std::wcerr << L"Unable to change file permission: " << _wcserror(errno)
+               << std::endl;
+  }
+
+  return ret;
+}
+
+int ApiC::RemoveFile(const std::wstring &path) {
+  int ret = _wremove(path.c_str());
+
+  if (ret != 0) {
+    std::wcerr << L"The file can not be deleted: " << _wcserror(errno) << std::endl;
+  }
+
+  return ret;
+}
+
+bool ApiC::DirectoryExists(const std::wstring &dir) {
+  struct _stat64 file_stat;
+
+  if (_wstat64(dir.c_str(), &file_stat) != 0) {
+    switch (errno) {
+      case ENOENT:
+        break;
+      default:
+        std::wcerr << "Unexpected error in _wstat. Errno: " << _wcserror(errno)
+                  << std::endl;
+    }
+
+    return false;
+  }
+
+  return (file_stat.st_mode & S_IFDIR) != 0;
+}
+
+long long ApiC::GetFreeSpaceT(const std::wstring &dir) {
+  __int64 free_bytes_available, total_number_of_bytes,
+      total_number_of_free_bytes;
+  LPCWSTR drive = dir.c_str();
+  int result =
+      GetDiskFreeSpaceExW(drive, (PULARGE_INTEGER)&free_bytes_available,
+                          (PULARGE_INTEGER)&total_number_of_bytes,
+                          (PULARGE_INTEGER)&total_number_of_free_bytes);
+
+  if (result == 0) {
+    std::wcerr << L"Unable to get file system statistics: " << GetLastError() << std::endl;
+    return -1;
+  }
+
+  return total_number_of_free_bytes;
 }
 
 #endif  // !_WIN32
