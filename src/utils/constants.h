@@ -59,4 +59,6 @@ static const std::map<std::string, size_t> SIZES{
     {"KB", KILOBYTE},  {"MB", MEGABYTE},  {"GB", GIGABYTE},
     {"K", KIBIBYTE},   {"M", MEBIBYTE},   {"G", GIGIBYTE}};
 
+static const int CONSISTENT = 1;
+
 #endif  // !PMDK_TESTS_SRC_UTILS_CONSTANTS_H_

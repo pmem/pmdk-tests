@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,35 +30,42 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
-#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+#ifndef PMDK_TESTS_SRC_UTILS_PMDK_STRUCTURES_OBJ_H_
+#define PMDK_TESTS_SRC_UTILS_PMDK_STRUCTURES_OBJ_H_
 
-#include "pmempool_create.h"
+#include "constants.h"
+#include <iostream>
+#include <libpmemobj.h>
+#include <string>
 
-namespace create {
-class ValidTests : public PmempoolCreate,
-                   public ::testing::WithParamInterface<PoolArgs> {
- public:
-  PoolArgs pool_args;
+class ObjPool {
+public:
+	std::string path;
+  size_t size = 0;
+  int mode = 0664 & PERMISSION_MASK;
+  std::string layout;
 
-  void SetUp() override;
+	ObjPool() {};
+
+	ObjPool(std::string path_) : path(path_) {}
+
+	ObjPool(std::string path_, std::string layout_) : path(path_), layout(layout_) {}
+
+	ObjPool(std::string path_, size_t size_) : path(path_), size(size_) {}
+
+	ObjPool(std::string path_, int mode_) : path(path_), mode(mode_) {}
+
+	ObjPool(std::string path_, size_t size_, int mode_) : path(path_), size(size_), mode(mode_) {}
+
+	ObjPool(std::string path_, size_t size_, int mode_, std::string layout_) : path(path_), size(size_), mode(mode_), layout(layout_) {}
 };
 
-class ValidInheritTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolInherit> {
- public:
-  PoolInherit pool_inherit;
-
-  void SetUp() override;
+class ObjManagement {
+public:
+  int CreatePool(const ObjPool& obj_pool);
+  PMEMobjpool* OpenPool(const ObjPool& obj_pool);
+  int CheckPool(const ObjPool& obj_pool);
+	void ClosePool(PMEMobjpool *pop) { pmemobj_close(pop); }
 };
 
-class ValidPoolsetTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolsetArgs> {
- public:
-  PoolsetArgs poolset_args;
-
-  void SetUp() override;
-};
-}
-
-#endif  // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+#endif // !PMDK_TESTS_SRC_UTILS_PMDK_STRUCTURES_OBJ_H_

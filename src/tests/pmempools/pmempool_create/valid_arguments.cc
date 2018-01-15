@@ -32,9 +32,8 @@
 
 #include "valid_arguments.h"
 
-void ValidTests::SetUp() {
-  pool_args = GetParam();
-}
+namespace create {
+void ValidTests::SetUp() { pool_args = GetParam(); }
 
 void ValidInheritTests::SetUp() {
   pool_inherit = GetParam();
@@ -51,4 +50,5 @@ void ValidPoolsetTests::SetUp() {
   poolset_args = GetParam();
 
   ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(poolset_args.poolset));
+}
 }

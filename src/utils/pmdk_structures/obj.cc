@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,35 +30,45 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
-#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+#include "obj.h"
 
-#include "pmempool_create.h"
+int ObjManagement::CreatePool(const ObjPool& obj_pool) {
+  const char *layout = obj_pool.layout.empty() ? nullptr : obj_pool.layout.c_str();
+  PMEMobjpool *pop =
+      pmemobj_create(obj_pool.path.c_str(), layout, obj_pool.size, obj_pool.mode);
 
-namespace create {
-class ValidTests : public PmempoolCreate,
-                   public ::testing::WithParamInterface<PoolArgs> {
- public:
-  PoolArgs pool_args;
+  if (pop == nullptr) {
+    std::cout << "Cannot create pool of obj type.\n" << strerror(errno)
+              << std::endl;
 
-  void SetUp() override;
-};
+    return -1;
+  }
 
-class ValidInheritTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolInherit> {
- public:
-  PoolInherit pool_inherit;
+  pmemobj_close(pop);
 
-  void SetUp() override;
-};
-
-class ValidPoolsetTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolsetArgs> {
- public:
-  PoolsetArgs poolset_args;
-
-  void SetUp() override;
-};
+  return 0;
 }
 
-#endif  // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+PMEMobjpool* ObjManagement::OpenPool(const ObjPool& obj_pool) {
+  const char *layout = obj_pool.layout.empty() ? nullptr : obj_pool.layout.c_str();
+  PMEMobjpool *pop = pmemobj_open(obj_pool.path.c_str(), layout);
+
+  if (pop == nullptr) {
+    std::cout << "Cannot open pool.\n" << strerror(errno) << std::endl;
+    return nullptr;
+  }
+
+	return pop;
+}
+
+int ObjManagement::CheckPool(const ObjPool& obj_pool) {
+  const char *layout = obj_pool.layout.empty() ? nullptr : obj_pool.layout.c_str();
+  if (pmemobj_check(obj_pool.path.c_str(), layout) != CONSISTENT) {
+    std::cout << "Cannot check pool of obj type." << strerror(errno)
+              << std::endl;
+
+    return -1;
+  }
+
+  return 0;
+}
