@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,25 +30,42 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "invalid_arguments.h"
+#include "obj.h"
 
-namespace create {
-  void InvalidArgumentsTests::SetUp() { pool_args = GetParam(); }
-  
-  void InvalidInheritTests::SetUp() {
-    pool_inherit = GetParam();
-  
-    ASSERT_EQ(0, CreatePool(pool_inherit.pool_base, pool_path_))
-        << GetOutputContent();
-    ASSERT_EQ(0,
-              file_utils::ValidateFile(
-                  pool_path_, struct_utils::GetPoolSize(pool_inherit.pool_base),
-                  struct_utils::GetPoolMode(pool_inherit.pool_base)));
+int ObjManagement::CreatePool(const ObjPool &obj_pool) {
+  const char *layout =
+      obj_pool.layout.empty() ? nullptr : obj_pool.layout.c_str();
+  PMEMobjpool *pop = pmemobj_create(obj_pool.path.c_str(), layout,
+                                    obj_pool.size, obj_pool.mode);
+
+  if (pop == nullptr) {
+    std::cout << "Cannot create pool of obj type.\n" << strerror(errno)
+              << std::endl;
+
+    return -1;
   }
-  
-  void InvalidArgumentsPoolsetTests::SetUp() {
-    poolset_args = GetParam();
-  
-    ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(poolset_args.poolset));
+
+  pmemobj_close(pop);
+
+  return 0;
+}
+
+PMEMobjpool *ObjManagement::OpenPool(const ObjPool &obj_pool) {
+  const char *layout =
+      obj_pool.layout.empty() ? nullptr : obj_pool.layout.c_str();
+  PMEMobjpool *pop = pmemobj_open(obj_pool.path.c_str(), layout);
+
+  if (pop == nullptr) {
+    std::cout << "Cannot open pool.\n" << strerror(errno) << std::endl;
+    return nullptr;
   }
+
+  return pop;
+}
+
+int ObjManagement::CheckPool(const ObjPool &obj_pool) {
+  const char *layout =
+      obj_pool.layout.empty() ? nullptr : obj_pool.layout.c_str();
+
+  return pmemobj_check(obj_pool.path.c_str(), layout);
 }

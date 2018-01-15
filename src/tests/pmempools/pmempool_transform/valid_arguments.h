@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,25 +30,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "invalid_arguments.h"
+#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_VALID_ARGUMENTS_H_
+#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_VALID_ARGUMENTS_H_
 
-namespace create {
-  void InvalidArgumentsTests::SetUp() { pool_args = GetParam(); }
-  
-  void InvalidInheritTests::SetUp() {
-    pool_inherit = GetParam();
-  
-    ASSERT_EQ(0, CreatePool(pool_inherit.pool_base, pool_path_))
-        << GetOutputContent();
-    ASSERT_EQ(0,
-              file_utils::ValidateFile(
-                  pool_path_, struct_utils::GetPoolSize(pool_inherit.pool_base),
-                  struct_utils::GetPoolMode(pool_inherit.pool_base)));
-  }
-  
-  void InvalidArgumentsPoolsetTests::SetUp() {
-    poolset_args = GetParam();
-  
-    ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(poolset_args.poolset));
-  }
+#include "pmempool_transform.h"
+
+namespace transform {
+class TransformValidTests
+    : public PmempoolTransform,
+      public ::testing::WithParamInterface<TransformArgs> {
+public:
+  void SetUp() override;
+};
+
+class TransformValidBasicTests
+    : public PmempoolTransform,
+      public ::testing::WithParamInterface<TransformArgs> {
+public:
+  void SetUp() override;
+};
 }
+
+#endif // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_VALID_ARGUMENTS_H_

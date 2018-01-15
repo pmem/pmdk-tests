@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,25 +30,18 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "invalid_arguments.h"
+#include "pmempool_transform.h"
 
-namespace create {
-  void InvalidArgumentsTests::SetUp() { pool_args = GetParam(); }
-  
-  void InvalidInheritTests::SetUp() {
-    pool_inherit = GetParam();
-  
-    ASSERT_EQ(0, CreatePool(pool_inherit.pool_base, pool_path_))
-        << GetOutputContent();
-    ASSERT_EQ(0,
-              file_utils::ValidateFile(
-                  pool_path_, struct_utils::GetPoolSize(pool_inherit.pool_base),
-                  struct_utils::GetPoolMode(pool_inherit.pool_base)));
-  }
-  
-  void InvalidArgumentsPoolsetTests::SetUp() {
-    poolset_args = GetParam();
-  
-    ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(poolset_args.poolset));
-  }
+int PmempoolTransform::TransformPoolCLI(const std::string &poolset_file_src,
+                                        const std::string &poolset_file_dst,
+                                        const std::vector<Arg> &args) {
+  output_ = shell_.ExecuteCommand("pmempool transform " +
+                                  struct_utils::CombineArguments(args) +
+                                  poolset_file_src + " " + poolset_file_dst);
+
+  return output_.GetExitCode();
+}
+
+void PmempoolTransform::TearDown() {
+  api_c_.CleanDirectory(local_config->GetTestDir());
 }
