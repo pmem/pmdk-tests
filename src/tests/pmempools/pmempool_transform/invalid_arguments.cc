@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,35 +30,23 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
-#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+#include "invalid_arguments.h"
 
-#include "pmempool_create.h"
-
-namespace create {
-class ValidTests : public PmempoolCreate,
-                   public ::testing::WithParamInterface<PoolArgs> {
- public:
-  PoolArgs pool_args;
-
-  void SetUp() override;
-};
-
-class ValidInheritTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolInherit> {
- public:
-  PoolInherit pool_inherit;
-
-  void SetUp() override;
-};
-
-class ValidPoolsetTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolsetArgs> {
- public:
-  PoolsetArgs poolset_args;
-
-  void SetUp() override;
-};
+namespace transform {
+void TransformInvalidTests::SetUp() {
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_src));
+  ASSERT_EQ(0, obj_mgmt_.CreatePool(GetParam().obj_pool));
+  ASSERT_EQ(0, file_utils::ValidatePoolset(GetParam().poolset_src,
+                                           GetParam().obj_pool.mode));
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_temp));
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_dst));
 }
 
-#endif  // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+void TransformInvalidBasicTests::SetUp() {
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_src));
+  ASSERT_EQ(0, obj_mgmt_.CreatePool(GetParam().obj_pool));
+  ASSERT_EQ(0, file_utils::ValidatePoolset(GetParam().poolset_src,
+                                           GetParam().obj_pool.mode));
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_dst));
+}
+}
