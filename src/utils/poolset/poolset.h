@@ -48,6 +48,7 @@ class Poolset final {
   std::string dir_;
   std::string name_ = "pool.set";
   std::string path_ = SEPARATOR + name_;
+  std::string replica_path_;
   std::vector<Replica> replicas_;
   void InitializeReplicas(std::initializer_list<replica> &&content);
 
@@ -59,9 +60,10 @@ class Poolset final {
     InitializeReplicas(std::move(content));
   }
   Poolset(const std::string &dir, const std::string &name,
-          std::initializer_list<replica> content)
+          std::initializer_list<replica> content, const std::string &replica_path = "")
       : dir_(dir), name_(name) {
     path_ = dir_ + SEPARATOR + name_;
+    replica_path_ = replica_path;
     InitializeReplicas(std::move(content));
   }
 

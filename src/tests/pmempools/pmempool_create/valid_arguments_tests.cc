@@ -32,6 +32,7 @@
 
 #include "valid_arguments.h"
 
+namespace create {
 /**
  * PmempoolCreateValidTests.PMEMPOOL_CREATE
  * Creating pools of different type with following arguments:
@@ -134,3 +135,4 @@ INSTANTIATE_TEST_CASE_P(
         PoolsetArgs{{PoolType::Obj},
                     Poolset{local_config->GetTestDir(),
                             {{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}}}));
+}

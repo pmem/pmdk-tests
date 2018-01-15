@@ -44,7 +44,7 @@ std::vector<Part> Poolset::GetParts() const {
 
 void Poolset::InitializeReplicas(std::initializer_list<replica> &&content) {
   for (const auto &replica : content) {
-    this->replicas_.emplace_back(replica, path_, replica_counter_);
+    this->replicas_.emplace_back(replica, replica_path_.empty() ? path_ : replica_path_, replica_counter_);
     ++replica_counter_;
   }
 }
