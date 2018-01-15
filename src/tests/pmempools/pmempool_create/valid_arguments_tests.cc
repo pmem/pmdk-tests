@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,6 +32,7 @@
 
 #include "valid_arguments.h"
 
+namespace create {
 /**
  * PmempoolCreateValidTests.PMEMPOOL_CREATE
  * Creating pools of different type with following arguments:
@@ -134,3 +135,4 @@ INSTANTIATE_TEST_CASE_P(
         PoolsetArgs{{PoolType::Obj},
                     Poolset{local_config->GetTestDir(),
                             {{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}}}));
+}
