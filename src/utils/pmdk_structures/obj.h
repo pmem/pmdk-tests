@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,38 +30,45 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
-#define PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
+#ifndef PMDK_TESTS_SRC_UTILS_PMDK_STRUCTURES_OBJ_H_
+#define PMDK_TESTS_SRC_UTILS_PMDK_STRUCTURES_OBJ_H_
 
-#include <map>
+#include "constants.h"
+#include <iostream>
+#include <libpmemobj.h>
 #include <string>
 
-#ifdef _WIN32
-/* On Windows there is no permission for execution. Also windows doesn't
-* support groups of users in UNIX way */
-const int PERMISSION_MASK = 0600;
-#else
-const int PERMISSION_MASK = 0777;
-#endif  // _WIN32
+class ObjPool {
+public:
+  std::string path;
+  size_t size = 0;
+  int mode = 0664 & PERMISSION_MASK;
+  std::string layout;
 
-#ifdef _WIN32
-const std::string SEPARATOR = "\\";
-#else
-const std::string SEPARATOR = "/";
-#endif  // _WIN32
+  ObjPool() {}
 
-static const size_t KIBIBYTE = 1 << 10;
-static const size_t MEBIBYTE = KIBIBYTE << 10;
-static const size_t GIGIBYTE = MEBIBYTE << 10;
-static const size_t KILOBYTE = 1000;
-static const size_t MEGABYTE = KILOBYTE * 1000;
-static const size_t GIGABYTE = MEGABYTE * 1000;
+  ObjPool(std::string path_) : path(path_) {}
 
-static const std::map<std::string, size_t> SIZES{
-    {"KiB", KIBIBYTE}, {"MiB", MEBIBYTE}, {"GiB", GIGIBYTE},
-    {"KB", KILOBYTE},  {"MB", MEGABYTE},  {"GB", GIGABYTE},
-    {"K", KIBIBYTE},   {"M", MEBIBYTE},   {"G", GIGIBYTE}};
+  ObjPool(std::string path_, std::string layout_)
+      : path(path_), layout(layout_) {}
 
-static const int CONSISTENT = 1;
+  ObjPool(std::string path_, size_t size_) : path(path_), size(size_) {}
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
+  ObjPool(std::string path_, int mode_) : path(path_), mode(mode_) {}
+
+  ObjPool(std::string path_, size_t size_, int mode_)
+      : path(path_), size(size_), mode(mode_) {}
+
+  ObjPool(std::string path_, size_t size_, int mode_, std::string layout_)
+      : path(path_), size(size_), mode(mode_), layout(layout_) {}
+};
+
+class ObjManagement {
+public:
+  int CreatePool(const ObjPool &obj_pool);
+  PMEMobjpool *OpenPool(const ObjPool &obj_pool);
+  int CheckPool(const ObjPool &obj_pool);
+  void ClosePool(PMEMobjpool *pop) { pmemobj_close(pop); }
+};
+
+#endif // !PMDK_TESTS_SRC_UTILS_PMDK_STRUCTURES_OBJ_H_

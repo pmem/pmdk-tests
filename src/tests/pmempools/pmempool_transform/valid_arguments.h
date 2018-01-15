@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,38 +30,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
-#define PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
+#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_VALID_ARGUMENTS_H_
+#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_VALID_ARGUMENTS_H_
 
-#include <map>
-#include <string>
+#include "pmempool_transform.h"
 
-#ifdef _WIN32
-/* On Windows there is no permission for execution. Also windows doesn't
-* support groups of users in UNIX way */
-const int PERMISSION_MASK = 0600;
-#else
-const int PERMISSION_MASK = 0777;
-#endif  // _WIN32
+namespace transform {
+class TransformValidTests
+    : public PmempoolTransform,
+      public ::testing::WithParamInterface<TransformArgs> {
+public:
+  void SetUp() override;
+};
 
-#ifdef _WIN32
-const std::string SEPARATOR = "\\";
-#else
-const std::string SEPARATOR = "/";
-#endif  // _WIN32
+class TransformValidBasicTests
+    : public PmempoolTransform,
+      public ::testing::WithParamInterface<TransformArgs> {
+public:
+  void SetUp() override;
+};
+}
 
-static const size_t KIBIBYTE = 1 << 10;
-static const size_t MEBIBYTE = KIBIBYTE << 10;
-static const size_t GIGIBYTE = MEBIBYTE << 10;
-static const size_t KILOBYTE = 1000;
-static const size_t MEGABYTE = KILOBYTE * 1000;
-static const size_t GIGABYTE = MEGABYTE * 1000;
-
-static const std::map<std::string, size_t> SIZES{
-    {"KiB", KIBIBYTE}, {"MiB", MEBIBYTE}, {"GiB", GIGIBYTE},
-    {"KB", KILOBYTE},  {"MB", MEGABYTE},  {"GB", GIGABYTE},
-    {"K", KIBIBYTE},   {"M", MEBIBYTE},   {"G", GIGIBYTE}};
-
-static const int CONSISTENT = 1;
-
-#endif  // !PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
+#endif // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_VALID_ARGUMENTS_H_

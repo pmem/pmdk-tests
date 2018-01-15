@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,38 +30,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
-#define PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
+#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_H_
+#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_H_
 
-#include <map>
-#include <string>
+#include "configXML/local_configuration.h"
+#include "pmdk_structures/obj.h"
+#include "shell/i_shell.h"
+#include "structures.h"
+#include "test_utils/file_utils.h"
+#include "gtest/gtest.h"
+#include <libpmempool.h>
 
-#ifdef _WIN32
-/* On Windows there is no permission for execution. Also windows doesn't
-* support groups of users in UNIX way */
-const int PERMISSION_MASK = 0600;
-#else
-const int PERMISSION_MASK = 0777;
-#endif  // _WIN32
+extern std::unique_ptr<LocalConfiguration> local_config;
+const std::string POOLSET_PATH_SRC = "pool_src.set";
+const std::string POOLSET_PATH_TEMP = "pool_temp.set";
+const std::string POOLSET_PATH_DST = "pool_dst.set";
 
-#ifdef _WIN32
-const std::string SEPARATOR = "\\";
-#else
-const std::string SEPARATOR = "/";
-#endif  // _WIN32
+class PmempoolTransform : public ::testing::Test {
+private:
+  std::string err_msg_;
+  Output<> output_;
 
-static const size_t KIBIBYTE = 1 << 10;
-static const size_t MEBIBYTE = KIBIBYTE << 10;
-static const size_t GIGIBYTE = MEBIBYTE << 10;
-static const size_t KILOBYTE = 1000;
-static const size_t MEGABYTE = KILOBYTE * 1000;
-static const size_t GIGABYTE = MEGABYTE * 1000;
+public:
+  ObjManagement obj_mgmt_;
+  ApiC api_c_;
+  IShell shell_;
+  PoolsetManagement p_mgmt_;
+  const std::string pool_path_ = local_config->GetTestDir() + "pool.file";
 
-static const std::map<std::string, size_t> SIZES{
-    {"KiB", KIBIBYTE}, {"MiB", MEBIBYTE}, {"GiB", GIGIBYTE},
-    {"KB", KILOBYTE},  {"MB", MEGABYTE},  {"GB", GIGABYTE},
-    {"K", KIBIBYTE},   {"M", MEBIBYTE},   {"G", GIGIBYTE}};
+  std::string GetOutputContent() const { return output_.GetContent(); }
 
-static const int CONSISTENT = 1;
+  int TransformPoolCLI(const std::string &poolset_file_src,
+                       const std::string &poolset_file_dst,
+                       const std::vector<Arg> &args = std::vector<Arg>());
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
+  void TearDown() override;
+};
+
+#endif // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_H_

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,9 +32,8 @@
 
 #include "invalid_arguments.h"
 
-void InvalidArgumentsTests::SetUp() {
-  pool_args = GetParam();
-}
+namespace create {
+void InvalidArgumentsTests::SetUp() { pool_args = GetParam(); }
 
 void InvalidInheritTests::SetUp() {
   pool_inherit = GetParam();
@@ -51,4 +50,5 @@ void InvalidArgumentsPoolsetTests::SetUp() {
   poolset_args = GetParam();
 
   ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(poolset_args.poolset));
+}
 }

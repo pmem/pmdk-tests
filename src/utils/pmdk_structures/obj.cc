@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,38 +30,42 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
-#define PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
+#include "obj.h"
 
-#include <map>
-#include <string>
+int ObjManagement::CreatePool(const ObjPool &obj_pool) {
+  const char *layout =
+      obj_pool.layout.empty() ? nullptr : obj_pool.layout.c_str();
+  PMEMobjpool *pop = pmemobj_create(obj_pool.path.c_str(), layout,
+                                    obj_pool.size, obj_pool.mode);
 
-#ifdef _WIN32
-/* On Windows there is no permission for execution. Also windows doesn't
-* support groups of users in UNIX way */
-const int PERMISSION_MASK = 0600;
-#else
-const int PERMISSION_MASK = 0777;
-#endif  // _WIN32
+  if (pop == nullptr) {
+    std::cout << "Cannot create pool of obj type.\n" << strerror(errno)
+              << std::endl;
 
-#ifdef _WIN32
-const std::string SEPARATOR = "\\";
-#else
-const std::string SEPARATOR = "/";
-#endif  // _WIN32
+    return -1;
+  }
 
-static const size_t KIBIBYTE = 1 << 10;
-static const size_t MEBIBYTE = KIBIBYTE << 10;
-static const size_t GIGIBYTE = MEBIBYTE << 10;
-static const size_t KILOBYTE = 1000;
-static const size_t MEGABYTE = KILOBYTE * 1000;
-static const size_t GIGABYTE = MEGABYTE * 1000;
+  pmemobj_close(pop);
 
-static const std::map<std::string, size_t> SIZES{
-    {"KiB", KIBIBYTE}, {"MiB", MEBIBYTE}, {"GiB", GIGIBYTE},
-    {"KB", KILOBYTE},  {"MB", MEGABYTE},  {"GB", GIGABYTE},
-    {"K", KIBIBYTE},   {"M", MEBIBYTE},   {"G", GIGIBYTE}};
+  return 0;
+}
 
-static const int CONSISTENT = 1;
+PMEMobjpool *ObjManagement::OpenPool(const ObjPool &obj_pool) {
+  const char *layout =
+      obj_pool.layout.empty() ? nullptr : obj_pool.layout.c_str();
+  PMEMobjpool *pop = pmemobj_open(obj_pool.path.c_str(), layout);
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
+  if (pop == nullptr) {
+    std::cout << "Cannot open pool.\n" << strerror(errno) << std::endl;
+    return nullptr;
+  }
+
+  return pop;
+}
+
+int ObjManagement::CheckPool(const ObjPool &obj_pool) {
+  const char *layout =
+      obj_pool.layout.empty() ? nullptr : obj_pool.layout.c_str();
+
+  return pmemobj_check(obj_pool.path.c_str(), layout);
+}
