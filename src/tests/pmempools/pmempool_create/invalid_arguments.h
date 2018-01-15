@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,9 +35,10 @@
 
 #include "pmempool_create.h"
 
+namespace create {
 class InvalidArgumentsTests : public PmempoolCreate,
                               public ::testing::WithParamInterface<PoolArgs> {
- public:
+public:
   PoolArgs pool_args;
 
   void SetUp() override;
@@ -45,7 +46,7 @@ class InvalidArgumentsTests : public PmempoolCreate,
 
 class InvalidInheritTests : public PmempoolCreate,
                             public ::testing::WithParamInterface<PoolInherit> {
- public:
+public:
   PoolInherit pool_inherit;
 
   void SetUp() override;
@@ -54,10 +55,11 @@ class InvalidInheritTests : public PmempoolCreate,
 class InvalidArgumentsPoolsetTests
     : public PmempoolCreate,
       public ::testing::WithParamInterface<PoolsetArgs> {
- public:
+public:
   PoolsetArgs poolset_args;
 
   void SetUp() override;
 };
+} // namespace create
 
-#endif  // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_INVALID_ARGUMENTS_H_
+#endif // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_INVALID_ARGUMENTS_H_

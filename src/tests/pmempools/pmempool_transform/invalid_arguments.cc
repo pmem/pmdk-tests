@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,23 +32,21 @@
 
 #include "invalid_arguments.h"
 
-namespace create {
-void InvalidArgumentsTests::SetUp() { pool_args = GetParam(); }
-
-void InvalidInheritTests::SetUp() {
-  pool_inherit = GetParam();
-
-  ASSERT_EQ(0, CreatePool(pool_inherit.pool_base, pool_path_))
-      << GetOutputContent();
-  ASSERT_EQ(0,
-            file_utils::ValidateFile(
-                pool_path_, struct_utils::GetPoolSize(pool_inherit.pool_base),
-                struct_utils::GetPoolMode(pool_inherit.pool_base)));
+namespace transform {
+void TransformInvalidTests::SetUp() {
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_src));
+  ASSERT_EQ(0, obj_mgmt_.CreatePool(GetParam().obj_pool));
+  ASSERT_EQ(0, file_utils::ValidatePoolset(GetParam().poolset_src,
+                                           GetParam().obj_pool.mode));
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_temp));
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_dst));
 }
 
-void InvalidArgumentsPoolsetTests::SetUp() {
-  poolset_args = GetParam();
-
-  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(poolset_args.poolset));
+void TransformInvalidBasicTests::SetUp() {
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_src));
+  ASSERT_EQ(0, obj_mgmt_.CreatePool(GetParam().obj_pool));
+  ASSERT_EQ(0, file_utils::ValidatePoolset(GetParam().poolset_src,
+                                           GetParam().obj_pool.mode));
+  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(GetParam().poolset_dst));
 }
-} // namespace create
+}

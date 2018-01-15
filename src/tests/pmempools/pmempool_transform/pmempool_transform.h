@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,25 +30,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "invalid_arguments.h"
+#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_H_
+#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_H_
 
-namespace create {
-void InvalidArgumentsTests::SetUp() { pool_args = GetParam(); }
+#include "configXML/local_configuration.h"
+#include "pmdk_structures/obj.h"
+#include "shell/i_shell.h"
+#include "structures.h"
+#include "test_utils/file_utils.h"
+#include "gtest/gtest.h"
+#include <libpmempool.h>
 
-void InvalidInheritTests::SetUp() {
-  pool_inherit = GetParam();
+extern std::unique_ptr<LocalConfiguration> local_config;
+const std::string POOLSET_PATH_SRC = "pool_src.set";
+const std::string POOLSET_PATH_TEMP = "pool_temp.set";
+const std::string POOLSET_PATH_DST = "pool_dst.set";
 
-  ASSERT_EQ(0, CreatePool(pool_inherit.pool_base, pool_path_))
-      << GetOutputContent();
-  ASSERT_EQ(0,
-            file_utils::ValidateFile(
-                pool_path_, struct_utils::GetPoolSize(pool_inherit.pool_base),
-                struct_utils::GetPoolMode(pool_inherit.pool_base)));
-}
+class PmempoolTransform : public ::testing::Test {
+private:
+  std::string err_msg_;
+  Output<> output_;
 
-void InvalidArgumentsPoolsetTests::SetUp() {
-  poolset_args = GetParam();
+public:
+  ObjManagement obj_mgmt_;
+  ApiC api_c_;
+  IShell shell_;
+  PoolsetManagement p_mgmt_;
+  const std::string pool_path_ = local_config->GetTestDir() + "pool.file";
 
-  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(poolset_args.poolset));
-}
-} // namespace create
+  std::string GetOutputContent() const { return output_.GetContent(); }
+
+  int TransformPoolCLI(const std::string &poolset_file_src,
+                       const std::string &poolset_file_dst,
+                       const std::vector<Arg> &args = std::vector<Arg>());
+
+  void TearDown() override;
+};
+
+#endif // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_H_
