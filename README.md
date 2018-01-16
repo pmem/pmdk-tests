@@ -36,9 +36,10 @@ If pkg-config is available, then PKG_CONFIG_PATH environmental variable needs to
 ```
 	$ PKG_CONFIG_PATH=<PMDK_INSTALL_PATH>/lib/pkgconfig cmake ..
 ```
-If it's not available, then CMAKE_PREFIX_PATH needs to be specified. Relative paths are not supported with CMAKE_PREFIX_PATH.
+If it's not available, then PMDK_INSTALL_PATH needs to be specified.
+PMDK_INSTALL_PATH must be an absolute path.
 ```
-	$ cmake .. -DCMAKE_PREFIX_PATH=<PMDK_INSTALL_PATH>
+	$ cmake .. -DPMDK_INSTALL_PATH=<PMDK_INSTALL_PATH>
 ```
 
 #### Building pmdk-tests on Windows ####
