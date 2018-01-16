@@ -38,6 +38,9 @@
 
 #include "api_c.h"
 
+#include <fstream>
+#include <sstream>
+
 int ApiC::CreateFileT(const std::string &path, const std::string &content) {
   std::ofstream file{path, std::ios::binary};
 
@@ -63,18 +66,16 @@ int ApiC::CreateFileT(const std::string &path,
 }
 
 int ApiC::ReadFile(const std::string &path, std::string &content) {
-  std::ifstream file{path, std::ios::binary | std::ios::ate};
+  std::ifstream file{path};
 
   if (!file.good()) {
     std::cerr << "File opening failed" << std::endl;
     return -1;
   }
 
-  std::string line;
-
-  while (std::getline(file, line)) {
-    content += line;
-  }
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  content = buffer.str();
 
   return 0;
 }

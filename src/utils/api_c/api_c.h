@@ -34,7 +34,6 @@
 #define PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
 
 #include <sys/stat.h>
-#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
