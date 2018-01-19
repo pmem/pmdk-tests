@@ -76,19 +76,23 @@ if (WIN32)
 		message(FATAL_ERROR "Following environment variables need to be set to valid directories: ${VARS_TO_SET}")
 	endif ()
 
-	set(Libpmemblk
+	set(Libpmem_LIBRARIES
+			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmem.lib"
+			optimized "$ENV{PMDK_LibraryPath}\\libpmem.lib")
+
+	set(Libpmemblk_LIBRARIES
 			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmemblk.lib"
 			optimized "$ENV{PMDK_LibraryPath}\\libpmemblk.lib")
 
-	set(Libpmemlog
+	set(Libpmemlog_LIBRARIES
 			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmemlog.lib"
 			optimized "$ENV{PMDK_LibraryPath}\\libpmemlog.lib")
 
-	set(Libpmemobj
+	set(Libpmemobj_LIBRARIES
 			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmemobj.lib"
 			optimized "$ENV{PMDK_LibraryPath}\\libpmemobj.lib")
 
-	set(Libpmempool
+	set(Libpmempool_LIBRARIES
 			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmempool.lib"
 			optimized "$ENV{PMDK_LibraryPath}\\libpmempool.lib")
 else ()
