@@ -34,7 +34,8 @@
 #include <sstream>
 
 Replica::Replica(std::vector<std::string> content, const std::string &path,
-                 int count) : count_(count) {
+                 int count)
+    : count_(count) {
   this->header_ = content.front();
   content.erase(content.begin());
 
