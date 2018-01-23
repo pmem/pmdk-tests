@@ -73,9 +73,9 @@ static inline int ValidatePoolset(const Poolset &poolset, int poolset_mode) {
   for (const auto &part : poolset.GetParts()) {
     size = ApiC::GetFileSize(part.GetPath());
     if (GetSize(part.GetSize()) != size) {
-      std::cerr << "Part's size mismatch\n" << part.GetPath()
-                << "\nExpected: " << part.GetSize() << "\nActual: " << size
-                << std::endl;
+      std::cerr << "Part's size mismatch\n"
+                << part.GetPath() << "\nExpected: " << part.GetSize()
+                << "\nActual: " << size << std::endl;
       ret = -1;
     }
   }
@@ -88,9 +88,9 @@ static inline int ValidatePoolset(const Poolset &poolset, int poolset_mode) {
   for (const auto &part : poolset.GetParts()) {
     mode = ApiC::GetFilePermission(part.GetPath());
     if (poolset_mode != mode) {
-      std::cerr << "Part's permission mismatch\n" << part.GetPath()
-                << "\nExpected: " << poolset_mode << "\nActual: " << mode
-                << std::endl;
+      std::cerr << "Part's permission mismatch\n"
+                << part.GetPath() << "\nExpected: " << poolset_mode
+                << "\nActual: " << mode << std::endl;
       ret = -1;
     }
   }
@@ -113,8 +113,8 @@ static inline int ValidateFile(const std::string &path, size_t file_size,
   size_t size = 0;
   size = ApiC::GetFileSize(path);
   if (file_size != size) {
-    std::cerr << "File's size mismatch\n" << path
-              << "\nExpected: " << file_size << "\nActual: " << size
+    std::cerr << "File's size mismatch\n"
+              << path << "\nExpected: " << file_size << "\nActual: " << size
               << std::endl;
     return -1;
   }
@@ -123,8 +123,8 @@ static inline int ValidateFile(const std::string &path, size_t file_size,
   int mode = 0;
   mode = ApiC::GetFilePermission(path);
   if (file_mode != mode) {
-    std::cerr << "File's permission mismatch\n" << path
-              << "\nExpected: " << file_mode << "\nActual: " << mode
+    std::cerr << "File's permission mismatch\n"
+              << path << "\nExpected: " << file_mode << "\nActual: " << mode
               << std::endl;
     ret = -1;
   }
