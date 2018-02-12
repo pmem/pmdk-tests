@@ -32,13 +32,13 @@
 
 #ifdef __linux__
 
+#include "api_c.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
 #include <libgen.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
-#include "api_c.h"
 
 int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   if (static_cast<off_t>(length) < 0) {
@@ -121,23 +121,21 @@ int ApiC::CleanDirectory(const std::string &dir) {
 
   while ((f_sent = fts_read(fts)) != nullptr) {
     switch (f_sent->fts_info) {
-      case FTS_D:
-        if (f_sent->fts_path != dir &&
-            RemoveDirectoryT(f_sent->fts_path) != 0) {
-          std::cerr << "Unable to remove directory " << f_sent->fts_path << ": "
-                    << strerror(errno) << std::endl;
-          ret = -1;
-        }
-        break;
-      case FTS_F:
-        if (RemoveFile(f_sent->fts_path) != 0) {
-          std::cerr << "Unable to remove file: " << f_sent->fts_path
-                    << std::endl;
-          ret = -1;
-        }
-        break;
-      default:
-        break;
+    case FTS_D:
+      if (f_sent->fts_path != dir && RemoveDirectoryT(f_sent->fts_path) != 0) {
+        std::cerr << "Unable to remove directory " << f_sent->fts_path << ": "
+                  << strerror(errno) << std::endl;
+        ret = -1;
+      }
+      break;
+    case FTS_F:
+      if (RemoveFile(f_sent->fts_path) != 0) {
+        std::cerr << "Unable to remove file: " << f_sent->fts_path << std::endl;
+        ret = -1;
+      }
+      break;
+    default:
+      break;
     }
   }
 
@@ -160,4 +158,11 @@ int ApiC::RemoveDirectoryT(const std::string &dir) {
   return 0;
 }
 
-#endif  // __linux__
+int ApiC::SetEnv(const std::string &name, const std::string &value) {
+  return setenv(name.c_str(), value.c_str(), 1);
+}
+int ApiC::UnsetEnv(const std::string &name) {
+  return unsetenv(name.c_str());
+}
+
+#endif // __linux__
