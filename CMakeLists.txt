@@ -113,6 +113,11 @@ else ()
 				${Libpmemlog_LIBRARY_DIRS}
 				${Libpmemobj_LIBRARY_DIRS}
 				${Libpmempool_LIBRARY_DIRS})
+		set(BIN_PATH_HINTS ${Libpmemblk_LIBRARY_DIRS}/../bin
+		${Libpmemlog_LIBRARY_DIRS}/../bin
+		${Libpmemobj_LIBRARY_DIRS}/../bin
+		${Libpmempool_LIBRARY_DIRS}/../bin)
+
 	else ()
 		set(CMAKE_PREFIX_PATH "${PMDK_INSTALL_PATH}")
 		find_library(Libpmem_LIBRARIES "pmem")
@@ -123,7 +128,9 @@ else ()
 
 		find_path(PMDK_INCLUDE_DIR NAMES "libpmem.h" "libpmemblk.h" "libpmemlog.h" "libpmemobj.h" "libpmempool.h")
 		include_directories(${PMDK_INCLUDE_DIR})
+		set(BIN_PATH_HINTS ${PMDK_INSTALL_PATH}/bin ${PMDK_INSTALL_PATH})
 	endif ()
+	find_pmdk_bins(${BIN_PATH_HINTS})
 endif ()
 
 include_directories(src/utils)

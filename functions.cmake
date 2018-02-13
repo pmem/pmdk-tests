@@ -182,3 +182,23 @@ function(check_workaround_flags_required)
 
 	set(WORKAROUND_FLAGS "${WORKAROUND_FLAGS}" PARENT_SCOPE)
 endfunction()
+
+function(find_pmdk_bins)
+	find_program(BINS_PMEMPOOL pmempool HINTS ${ARGV})
+	find_program(BINS_RPMEMD rpmemd HINTS ${ARGV})
+
+	if (BINS_PMEMPOOL)
+		message(STATUS "pmempool found at ${BINS_PMEMPOOL}")
+		set(BINS_DEFINES "-DBINS_PMEMPOOL='\"${BINS_PMEMPOOL}\"'")
+	else()
+		message(FATAL_ERROR "pmempool binary not found")
+	endif()
+
+	if (BINS_RPMEMD)
+		message(STATUS "rpmemd found at ${BINS_RPMEMD}")
+		set(BINS_DEFINES "${BINS_DEFINES} -DBINS_RPMEMD='\"${BINS_RPMEMD}\"'")
+	else()
+		message(FATAL_ERROR "rpmemd binary not found")
+	endif()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BINS_DEFINES}" PARENT_SCOPE)
+endfunction()

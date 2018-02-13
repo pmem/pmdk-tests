@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,19 +30,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "pmempool_create.h"
+#ifndef PMDK_TESTS_SRC_UTILS_BINS_H_
+#define PMDK_TESTS_SRC_UTILS_BINS_H_
 
-int PmempoolCreate::CreatePool(const PoolArgs &pool_args,
-                               const std::string &path) {
-  std::string create_args =
-      struct_utils::POOL_TYPES[static_cast<int>(pool_args.pool_type)];
-  create_args += struct_utils::CombineArguments(pool_args.args) + " " + path;
+#include <string>
 
-  output_ = shell_.ExecuteCommand(bins::pmempool + " create " + create_args);
-
-  return output_.GetExitCode();
+namespace bins {
+const std::string pmempool{BINS_PMEMPOOL};
+const std::string rpmem{BINS_RPMEMD};
 }
 
-void PmempoolCreate::TearDown() {
-  api_c_.CleanDirectory(local_config->GetTestDir());
-}
+#endif  // PMDK_TESTS_SRC_UTILS_BINS_H_

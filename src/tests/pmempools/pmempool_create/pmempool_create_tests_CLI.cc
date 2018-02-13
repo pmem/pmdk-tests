@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -130,10 +130,13 @@ TEST_F(PmempoolCreate, PMEMPOOL_CREATE_HELP_MESSAGES) {
       "  -l, --layout <name>  layout name stored in pool's header\n\n"
       "For complete documentation see pmempool-create(1) manual page.\n";
   /* Step 1 */
-  EXPECT_EQ(0, shell_.ExecuteCommand("pmempool create -h").GetExitCode());
+  EXPECT_EQ(0,
+            shell_.ExecuteCommand(bins::pmempool + " create -h").GetExitCode());
   std::string output1 = shell_.GetLastOutput().GetContent();
   /* Step 2 */
-  EXPECT_EQ(0, shell_.ExecuteCommand("pmempool create --help").GetExitCode());
+  EXPECT_EQ(
+      0,
+      shell_.ExecuteCommand(bins::pmempool + " create --help").GetExitCode());
   std::string output2 = shell_.GetLastOutput().GetContent();
   /* Step 3 */
   EXPECT_TRUE(string_utils::IsSubstrFound(expected_help_msg, output1));

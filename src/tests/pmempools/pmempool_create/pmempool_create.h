@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,6 +33,7 @@
 #ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_H_
 #define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_H_
 
+#include "bins.h"
 #include "configXML/local_configuration.h"
 #include "gtest/gtest.h"
 #include "output/output.h"
