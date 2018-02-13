@@ -32,9 +32,9 @@
 
 #ifdef _WIN32
 
+#include "api_c.h"
 #include <codecvt>
 #include <locale>
-#include "api_c.h"
 
 int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   if (length < 0) {
@@ -196,4 +196,11 @@ int ApiC::RemoveDirectoryT(const std::string &dir) {
   return 0;
 }
 
-#endif  // !_WIN32
+int ApiC::SetEnv(const std::string &name, const std::string &value) {
+  return _putenv_s(name.c_str(), value.c_str());
+}
+int ApiC::UnsetEnv(const std::string &name) {
+  return _putenv_s(name.c_str(), "");
+}
+
+#endif // !_WIN32
