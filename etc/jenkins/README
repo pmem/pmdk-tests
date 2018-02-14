@@ -1,0 +1,4 @@
+Persistent Memory Development Kit Tests
+
+Scripts in this directory let you run a Jenkins pipeline jobs which
+contain diffrent kinds of https://github.com/pmem/pmdk tests configurations.
