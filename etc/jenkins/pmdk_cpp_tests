@@ -1,0 +1,49 @@
+pipeline {
+    agent none
+    stages {
+        stage('Prepare') {
+            agent {label 'master'}
+            steps {
+                git(url: 'https://github.com/pmem/pmdk', branch: "${params.BRANCH}")
+                stash(name: 'pmdk', includes: '*/**')
+                deleteDir()
+            }
+        }
+        stage('B&T') {
+            parallel {
+                stage('Ubuntu') {
+                    agent {label "${pmdk_ubuntu_long_tests}"}
+                    steps {
+                        deleteDir()
+                        unstash 'pmdk'
+                        sh 'cp ~/testconfig.sh ${WORKSPACE}/src/test/'
+                        sh 'make -j4 CC=clang CXX=clang++ USE_LLVM_LIBCPP=1 EXTRA_CFLAGS=-DUSE_VALGRIND EXTRA_CXXFLAGS=-DUSE_VALGRIND LIBCPP_INCDIR=/usr/local/libcxx/include/c++/v1 LIBCPP_LIBDIR=/usr/local/libcxx/lib test'
+                        sh 'cd src/test && ./RUNTESTS obj_cpp* -t all'
+                    }
+                }
+                stage('Fedora') {
+                    agent {label "${pmdk_fedora_long_tests}"}
+                    steps {
+                        deleteDir()
+                        unstash 'pmdk'
+                        sh 'cp ~/testconfig.sh ${WORKSPACE}/src/test/'
+                        sh 'make -j4 CC=clang CXX=clang++ USE_LLVM_LIBCPP=1 EXTRA_CFLAGS=-DUSE_VALGRIND EXTRA_CXXFLAGS=-DUSE_VALGRIND LIBCPP_INCDIR=/usr/local/libcxx/include/c++/v1 LIBCPP_LIBDIR=/usr/local/libcxx/lib test'
+                        sh 'cd src/test && ./RUNTESTS obj_cpp* -t all'
+                    }
+                }
+            }
+        }
+    }
+    post {
+        failure {
+           mail (
+             to: "${mail_list}",
+             subject: "[Jenkins] PMDK C++ tests",
+             body: "Tests failed on at least one configuration, please check: ${env.JENKINS_URL}blue/organizations/jenkins/${env.JOB_NAME}/detail/${env.JOB_NAME}/${env.BUILD_NUMBER}"
+           )
+        }
+    }
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to run tests on')
+    }
+}
