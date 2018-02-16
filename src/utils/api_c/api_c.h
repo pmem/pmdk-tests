@@ -33,12 +33,13 @@
 #ifndef PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
 #define PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
 
-#include <sys/stat.h>
-#include <iostream>
-#include <string>
-#include <vector>
+
 #include "constants.h"
 #include "non_copyable/non_copyable.h"
+#include <iostream>
+#include <string>
+#include <sys/stat.h>
+#include <vector>
 
 class ApiC final : NonCopyable {
  public:
@@ -91,8 +92,8 @@ class ApiC final : NonCopyable {
    * GetFileSize -- returns vector of file sizes on success, prints error message
    * and returns empty vector otherwise.
    */
-  static std::vector<long long> GetFilesSize(
-      const std::vector<std::string> &paths);
+  static std::vector<long long>
+  GetFilesSize(const std::vector<std::string> &paths);
 
   /*
    * GetFilePermission -- returns UNIX-style file mode bits on success, prints
@@ -142,6 +143,14 @@ class ApiC final : NonCopyable {
    * containing given path, prints error message and returns -1 otherwise.
    */
   static long long GetFreeSpaceT(const std::string &path);
+  
+  /* SetEnv -- adds tne environment variable name to the environment
+   * with the value value. Returns 0 on success, -1 otherwise. */
+  static int SetEnv(const std::string &name, const std::string &value);
+  
+  /* UnsetEnv -- deletes the variable name from the environment.
+   * Returns 0 on success, -1 otherwise. */
+  static int UnsetEnv(const std::string &name);
 };
 
-#endif  // !PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
+#endif // !PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
