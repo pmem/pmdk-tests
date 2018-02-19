@@ -1,5 +1,22 @@
 <configuration>
 	<localConfiguration>
 		<testDir>example\path</testDir>
+		<dimmConfiguration>
+			<mountPoint>example\path</mountPoint>
+			<mountPoint>example\path2</mountPoint>
+			<mountPoint>example\path3</mountPoint>
+			<mountPoint>example\path4</mountPoint>
+		</dimmConfiguration>
 	</localConfiguration>
+	<remoteConfiguration>
+		<testDir>example\path</remoteConfiguration>
+		<address>user@0.0.0.0:00<address>
+		<binsDir>example\path</binsDir>
+		<dimmConfiguration>
+			<mountPoint>example\path</mountPoint>
+			<mountPoint>example\path2</mountPoint>
+			<mountPoint>example\path3</mountPoint>
+			<mountPoint>example\path4</mountPoint>
+		</dimmConfiguration>
+	</remoteConfiguration>
 </configuration>
