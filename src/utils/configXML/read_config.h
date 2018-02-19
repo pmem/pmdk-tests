@@ -37,12 +37,6 @@
 #include "non_copyable/non_copyable.h"
 #include "pugixml.hpp"
 
-#ifdef _WIN32
-const std::string SEPARATOR = "\\";
-#else
-const std::string SEPARATOR = "/";
-#endif  // _WIN32
-
 /*
  * ReadConfig -- class based on CRTP pattern. Checks that config.xml file exists
  * and it consists with appropriate nodes.
@@ -50,12 +44,14 @@ const std::string SEPARATOR = "/";
 template <class DerivedConfig>
 class ReadConfig : public NonCopyable {
  private:
+  ApiC api_c_;
   const std::string config_{"config.xml"};
 
- protected:
+protected:
+  int SetTestDir(const pugi::xml_node &root, std::string &test_dir);
   int FillConfigFields(pugi::xml_node &&root) {
-    return static_cast<DerivedConfig *>(this)->FillConfigFields(
-        std::move(root));
+    return static_cast<DerivedConfig *>(this)
+        ->FillConfigFields(std::move(root));
   }
 
  public:
@@ -67,7 +63,34 @@ class ReadConfig : public NonCopyable {
 };
 
 template <class DerivedConfig>
-int ReadConfig<DerivedConfig>::ReadConfigFile() {
+inline int ReadConfig<DerivedConfig>::SetTestDir(const pugi::xml_node &root,
+                                                 std::string &test_dir) {
+  test_dir = root.child("testDir").text().get();
+
+  if (test_dir.empty()) {
+    std::cerr << "TestDir field is empty. Please change testDir field value."
+              << std::endl;
+    return -1;
+  }
+
+  if (!api_c_.DirectoryExists(test_dir)) {
+    std::cerr << "Directory " + test_dir +
+                     " does not exist. Please change testDir field value."
+              << std::endl;
+    return -1;
+  }
+
+  if (!api_c_.DirectoryExists((test_dir + SEPARATOR + "pmdk_tests")) &&
+      api_c_.CreateDirectoryT((test_dir + SEPARATOR + "pmdk_tests")) != 0) {
+    return -1;
+  }
+
+  test_dir += SEPARATOR + "pmdk_tests" + SEPARATOR;
+
+  return 0;
+}
+
+template <class DerivedConfig> int ReadConfig<DerivedConfig>::ReadConfigFile() {
   pugi::xml_document config;
   std::string path;
   int ret = ApiC::GetExecutableDirectory(path);
@@ -99,4 +122,4 @@ int ReadConfig<DerivedConfig>::ReadConfigFile() {
   return FillConfigFields(std::move(root));
 }
 
-#endif
+#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_READ_CONFIG_H_

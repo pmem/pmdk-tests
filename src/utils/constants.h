@@ -33,9 +33,6 @@
 #ifndef PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
 #define PMDK_TESTS_SRC_UTILS_CONSTANTS_H_
 
-#include <libpmemblk.h>
-#include <libpmemlog.h>
-#include <libpmemobj.h>
 #include <map>
 #include <string>
 
@@ -45,6 +42,12 @@
 const int PERMISSION_MASK = 0600;
 #else
 const int PERMISSION_MASK = 0777;
+#endif  // _WIN32
+
+#ifdef _WIN32
+const std::string SEPARATOR = "\\";
+#else
+const std::string SEPARATOR = "/";
 #endif  // _WIN32
 
 static const size_t KIBIBYTE = 1 << 10;

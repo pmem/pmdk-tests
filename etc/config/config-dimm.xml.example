@@ -1,0 +1,20 @@
+<configuration>
+	<localConfiguration>
+		<testDir>example\path</testDir>
+		<dimmConfiguration>
+			<testDir>example\path</testDir>
+		</dimmConfiguration>
+		<dimmConfiguration>
+			<testDir>example\path2</testDir>
+		</dimmConfiguration>
+	</localConfiguration>
+	<remoteConfiguration>
+		<testDir>example\path</remoteConfiguration>
+		<dimmConfiguration>
+			<testDir>example\path</testDir>
+		</dimmConfiguration>
+		<dimmConfiguration>
+			<testDir>example\path2</testDir>
+		</dimmConfiguration>
+	</remoteConfiguration>
+</configuration>
