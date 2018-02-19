@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,29 +30,46 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+#include "remote_dimm_configuration.h"
+#include "shell/i_shell.h"
 
-#include "api_c/api_c.h"
-#include "pugixml.hpp"
-#include "read_config.h"
+int RemoteDimmConfigurationCollection::FillConfigFields(pugi::xml_node &&root) {
+  IShell shell;
+  std::string address;
+  std::string port = "22";
+  size_t pos;
+  int ret = -1;
 
-/*
- * LocalConfiguration -- class that provides access to configuration file.
- */
-class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
-private:
-  friend class ReadConfig<LocalConfiguration>;
-  std::string test_dir_;
-  /*
-   * FillConfigFields -- checks that TestDir exists, creates folder 'pmdk_tests'
-   * and assigns this path to test_dir_. Returns 0 on success, prints error
-   * message and returns -1 otherwise.
-   */
-  int FillConfigFields(pugi::xml_node &&root);
+  for (auto &&it : root.children("remoteConfiguration")) {
+    ret = 0;
+    std::vector<DimmConfiguration> dimm_device;
 
-public:
-  const std::string &GetTestDir() { return this->test_dir_; }
-};
+    if (DimmConfiguration::SetDimmDevices(it, dimm_device) != 0) {
+      return -1;
+    }
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+    address = it.child("address").text().as_string();
+    pos = address.find_last_of(":");
+
+    if (pos != std::string::npos) {
+      port = address.substr(pos + 1);
+      address = address.substr(0, pos - 1);
+    }
+
+    if (shell.ExecuteCommand("ssh " + address + " -p " + port + " exit")
+            .GetExitCode() != 0) {
+      std::cerr << shell.GetLastOutput().GetContent() << std::endl;
+      return -1;
+    }
+
+    remote_cfgs_.emplace_back(RemoteDimmConfiguration(
+        address + " -p " + port, it.child("testDir").text().as_string(),
+        it.child("binsDir").text().as_string(), std::move(dimm_device)));
+  }
+
+  if (ret == -1) {
+    std::cerr << "remoteConfiguration node does not exist" << std::endl;
+  }
+
+  return ret;
+}

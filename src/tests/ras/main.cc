@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,29 +30,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+#include <exception>
+#include <iostream>
+#include <memory>
+#include "configXML/local_configuration.h"
+#include "gtest/gtest.h"
 
-#include "api_c/api_c.h"
-#include "pugixml.hpp"
-#include "read_config.h"
+std::unique_ptr<LocalConfiguration> local_config{new LocalConfiguration()};
 
-/*
- * LocalConfiguration -- class that provides access to configuration file.
- */
-class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
-private:
-  friend class ReadConfig<LocalConfiguration>;
-  std::string test_dir_;
-  /*
-   * FillConfigFields -- checks that TestDir exists, creates folder 'pmdk_tests'
-   * and assigns this path to test_dir_. Returns 0 on success, prints error
-   * message and returns -1 otherwise.
-   */
-  int FillConfigFields(pugi::xml_node &&root);
+int main(int argc, char **argv) {
+  int ret = 0;
+  try {
+    if (local_config->ReadConfigFile() != 0) {
+      return -1;
+    }
 
-public:
-  const std::string &GetTestDir() { return this->test_dir_; }
-};
+    ::testing::InitGoogleTest(&argc, argv);
+    ret = RUN_ALL_TESTS();
+  } catch (const std::exception &e) {
+    std::cerr << "Exception was caught: " << e.what() << std::endl;
+    ret = -1;
+  }
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+  ApiC::CleanDirectory(local_config->GetTestDir());
+  ApiC::RemoveDirectoryT(local_config->GetTestDir());
+
+  return ret;
+}

@@ -39,6 +39,7 @@
 #include <libgen.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
+#include <cstring>
 
 int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   if (static_cast<off_t>(length) < 0) {

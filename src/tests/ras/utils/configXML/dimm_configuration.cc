@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,29 +30,49 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+#include "dimm_configuration.h"
 
-#include "api_c/api_c.h"
-#include "pugixml.hpp"
-#include "read_config.h"
+DimmConfiguration::DimmConfiguration(pugi::xml_node &&dimm_configuration) {
+  mount_point_ = dimm_configuration.text().get();
 
-/*
- * LocalConfiguration -- class that provides access to configuration file.
- */
-class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
-private:
-  friend class ReadConfig<LocalConfiguration>;
-  std::string test_dir_;
-  /*
-   * FillConfigFields -- checks that TestDir exists, creates folder 'pmdk_tests'
-   * and assigns this path to test_dir_. Returns 0 on success, prints error
-   * message and returns -1 otherwise.
-   */
-  int FillConfigFields(pugi::xml_node &&root);
+  if (mount_point_.empty()) {
+    throw std::invalid_argument(
+        "mountPoint field is empty. Please set mountPoint value.");
+  }
 
-public:
-  const std::string &GetTestDir() { return this->test_dir_; }
-};
+  if (!ApiC::DirectoryExists(this->mount_point_)) {
+    throw std::invalid_argument(
+        "Directory " + this->mount_point_ +
+        " does not exist. Please change mountPoint field value.");
+  }
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+  if (!ApiC::DirectoryExists((mount_point_ + SEPARATOR + "pmdk_tests")) &&
+      ApiC::CreateDirectoryT((mount_point_ + SEPARATOR + "pmdk_tests").c_str()) !=
+          0) {
+    throw std::invalid_argument("");
+  }
+
+  mount_point_ += SEPARATOR + "pmdk_tests" + SEPARATOR;
+}
+
+int DimmConfiguration::SetDimmDevices(
+    const pugi::xml_node &node, std::vector<DimmConfiguration> &dimm_devices) {
+  int ret = -1;
+
+  for (auto &&it : node.child("dimmConfiguration").children("mountPoint")) {
+    ret = 0;
+    try {
+      DimmConfiguration temp_device = DimmConfiguration(std::move(it));
+      dimm_devices.emplace_back(std::move(temp_device));
+    } catch (std::exception e) {
+      std::cerr << e.what() << std::endl;
+      return -1;
+    }
+  }
+
+  if (ret == -1) {
+    std::cerr << "dimmConfiguration node does not exist" << std::endl;
+  }
+
+  return ret;
+}
