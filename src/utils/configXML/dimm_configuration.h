@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,19 +30,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_configuration.h"
+#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_DIMM_CONFIGURATION_H_
+#define PMDK_TESTS_SRC_UTILS_CONFIGXML_DIMM_CONFIGURATION_H_
 
-int LocalConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
+#include "api_c/api_c.h"
+#include "pugixml.hpp"
 
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
-  }
+class DimmConfiguration final {
+private:
+  std::string device_name_;
+  std::string test_dir_;
+  ApiC api_c_;
 
-  if (SetTestDir(root, test_dir_) != 0) {
-    return -1;
-  }
+public:
+  DimmConfiguration() {}
+  DimmConfiguration(const DimmConfiguration &origin)
+      : device_name_(origin.device_name_), test_dir_(origin.test_dir_) {}
+  DimmConfiguration(pugi::xml_node &&dimm_configuration);
 
-  return 0;
-}
+  const std::string &GetDeviceName() const { return this->device_name_; }
+  const std::string &GetTestDir() const { return this->test_dir_; }
+};
+
+#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_DIMM_CONFIGURATION_H_

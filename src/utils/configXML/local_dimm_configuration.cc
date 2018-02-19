@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,9 +30,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_configuration.h"
+#include "local_dimm_configuration.h"
 
-int LocalConfiguration::FillConfigFields(pugi::xml_node &&root) {
+int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
   root = root.child("localConfiguration");
 
   if (root.empty()) {
@@ -41,6 +41,10 @@ int LocalConfiguration::FillConfigFields(pugi::xml_node &&root) {
   }
 
   if (SetTestDir(root, test_dir_) != 0) {
+    return -1;
+  }
+
+  if (SetDimmDevices(root, dimm_device_) != 0) {
     return -1;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,19 +30,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_configuration.h"
+#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_CONFIGURATION_H_
+#define PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_CONFIGURATION_H_
 
-int LocalConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
+#include "api_c/api_c.h"
+#include "pugixml.hpp"
+#include "read_config.h"
 
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
+class RemoteConfiguration final {
+private:
+  std::string ip_address_;
+  std::string test_dir_;
+
+public:
+  RemoteConfiguration(const std::string &ip_address,
+                      const std::string &test_dir)
+      : ip_address_(ip_address), test_dir_(test_dir) {}
+
+  const std::string &GetTestDir() const { return this->test_dir_; }
+
+  const std::string &GetIpAddress() const { return this->ip_address_; }
+};
+
+class RemoteConfigurationCollection final
+    : public ReadConfig<RemoteConfigurationCollection> {
+private:
+  friend class ReadConfig<RemoteConfigurationCollection>;
+  ApiC api_c_;
+  int FillConfigFields(pugi::xml_node &&root);
+  std::vector<RemoteConfiguration> remote_cfg_;
+
+public:
+  const RemoteConfiguration &operator[](int idx) const {
+    return remote_cfg_.at(idx);
   }
+};
 
-  if (SetTestDir(root, test_dir_) != 0) {
-    return -1;
-  }
-
-  return 0;
-}
+#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_CONFIGURATION_H_

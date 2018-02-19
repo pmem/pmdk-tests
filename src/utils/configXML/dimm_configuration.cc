@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,19 +30,29 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_configuration.h"
+#include "dimm_configuration.h"
 
-int LocalConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
+DimmConfiguration::DimmConfiguration(pugi::xml_node &&dimm_configuration) {
+  device_name_ = dimm_configuration.child("deviceName").text().get();
 
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
+  test_dir_ = dimm_configuration.child("testDir").text().get();
+
+  if (test_dir_.empty()) {
+    throw std::invalid_argument(
+        "TestDir field is empty. Please change testDir field value.");
   }
 
-  if (SetTestDir(root, test_dir_) != 0) {
-    return -1;
+  if (!api_c_.DirectoryExists(this->test_dir_)) {
+    throw std::invalid_argument(
+        "Directory " + this->test_dir_ +
+        " does not exist. Please change testDir field value.");
   }
 
-  return 0;
+  if (!api_c_.DirectoryExists((test_dir_ + SEPARATOR + "pmdk_tests")) &&
+      api_c_.CreateDirectoryT((test_dir_ + SEPARATOR + "pmdk_tests").c_str()) !=
+          0) {
+    throw std::invalid_argument("");
+  }
+
+  test_dir_ += SEPARATOR + "pmdk_tests" + SEPARATOR;
 }

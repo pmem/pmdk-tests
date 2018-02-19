@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,19 +30,51 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_configuration.h"
+#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
+#define PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
 
-int LocalConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
+#include "api_c/api_c.h"
+#include "pugixml.hpp"
+#include "read_config.h"
 
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
+class RemoteDimmConfiguration final {
+private:
+  std::string ip_address_;
+  std::string test_dir_;
+  std::string bins_dir_;
+  std::vector<DimmConfiguration> dimm_device_;
+
+public:
+  RemoteDimmConfiguration(const std::string &ip_address,
+                          const std::string &test_dir,
+                          const std::string &bins_dir,
+                          std::vector<DimmConfiguration> &&dimm_cfg)
+      : ip_address_(ip_address), test_dir_(test_dir), bins_dir_(bins_dir),
+        dimm_device_(std::move(dimm_cfg)) {}
+
+  const std::string &GetTestDir() const { return this->test_dir_; }
+
+  const std::string &GetIpAddress() const { return this->ip_address_; }
+
+  const std::string &GetBinsDir() const { return this->bins_dir_; }
+
+  const std::vector<DimmConfiguration> &GetDimmsDevice() const {
+    return this->dimm_device_;
   }
+};
 
-  if (SetTestDir(root, test_dir_) != 0) {
-    return -1;
+class RemoteDimmConfigurationCollection final
+    : public ReadConfig<RemoteDimmConfigurationCollection> {
+private:
+  friend class ReadConfig<RemoteDimmConfigurationCollection>;
+  ApiC api_c_;
+  int FillConfigFields(pugi::xml_node &&root);
+  std::vector<RemoteDimmConfiguration> remote_cfg_;
+
+public:
+  const RemoteDimmConfiguration &operator[](int idx) const {
+    return remote_cfg_.at(idx);
   }
+};
 
-  return 0;
-}
+#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_

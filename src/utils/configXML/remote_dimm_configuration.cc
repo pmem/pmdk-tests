@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,19 +30,39 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_configuration.h"
+#include "remote_dimm_configuration.h"
+#include "shell/i_shell.h"
 
-int LocalConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
+int RemoteDimmConfigurationCollection::FillConfigFields(pugi::xml_node &&root) {
+  IShell shell;
+  std::string ip_address;
+  int ret = -1;
 
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
+  for (auto &&it : root.children("remoteConfiguration")) {
+    ret = 0;
+    std::vector<DimmConfiguration> dimm_device;
+
+    if (SetDimmDevices(it, dimm_device) != 0) {
+      return -1;
+    }
+
+    ip_address = it.child("address").text().as_string();
+
+    if (shell.ExecuteCommand("ssh -q " + ip_address + " exit").GetExitCode() !=
+        0) {
+      std::cerr << shell.GetLastOutput().GetContent() << std::endl;
+
+      return -1;
+    }
+
+    remote_cfg_.emplace_back(RemoteDimmConfiguration(
+        ip_address, it.child("testDir").text().as_string(),
+        it.child("binsDir").text().as_string(), std::move(dimm_device)));
   }
 
-  if (SetTestDir(root, test_dir_) != 0) {
-    return -1;
+  if (ret == -1) {
+    std::cerr << "remoteConfiguration node does not exist" << std::endl;
   }
 
-  return 0;
+  return ret;
 }

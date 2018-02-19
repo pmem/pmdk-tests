@@ -1,0 +1,17 @@
+<configuration>
+	<localConfiguration>
+		<testDir>example\path</testDir>
+		<dimmConfiguration>
+			<deviceName>nr</deviceName>
+			<testDir>example\path</testDir>
+		</dimmConfiguration>
+	</localConfiguration>
+	<remoteConfiguration>
+		<testDir>example\path</remoteConfiguration>
+		<binsDir>exaple\path</binsDir>
+		<dimmConfiguration>
+			<deviceName>nr</deviceName>
+			<testDir>example\path</testDir>
+		</dimmConfiguration>
+	</remoteConfiguration>
+</configuration>
