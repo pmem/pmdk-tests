@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,6 +43,10 @@ const std::string SEPARATOR = "\\";
 const std::string SEPARATOR = "/";
 #endif  // _WIN32
 
+/*
+ * ReadConfig -- class based on CRTP pattern. Checks that config.xml file exists
+ * and it consists with appropriate nodes.
+ */
 template <class DerivedConfig>
 class ReadConfig : public NonCopyable {
  private:
@@ -55,6 +59,10 @@ class ReadConfig : public NonCopyable {
   }
 
  public:
+  /*
+   * ReadConfigFile -- Checks that config.xml file exists and reads its content.
+   * Returns 0 on success, print message and returns -1 otherwise.
+   */
   int ReadConfigFile();
 };
 
@@ -62,7 +70,7 @@ template <class DerivedConfig>
 int ReadConfig<DerivedConfig>::ReadConfigFile() {
   pugi::xml_document config;
   std::string path;
-  int ret = ApiC::GetExecutablePath(path);
+  int ret = ApiC::GetExecutableDirectory(path);
 
   if (ret != 0) {
     std::cerr << "Cannot get path to executable" << std::endl;

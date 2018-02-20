@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,6 +57,10 @@ struct PipeDeleter {
   }
 };
 
+/*
+ * IShell -- class serving as an OS-independent abstraction for command line
+ * operations.
+ */
 class IShell : NonCopyable {
  private:
   Output<char> output_;
@@ -65,11 +69,16 @@ class IShell : NonCopyable {
  public:
   IShell(){};
   IShell(bool print_log) : print_log_(print_log){};
-
+  /*
+   * GetLastOutput -- returns last received output.
+   */
   Output<char> GetLastOutput() const {
     return output_;
   }
-
+  /*
+   * ExecuteCommand -- performs command by creating pipe with read mode. Returns
+   * Output object on success, throws std::exception otherwise.
+   */
   Output<char> ExecuteCommand(const std::string &cmd);
 };
 

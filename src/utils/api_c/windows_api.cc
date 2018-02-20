@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
 
 int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   if (length < 0) {
-    std::cerr << "length should be > 0" << std::endl;
+    std::cerr << "length should be >= 0" << std::endl;
     return -1;
   }
 
@@ -98,7 +98,7 @@ err:
   return -1;
 }
 
-int ApiC::GetExecutablePath(std::string &path) {
+int ApiC::GetExecutableDirectory(std::string &path) {
   char file_path[MAX_PATH + 1] = {0};
   auto count = GetModuleFileName(nullptr, file_path, MAX_PATH);
 
@@ -115,10 +115,10 @@ int ApiC::GetExecutablePath(std::string &path) {
   return 0;
 }
 
-long long ApiC::GetFreeSpaceT(const std::string &dir) {
+long long ApiC::GetFreeSpaceT(const std::string &path) {
   __int64 free_bytes_available, total_number_of_bytes,
       total_number_of_free_bytes;
-  LPCSTR drive = dir.c_str();
+  LPCSTR drive = path.c_str();
   int result =
       GetDiskFreeSpaceExA(drive, (PULARGE_INTEGER)&free_bytes_available,
                           (PULARGE_INTEGER)&total_number_of_bytes,
@@ -133,8 +133,8 @@ long long ApiC::GetFreeSpaceT(const std::string &dir) {
   return total_number_of_free_bytes;
 }
 
-int ApiC::CreateDirectoryT(const std::string &dir) {
-  BOOL ret = CreateDirectory(dir.c_str(), nullptr);
+int ApiC::CreateDirectoryT(const std::string &path) {
+  BOOL ret = CreateDirectory(path.c_str(), nullptr);
 
   if (ret) {
     return 0;
@@ -144,12 +144,12 @@ int ApiC::CreateDirectoryT(const std::string &dir) {
   return -1;
 }
 
-int ApiC::CleanDirectory(const std::string &dir) {
+int ApiC::CleanDirectory(const std::string &path) {
   int ret = 0;
   HANDLE h = nullptr;
   WIN32_FIND_DATA f_d;
 
-  h = FindFirstFile((dir + "*").c_str(), &f_d);
+  h = FindFirstFile((path + "*").c_str(), &f_d);
 
   if (h == INVALID_HANDLE_VALUE) {
     std::cerr << "INVALID_HANDLE_VALUE occurs\nError message: "
@@ -159,19 +159,19 @@ int ApiC::CleanDirectory(const std::string &dir) {
 
   do {
     const std::string file_name = f_d.cFileName;
-    const std::string full_file_name = dir + file_name;
+    const std::string full_file_name = path + file_name;
     if (!lstrcmp(f_d.cFileName, ".") || !lstrcmp(f_d.cFileName, "..")) {
       continue;
     }
 
-    SetFilePermission(dir + f_d.cFileName, 0600);
+    SetFilePermission(path + f_d.cFileName, 0600);
 
-    if (DirectoryExists(dir + f_d.cFileName) &&
-        !RemoveDirectory((dir + f_d.cFileName).c_str())) {
+    if (DirectoryExists(path + f_d.cFileName) &&
+        !RemoveDirectory((path + f_d.cFileName).c_str())) {
       std::cerr << "Unable to remove directory: " << GetLastError()
                 << std::endl;
       ret = -1;
-    } else if (RemoveFile(dir + f_d.cFileName) != 0) {
+    } else if (RemoveFile(path + f_d.cFileName) != 0) {
       std::cerr << "File " << f_d.cFileName << " removing failed" << std::endl;
       ret = -1;
     }
@@ -185,8 +185,8 @@ int ApiC::CleanDirectory(const std::string &dir) {
   return ret;
 }
 
-int ApiC::RemoveDirectoryT(const std::string &dir) {
-  BOOL ret = RemoveDirectory(dir.c_str());
+int ApiC::RemoveDirectoryT(const std::string &path) {
+  BOOL ret = RemoveDirectory(path.c_str());
 
   if (!ret) {
     std::cerr << "Unable to remove directory: " << GetLastError() << std::endl;

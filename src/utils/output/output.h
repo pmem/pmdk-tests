@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +36,10 @@
 #include <string>
 #include "non_copyable/non_copyable.h"
 
+/*
+ * Output -- template class that contains information about exit code and standard
+ * output from shell command. Standard output can be a char-like object.
+ */
 template <typename T = char>
 class Output final {
  private:
