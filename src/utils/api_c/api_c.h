@@ -33,7 +33,6 @@
 #ifndef PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
 #define PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
 
-
 #include "constants.h"
 #include "non_copyable/non_copyable.h"
 #include <iostream>
@@ -42,7 +41,7 @@
 #include <vector>
 
 class ApiC final : NonCopyable {
- public:
+public:
   /*
    * GetExecutableDirectory -- assigns a path to a folder containing the
    * executable file to the input argument. Returns 0 on success, -1 otherwise.
@@ -78,7 +77,7 @@ class ApiC final : NonCopyable {
   /*
    * RegularFileExists -- checks that file in given path is regular. Returns
    * true on success, prints error message (if errno is different than ENOENT)
-	 * and returns false otherwise.
+   * and returns false otherwise.
    */
   static bool RegularFileExists(const std::string &path);
 
@@ -123,7 +122,7 @@ class ApiC final : NonCopyable {
   /*
    * DirectoryExists -- checks that directory under given 'path' exists. Returns
    * true on success, prints error message (if errno is different than ENOENT)
-	 * and returns false otherwise.
+   * and returns false otherwise.
    */
   static bool DirectoryExists(const std::string &path);
 
@@ -152,6 +151,67 @@ class ApiC final : NonCopyable {
   /* UnsetEnv -- deletes the variable name from the environment.
    * Returns 0 on success, -1 otherwise. */
   static int UnsetEnv(const std::string &name);
+
+#ifdef _WIN32
+  /*
+   * CreateFileT -- creates file in given path and writes content. Returns 0 on
+   * success, prints error message and returns -1 otherwise.
+   */
+  static int CreateFileT(const std::wstring &path,
+                         const std::vector<std::wstring> &content,
+                         bool is_bom = false);
+
+  /*
+   * CreateFileT -- creates file in given path and writes content. Returns 0 on
+   * success, prints error message and returns -1 otherwise.
+   */
+  static int CreateFileT(const std::wstring &path, const std::wstring &content,
+                         bool is_bom = false);
+
+  /*
+   * ReadFile -- opens given file and reads its content. Returns 0 on success,
+   * prints error message and returns -1 otherwise.
+   */
+  static int ReadFile(const std::wstring &path, std::wstring &content);
+
+  /*
+   * RegularFileExists -- checks that file in given path is regular. Returns
+   * true on success, prints error message (if errno is different than ENOENT)
+   * and returns false otherwise.
+   */
+  static bool RegularFileExists(const std::wstring &path);
+
+  /*
+   * GetFilePermission -- returns UNIX-style file mode bits in decimal on
+   * success, prints error message and returns 0 otherwise.
+   */
+  static unsigned short GetFilePermission(const std::wstring &path);
+
+  /*
+   * SetFilePermission -- changes a file mode bits. Returns 0 on success, prints
+   * error message and returns -1 otherwise.
+  */
+  static int SetFilePermission(const std::wstring &path, int permission);
+
+  /*
+   * RemoveFile -- removes specified file. Returns 0 on success, prints error
+   * message and returns -1 otherwise.
+   */
+  static int RemoveFile(const std::wstring &path);
+
+  /*
+   * DirectoryExists -- checks that directory under given 'path' exists. Returns
+   * true on success, prints error message (if errno is different than ENOENT)
+   * and returns false otherwise.
+   */
+  static bool DirectoryExists(const std::wstring &dir);
+
+  /*
+   * GetFreeSpaceT -- returns available free space in bytes for filesystem
+   * containing given path, prints error message and returns -1 otherwise.
+   */
+  static long long GetFreeSpaceT(const std::wstring &dir);
+#endif
 };
 
 #endif // !PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
