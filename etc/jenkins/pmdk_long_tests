@@ -1,8 +1,16 @@
 pipeline {
     agent none
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to run tests on')
+    }
+    options {
+        timestamps()
+    }
     stages {
         stage('Prepare') {
-            agent {label 'master'}
+            agent {
+                label 'master'
+            }
             steps {
                 git(url: 'https://github.com/pmem/pmdk', branch: "${params.BRANCH}")
                 sh 'echo exit > src/test/vmmalloc_fork/TEST1'
@@ -14,7 +22,9 @@ pipeline {
         stage('B&T') {
             parallel {
                 stage('Ubuntu') {
-                    agent {label "${pmdk_ubuntu_long_tests}"}
+                    agent {
+                        label "${pmdk_ubuntu_long_tests}"
+                    }
                     steps {
                         deleteDir()
                         unstash 'pmdk'
@@ -25,7 +35,9 @@ pipeline {
                     }
                 }
                 stage('Fedora') {
-                    agent {label "${pmdk_fedora_long_tests}"}
+                    agent {
+                        label "${pmdk_fedora_long_tests}"
+                    }
                     steps {
                         deleteDir()
                         unstash 'pmdk'
@@ -36,7 +48,9 @@ pipeline {
                     }
                 }
                 stage('RedHat') {
-                    agent {label "${pmdk_redhat_long_tests}"}
+                    agent {
+                        label "${pmdk_redhat_long_tests}"
+                    }
                     steps {
                         deleteDir()
                         unstash 'pmdk'
@@ -46,7 +60,9 @@ pipeline {
                     }
                 }
                 stage('Suse') {
-                    agent {label "${pmdk_suse_long_tests}"}
+                    agent {
+                        label "${pmdk_suse_long_tests}"
+                    }
                     steps {
                         deleteDir()
                         unstash 'pmdk'
@@ -67,7 +83,5 @@ pipeline {
             )
         }
     }
-    parameters {
-        string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to run tests on')
-    }
 }
+

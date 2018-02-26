@@ -1,8 +1,16 @@
 pipeline {
     agent none
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to run tests on')
+    }
+    options {
+        timestamps()
+    }
     stages {
         stage('Prepare') {
-            agent {label 'master'}
+            agent {
+                label 'master'
+            }
             steps {
                 git(url: 'https://github.com/pmem/pmdk', branch: "${params.BRANCH}")
                 stash(name: 'pmdk', includes: '*/**')
@@ -10,7 +18,9 @@ pipeline {
             }
         }
         stage('Memcheck') {
-            agent {label "${pmdk_memcheck_tests}"}
+            agent {
+                label "${pmdk_memcheck_tests}"
+            }
             steps {
                 deleteDir()
                 unstash 'pmdk'
@@ -31,7 +41,5 @@ pipeline {
             )
         }
     }
-    parameters {
-        string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to run tests on')
-    }
 }
+
