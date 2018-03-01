@@ -30,49 +30,57 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "dimm_configuration.h"
+#ifndef PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
+#define PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
 
-DimmConfiguration::DimmConfiguration(pugi::xml_node &&dimm_configuration) {
-  mount_point_ = dimm_configuration.text().get();
+#include <ndctl/libdaxctl.h>
+#include <ndctl/libndctl.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <exception>
+#include <iostream>
+#include <string>
+#include <vector>
+#include "api_c/api_c.h"
 
-  if (mount_point_.empty()) {
-    throw std::invalid_argument(
-        "mountPoint field is empty. Please set mountPoint value.");
+#define FOREACH_BUS_REGION_NAMESPACE(ctx, bus, region, ndns)    \
+  ndctl_bus_foreach(ctx, bus) ndctl_region_foreach(bus, region) \
+      ndctl_namespace_foreach(region, ndns)
+
+class Dimm final {
+ private:
+  struct ndctl_dimm *dimm_ = nullptr;
+  std::string uid_;
+
+ public:
+  Dimm(struct ndctl_dimm *dimm, const char *uid) : dimm_(dimm), uid_(uid) {
   }
 
-  if (!ApiC::DirectoryExists(this->mount_point_)) {
-    throw std::invalid_argument(
-        "Directory " + this->mount_point_ +
-        " does not exist. Please change mountPoint field value.");
+  int GetShutdownCount();
+  int InjectUnsafeShutdown();
+
+  const std::string &GetUid() const {
+    return this->uid_;
+  }
+};
+
+class DimmCollection final {
+ private:
+  bool is_dax_ = false;
+  ndctl_ctx *ctx_ = nullptr;
+  std::string mountpoint_;
+  std::vector<Dimm> dimms_;
+
+  ndctl_interleave_set *GetInterleaveSet(ndctl_ctx *ctx, struct stat64 st);
+
+ public:
+  DimmCollection(const std::string &mountpoint);
+
+  Dimm &operator[](std::size_t idx) {
+    return this->dimms_.at(idx);
   }
 
-  if (!ApiC::DirectoryExists((mount_point_ + SEPARATOR + "pmdk_tests")) &&
-      ApiC::CreateDirectoryT((mount_point_ + SEPARATOR + "pmdk_tests").c_str()) !=
-          0) {
-    throw std::invalid_argument("");
-  }
+  ~DimmCollection();
+};
 
-  mount_point_ += SEPARATOR + "pmdk_tests" + SEPARATOR;
-}
-
-int DimmConfiguration::SetDimmDevices(
-    const pugi::xml_node &node, std::vector<DimmConfiguration> &dimm_devices) {
-  int ret = -1;
-
-  for (auto &&it : node.child("dimmConfiguration").children("mountPoint")) {
-    ret = 0;
-    try {
-      DimmConfiguration temp_device = DimmConfiguration(std::move(it));
-      dimm_devices.emplace_back(std::move(temp_device));
-    } catch (std::exception e) {
-      std::cerr << e.what() << std::endl;
-      return -1;
-    }
-  }
-
-  if (ret == -1) {
-    std::cerr << "dimmConfiguration node does not exist" << std::endl;
-  }
-
-  return ret;
-}
+#endif  // !PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
