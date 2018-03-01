@@ -42,11 +42,7 @@ int RemoteDimmConfigurationCollection::FillConfigFields(pugi::xml_node &&root) {
 
   for (auto &&it : root.children("remoteConfiguration")) {
     ret = 0;
-    std::vector<DimmConfiguration> dimm_device;
-
-    if (DimmConfiguration::SetDimmDevices(it, dimm_device) != 0) {
-      return -1;
-    }
+    std::vector<DimmCollection> dimm_device;
 
     address = it.child("address").text().as_string();
     pos = address.find_last_of(":");

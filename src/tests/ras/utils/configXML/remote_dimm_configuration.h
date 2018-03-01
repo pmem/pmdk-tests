@@ -34,47 +34,56 @@
 #define PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
 
 #include "api_c/api_c.h"
-#include "pugixml.hpp"
-#include "dimm_configuration.h"
 #include "configXML/read_config.h"
+#include "dimm.h"
+#include "pugixml.hpp"
 
 class RemoteDimmConfiguration final {
-private:
+ private:
   std::string address_;
   std::string test_dir_;
   std::string bins_dir_;
-  std::vector<DimmConfiguration> dimm_devices_;
+  std::vector<DimmCollection> dimm_devices_;
 
-public:
+ public:
   RemoteDimmConfiguration(const std::string &address,
                           const std::string &test_dir,
                           const std::string &bins_dir,
-                          std::vector<DimmConfiguration> &&dimm_cfgs)
-      : address_(address), test_dir_(test_dir), bins_dir_(bins_dir),
-        dimm_devices_(std::move(dimm_cfgs)) {}
+                          std::vector<DimmCollection> &&dimm_cfgs)
+      : address_(address),
+        test_dir_(test_dir),
+        bins_dir_(bins_dir),
+        dimm_devices_(std::move(dimm_cfgs)) {
+  }
 
-  const std::string &GetTestDir() const { return this->test_dir_; }
+  const std::string &GetTestDir() const {
+    return this->test_dir_;
+  }
 
-  const std::string &GetIpAddress() const { return this->address_; }
+  const std::string &GetIpAddress() const {
+    return this->address_;
+  }
 
-  const std::string &GetBinsDir() const { return this->bins_dir_; }
+  const std::string &GetBinsDir() const {
+    return this->bins_dir_;
+  }
 
-  const std::vector<DimmConfiguration> &GetDimmsDevice() const {
+  const std::vector<DimmCollection> &GetDimmsDevice() const {
     return this->dimm_devices_;
   }
 };
 
 class RemoteDimmConfigurationCollection final
     : public ReadConfig<RemoteDimmConfigurationCollection> {
-private:
+ private:
   friend class ReadConfig<RemoteDimmConfigurationCollection>;
   int FillConfigFields(pugi::xml_node &&root);
   std::vector<RemoteDimmConfiguration> remote_cfgs_;
 
-public:
+ public:
   const RemoteDimmConfiguration &operator[](int idx) const {
     return remote_cfgs_.at(idx);
   }
 };
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
+#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
