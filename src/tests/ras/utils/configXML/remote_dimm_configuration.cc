@@ -42,11 +42,7 @@ int RemoteDimmConfigurationCollection::FillConfigFields(pugi::xml_node &&root) {
 
   for (auto &&it : root.children("remoteConfiguration")) {
     ret = 0;
-    std::vector<DimmConfiguration> dimm_device;
-
-    if (DimmConfiguration::SetDimmDevices(it, dimm_device) != 0) {
-      return -1;
-    }
+    std::vector<DimmCollection> dimm_devices;
 
     address = it.child("address").text().as_string();
     pos = address.find_last_of(":");
@@ -64,7 +60,7 @@ int RemoteDimmConfigurationCollection::FillConfigFields(pugi::xml_node &&root) {
 
     remote_cfgs_.emplace_back(RemoteDimmConfiguration(
         address + " -p " + port, it.child("testDir").text().as_string(),
-        it.child("binsDir").text().as_string(), std::move(dimm_device)));
+        it.child("binsDir").text().as_string(), std::move(dimm_devices)));
   }
 
   if (ret == -1) {
