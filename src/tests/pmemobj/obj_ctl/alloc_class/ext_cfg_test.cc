@@ -36,7 +36,7 @@
 using namespace std;
 
 /**
- * PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG
+ * PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG_POS
  * Creating allocation classes from external configurations via:
  * - PMEMOBJ_CONF environment variable
  * - configuration file pointed by PMEMOBJ_CONF_FILE environment variable
@@ -56,7 +56,7 @@ using namespace std;
  *          \li \c Step8. Make sure object is allocated
  *          \li \c Step9. Close pool / SUCCESS
  */
-TEST_P(ObjCtlExtCfgPosTest, PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG) {
+TEST_P(ObjCtlExtCfgPosTest, PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG_POS) {
   /* Step 4 */
   PMEMobjpool *pop =
       pmemobj_create(pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL, 0666);
@@ -65,8 +65,8 @@ TEST_P(ObjCtlExtCfgPosTest, PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG) {
   PMEMoid oid = OID_NULL;
   if (write_arg_.class_id == auto_class_id) {
     int id =
-        GetAllocClassId(pop, write_arg_.unit_size, write_arg_.units_per_block,
-                        write_arg_.header_type);
+        GetAllocClassId(pop, write_arg_.unit_size, write_arg_.alignment,
+                        write_arg_.units_per_block, write_arg_.header_type);
     EXPECT_NE(-1, id);
     write_arg_.class_id = id;
   }
@@ -77,11 +77,11 @@ TEST_P(ObjCtlExtCfgPosTest, PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG) {
   /* Step 6 */
   EXPECT_TRUE(AllocClassUtils::IsAllocClassValid(write_arg_, read_arg));
   /* Step 7 */
-  EXPECT_EQ(
-      0, pmemobj_xalloc(
-             pop, &oid, read_arg.unit_size -
-                            AllocClassUtils::hdrs[write_arg_.header_type].size,
-             0, POBJ_CLASS_ID(write_arg_.class_id), nullptr, nullptr))
+  EXPECT_EQ(0, pmemobj_xalloc(
+                   pop, &oid,
+                   read_arg.unit_size -
+                       AllocClassUtils::hdrs[write_arg_.header_type].size,
+                   0, POBJ_CLASS_ID(write_arg_.class_id), nullptr, nullptr))
       << pmemobj_errormsg();
   /* Step 8 */
   EXPECT_FALSE(OID_IS_NULL(oid));
@@ -94,23 +94,26 @@ INSTANTIATE_TEST_CASE_P(
     ParamTest, ObjCtlExtCfgPosTest,
     ::testing::Combine(
         ::testing::Values(
-            pobj_alloc_class_desc{512, 1024, POBJ_HEADER_COMPACT, 128},
-            pobj_alloc_class_desc{128, 128, POBJ_HEADER_LEGACY, 254},
-            pobj_alloc_class_desc{8, 1024, POBJ_HEADER_NONE, 254},
-            pobj_alloc_class_desc{512, 1023, POBJ_HEADER_NONE, auto_class_id},
-            pobj_alloc_class_desc{512, 1023, POBJ_HEADER_LEGACY, auto_class_id},
-            pobj_alloc_class_desc{512, 1023, POBJ_HEADER_COMPACT,
+            pobj_alloc_class_desc{512, 0, 1024, POBJ_HEADER_COMPACT, 128},
+            pobj_alloc_class_desc{128, 0, 128, POBJ_HEADER_LEGACY, 254},
+            pobj_alloc_class_desc{8, 0, 1024, POBJ_HEADER_NONE, 254},
+            pobj_alloc_class_desc{512, 0, 1023, POBJ_HEADER_NONE,
+                                  auto_class_id},
+            pobj_alloc_class_desc{512, 0, 1023, POBJ_HEADER_LEGACY,
+                                  auto_class_id},
+            pobj_alloc_class_desc{512, 0, 1023, POBJ_HEADER_COMPACT,
                                   auto_class_id}),
         ::testing::Values(ExternalCfg::FROM_ENV_VAR,
                           ExternalCfg::FROM_CFG_FILE)));
 
 /**
- * PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG
+ * PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG_NEG
  * Creating allocation classes from external configurations via:
  * - PMEMOBJ_CONF environment variable
  * - configuration file pointed by PMEMOBJ_CONF_FILE environment variable
  * Following scenarios are considered:
  * - unit sizes: 0, PMEMOBJ_MAX_ALLOC_SIZE + 1
+ * - alignments: 1
  * - class of ids: 0, 255
  * - units per block: 0, greater than internal bitmap size(i.e. 2432)
  * - header types: invalid
@@ -121,7 +124,7 @@ INSTANTIATE_TEST_CASE_P(
  *          / SUCCESS
  *          \li \c Step4. Create pmemobj pool / FAIL: ret = -1, errno = EINVAL
  */
-TEST_P(ObjCtlExtCfgNegTest, PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG) {
+TEST_P(ObjCtlExtCfgNegTest, PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG_NEG) {
   errno = 0;
   PMEMobjpool *pop =
       pmemobj_create(pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL, 0666);
@@ -133,14 +136,16 @@ INSTANTIATE_TEST_CASE_P(
     ParamTest, ObjCtlExtCfgNegTest,
     ::testing::Combine(
         ::testing::Values(
-            pobj_alloc_class_desc{0, 1024, POBJ_HEADER_COMPACT, 128},
-            pobj_alloc_class_desc{PMEMOBJ_MAX_ALLOC_SIZE + 1, 1024,
+            pobj_alloc_class_desc{0, 0, 1024, POBJ_HEADER_COMPACT, 128},
+            pobj_alloc_class_desc{PMEMOBJ_MAX_ALLOC_SIZE + 1, 0, 1024,
                                   POBJ_HEADER_COMPACT, 128},
-            pobj_alloc_class_desc{1024, 1024, POBJ_HEADER_COMPACT, 0},
-            pobj_alloc_class_desc{1024, 1024, POBJ_HEADER_COMPACT, 255},
-            pobj_alloc_class_desc{1024, 0, POBJ_HEADER_COMPACT, auto_class_id},
-            pobj_alloc_class_desc{1024, 0, POBJ_HEADER_COMPACT, 128},
-            pobj_alloc_class_desc{128, 4096, POBJ_HEADER_COMPACT, 128},
-            pobj_alloc_class_desc{1024, 1024, MAX_POBJ_HEADER_TYPES, 128}),
+            pobj_alloc_class_desc{1024, 1, 1024, POBJ_HEADER_COMPACT, 128},
+            pobj_alloc_class_desc{1024, 0, 1024, POBJ_HEADER_COMPACT, 0},
+            pobj_alloc_class_desc{1024, 0, 1024, POBJ_HEADER_COMPACT, 255},
+            pobj_alloc_class_desc{1024, 0, 0, POBJ_HEADER_COMPACT,
+                                  auto_class_id},
+            pobj_alloc_class_desc{1024, 0, 0, POBJ_HEADER_COMPACT, 128},
+            pobj_alloc_class_desc{128, 0, 4096, POBJ_HEADER_COMPACT, 128},
+            pobj_alloc_class_desc{1024, 0, 1024, MAX_POBJ_HEADER_TYPES, 128}),
         ::testing::Values(ExternalCfg::FROM_ENV_VAR,
                           ExternalCfg::FROM_CFG_FILE)));

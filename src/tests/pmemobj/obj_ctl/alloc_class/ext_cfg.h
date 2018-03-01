@@ -63,9 +63,9 @@ class ObjCtlExtCfgTest : public ::testing::TestWithParam<
    */
   std::string ToCtlString(const pobj_alloc_class_desc &desc) const;
   /* GetAllocClassId -- returns class id of the allocation class within pop pool
-   * described by unit_size, units_per_block, header_type arguments.
+   * described by unit_size, alignment, units_per_block, header_type arguments.
    * Returns -1 if allocation class does not exist. */
-  int GetAllocClassId(PMEMobjpool *pop, size_t unit_size,
+  int GetAllocClassId(PMEMobjpool *pop, size_t unit_size, size_t alignment,
                       unsigned units_per_block,
                       pobj_header_type header_type) const;
   virtual void SetUp();
