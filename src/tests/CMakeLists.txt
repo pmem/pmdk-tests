@@ -30,3 +30,6 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/pmempools/CMakeLists.txt)
 include(${CMAKE_CURRENT_LIST_DIR}/pmemobj/CMakeLists.txt)
+if (NOT WIN32)
+    include(${CMAKE_CURRENT_LIST_DIR}/ras/CMakeLists.txt)
+endif()
