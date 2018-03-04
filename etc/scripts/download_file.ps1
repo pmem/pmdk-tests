@@ -37,6 +37,7 @@ param (
 
 # disable Error printing when command fails
 $ErrorActionPreference = "SilentlyContinue"
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Replace "/" with "\" so Split-Path can work with replace
 $PATH = $PATH.replace("/", "\")
