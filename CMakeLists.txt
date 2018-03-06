@@ -95,6 +95,10 @@ if (WIN32)
 	set(Libpmempool_LIBRARIES
 			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmempool.lib"
 			optimized "$ENV{PMDK_LibraryPath}\\libpmempool.lib")
+
+	set(Libpmemcto_LIBRARIES
+			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmemcto.lib"
+			optimized "$ENV{PMDK_LibraryPath}\\libpmemcto.lib")
 else ()
 	option(PMDK_INSTALL_PATH "PMDK installation path" "")
 	if (PKG_CONFIG_FOUND)
@@ -103,16 +107,19 @@ else ()
 		pkg_check_modules(Libpmemlog REQUIRED libpmemlog)
 		pkg_check_modules(Libpmemobj REQUIRED libpmemobj)
 		pkg_check_modules(Libpmempool REQUIRED libpmempool)
+		pkg_check_modules(Libpmemcto REQUIRED libpmemcto)
 		include_directories(${Libpmem_INCLUDE_DIRS}
 				${Libpmemblk_INCLUDE_DIRS}
 				${Libpmemlog_INCLUDE_DIRS}
 				${Libpmemobj_INCLUDE_DIRS}
-				${Libpmempool_INCLUDE_DIRS})
+				${Libpmempool_INCLUDE_DIRS}
+				${Libpmemcto_INCLUDE_DIRS})
 		link_directories(${Libpmem_LIBRARY_DIRS}
 				${Libpmemblk_LIBRARY_DIRS}
 				${Libpmemlog_LIBRARY_DIRS}
 				${Libpmemobj_LIBRARY_DIRS}
-				${Libpmempool_LIBRARY_DIRS})
+				${Libpmempool_LIBRARY_DIRS}
+				${Libpmemcto_LIBRARY_DIRS})
 	else ()
 		set(CMAKE_PREFIX_PATH "${PMDK_INSTALL_PATH}")
 		find_library(Libpmem_LIBRARIES "pmem")
@@ -120,8 +127,10 @@ else ()
 		find_library(Libpmemlog_LIBRARIES "pmemlog")
 		find_library(Libpmemobj_LIBRARIES "pmemobj")
 		find_library(Libpmempool_LIBRARIES "pmempool")
+		find_library(Libpmempcto_LIBRARIES "pmemcto")
 
-		find_path(PMDK_INCLUDE_DIR NAMES "libpmem.h" "libpmemblk.h" "libpmemlog.h" "libpmemobj.h" "libpmempool.h")
+		find_path(PMDK_INCLUDE_DIR NAMES "libpmem.h" "libpmemblk.h" "libpmemlog.h" "libpmemobj.h" "libpmempool.h"
+				"libpmemcto.h")
 		include_directories(${PMDK_INCLUDE_DIR})
 	endif ()
 endif ()
