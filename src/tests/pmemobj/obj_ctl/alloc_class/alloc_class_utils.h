@@ -33,8 +33,8 @@
 #ifndef PMDK_ALLOC_CLASS_UTILS_H
 #define PMDK_ALLOC_CLASS_UTILS_H
 
-#include <array>
 #include <libpmemobj.h>
+#include <array>
 #include <string>
 
 namespace AllocClassUtils {
@@ -44,10 +44,11 @@ struct hdr_desc {
   size_t size;
 };
 
-const std::array<hdr_desc, MAX_POBJ_HEADER_TYPES> hdrs = {
+const std::array<hdr_desc, MAX_POBJ_HEADER_TYPES + 1> hdrs = {
     {{"POBJ_HEADER_LEGACY", "legacy", 64},
      {"POBJ_HEADER_COMPACT", "compact", 16},
-     {"POBJ_HEADER_NONE", "none", 0}}};
+     {"POBJ_HEADER_NONE", "none", 0},
+     {"MAX_POBJ_HEADER_TYPES", "invalid", 0}}};
 
 /*
  * IsAllocClassValid -- checks if created allocation class described by read is
@@ -57,6 +58,6 @@ const std::array<hdr_desc, MAX_POBJ_HEADER_TYPES> hdrs = {
  */
 bool IsAllocClassValid(const pobj_alloc_class_desc &write,
                        const pobj_alloc_class_desc &read);
-}
+}  // namespace AllocClassUtils
 
-#endif // PMDK_ALLOC_CLASS_UTILS_H
+#endif  // PMDK_ALLOC_CLASS_UTILS_H

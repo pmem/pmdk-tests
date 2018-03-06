@@ -37,15 +37,17 @@ namespace AllocClassUtils {
 namespace {
 void printArg(const pobj_alloc_class_desc &arg) {
   std::cout << "Unit size: " << arg.unit_size << std::endl;
+  std::cout << "Alignment: " << arg.alignment << std::endl;
   std::cout << "Units per block: " << arg.units_per_block << std::endl;
   std::cout << "Header type: " << hdrs[arg.header_type].full_name << std::endl;
   std::cout << "Class ID: " << arg.class_id << std::endl;
 }
-}
+}  // namespace
 bool IsAllocClassValid(const pobj_alloc_class_desc &write,
                        const pobj_alloc_class_desc &read) {
   const unsigned bitmap_size = 2432;
   bool ret = write.class_id == read.class_id &&
+             write.alignment == read.alignment &&
              write.header_type == read.header_type &&
              write.unit_size == read.unit_size &&
              (write.units_per_block > bitmap_size
@@ -59,4 +61,4 @@ bool IsAllocClassValid(const pobj_alloc_class_desc &write,
   }
   return ret;
 }
-}
+}  // namespace AllocClassUtils

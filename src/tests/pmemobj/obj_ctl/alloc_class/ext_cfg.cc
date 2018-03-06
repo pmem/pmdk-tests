@@ -67,12 +67,14 @@ std::string ObjCtlExtCfgTest::ToCtlString(
   query +=
       desc.class_id == auto_class_id ? "new" : std::to_string(desc.class_id);
   query += ".desc=" + std::to_string(desc.unit_size) + "," +
+           std::to_string(desc.alignment) + "," +
            std::to_string(desc.units_per_block) + "," +
            AllocClassUtils::hdrs[desc.header_type].config_name + ";";
   return query;
 }
 
 int ObjCtlExtCfgTest::GetAllocClassId(PMEMobjpool *pop, size_t unit_size,
+                                      size_t alignment,
                                       unsigned units_per_block,
                                       pobj_header_type header_type) const {
   int id = -1;
@@ -80,7 +82,7 @@ int ObjCtlExtCfgTest::GetAllocClassId(PMEMobjpool *pop, size_t unit_size,
   for (int i = 0; i < 255; ++i) {
     std::string entry_point = "heap.alloc_class." + std::to_string(i) + ".desc";
     if (pmemobj_ctl_get(pop, entry_point.c_str(), &arg) == 0) {
-      if (arg.unit_size == unit_size &&
+      if (arg.unit_size == unit_size && arg.alignment == alignment &&
           arg.units_per_block == units_per_block &&
           arg.header_type == header_type) {
         id = arg.class_id;
