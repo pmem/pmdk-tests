@@ -76,10 +76,11 @@ struct Arg {
   std::string value;
 
   Arg(Option option, OptionType arg_type, std::string value)
-      : option(option), arg_type(arg_type), value(value){}
+      : option(option), arg_type(arg_type), value(value) {
+  }
 
-  Arg(Option option, OptionType arg_type)
-      : option(option), arg_type(arg_type){}
+  Arg(Option option, OptionType arg_type) : option(option), arg_type(arg_type) {
+  }
 };
 
 struct PoolArgs {
@@ -90,16 +91,20 @@ struct PoolArgs {
   PoolArgs() = default;
 
   PoolArgs(PoolType pool_type_, std::initializer_list<Arg> args_)
-      : pool_type(pool_type_), args(args_){}
+      : pool_type(pool_type_), args(args_) {
+  }
 
-  PoolArgs(PoolType pool_type) : pool_type(pool_type){}
+  PoolArgs(PoolType pool_type) : pool_type(pool_type) {
+  }
 
   PoolArgs(PoolType pool_type_, std::initializer_list<Arg> args_,
            std::string err_msg_)
-      : pool_type(pool_type_), args(args_), err_msg(err_msg_){}
+      : pool_type(pool_type_), args(args_), err_msg(err_msg_) {
+  }
 
   PoolArgs(PoolType pool_type, std::string err_msg_)
-      : pool_type(pool_type), err_msg(err_msg_){}
+      : pool_type(pool_type), err_msg(err_msg_) {
+  }
 };
 
 struct PoolInherit {
