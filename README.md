@@ -62,7 +62,8 @@ To build binaries use either generated `pmdk_tests.sln` solution file with Visua
 * `<target>` - specified group of tests to build, e.g. `PMEMPOOLS`
 
 ### Running Tests ###
-Before executing tests, valid configuration `config.xml` file needs to be placed in the same directory as the test binary. Template `config.xml.example` is located in `etc/config` directory. After this setup, tests can be run simply by executing the binary:
+Before executing tests, valid configuration `config.xml` file needs to be placed in the same directory as the test binary. Template `config.xml.example` is located in `etc/config` directory. For more information see dedicated [README](etc/config/README.md) file.
+After this setup, tests can be run simply by executing the binary:
 
 ```
 	$ cd build
