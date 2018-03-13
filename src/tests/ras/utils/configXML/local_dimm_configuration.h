@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,29 +30,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
 
 #include "api_c/api_c.h"
 #include "pugixml.hpp"
-#include "read_config.h"
+#include "dimm_configuration.h"
+#include "configXML/read_config.h"
 
-/*
- * LocalConfiguration -- class that provides access to configuration file.
- */
-class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
+class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
 private:
-  friend class ReadConfig<LocalConfiguration>;
+  friend class ReadConfig<LocalDimmConfiguration>;
   std::string test_dir_;
-  /*
-   * FillConfigFields -- checks that TestDir exists, creates folder 'pmdk_tests'
-   * and assigns this path to test_dir_. Returns 0 on success, prints error
-   * message and returns -1 otherwise.
-   */
+  std::vector<DimmConfiguration> dimm_devices_;
   int FillConfigFields(pugi::xml_node &&root);
 
 public:
-  const std::string &GetTestDir() { return this->test_dir_; }
+  const std::string &GetTestDir() const { return this->test_dir_; }
+  const std::vector<DimmConfiguration> &GetDimmDevices() const {
+    return this->dimm_devices_;
+  }
 };
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_

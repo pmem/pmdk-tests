@@ -33,6 +33,7 @@
 #ifdef _WIN32
 
 #include "api_c.h"
+#include <windows.h>
 #include <codecvt>
 #include <fstream>
 #include <locale>

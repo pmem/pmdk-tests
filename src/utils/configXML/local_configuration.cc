@@ -40,24 +40,9 @@ int LocalConfiguration::FillConfigFields(pugi::xml_node &&root) {
     return -1;
   }
 
-  test_dir_ = root.child("testDir").text().get();
-
-  if (test_dir_.empty() || !api_c_.DirectoryExists(this->test_dir_)) {
-    std::cerr << "Directory does not exist. Please change " << this->test_dir_
-              << " field." << std::endl;
+  if (SetTestDir(root, test_dir_) != 0) {
     return -1;
   }
-
-  if (api_c_.CreateDirectoryT((test_dir_ + SEPARATOR + "pmdk_tests").c_str()) !=
-      0) {
-    return -1;
-  }
-
-  test_dir_ += SEPARATOR + "pmdk_tests" + SEPARATOR;
 
   return 0;
-}
-
-std::string LocalConfiguration::GetTestDir() {
-  return this->test_dir_;
 }

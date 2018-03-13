@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,29 +30,51 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
+#define PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
 
 #include "api_c/api_c.h"
 #include "pugixml.hpp"
-#include "read_config.h"
+#include "dimm_configuration.h"
+#include "configXML/read_config.h"
 
-/*
- * LocalConfiguration -- class that provides access to configuration file.
- */
-class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
+class RemoteDimmConfiguration final {
 private:
-  friend class ReadConfig<LocalConfiguration>;
+  std::string address_;
   std::string test_dir_;
-  /*
-   * FillConfigFields -- checks that TestDir exists, creates folder 'pmdk_tests'
-   * and assigns this path to test_dir_. Returns 0 on success, prints error
-   * message and returns -1 otherwise.
-   */
-  int FillConfigFields(pugi::xml_node &&root);
+  std::string bins_dir_;
+  std::vector<DimmConfiguration> dimm_devices_;
 
 public:
-  const std::string &GetTestDir() { return this->test_dir_; }
+  RemoteDimmConfiguration(const std::string &address,
+                          const std::string &test_dir,
+                          const std::string &bins_dir,
+                          std::vector<DimmConfiguration> &&dimm_cfgs)
+      : address_(address), test_dir_(test_dir), bins_dir_(bins_dir),
+        dimm_devices_(std::move(dimm_cfgs)) {}
+
+  const std::string &GetTestDir() const { return this->test_dir_; }
+
+  const std::string &GetIpAddress() const { return this->address_; }
+
+  const std::string &GetBinsDir() const { return this->bins_dir_; }
+
+  const std::vector<DimmConfiguration> &GetDimmsDevice() const {
+    return this->dimm_devices_;
+  }
 };
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+class RemoteDimmConfigurationCollection final
+    : public ReadConfig<RemoteDimmConfigurationCollection> {
+private:
+  friend class ReadConfig<RemoteDimmConfigurationCollection>;
+  int FillConfigFields(pugi::xml_node &&root);
+  std::vector<RemoteDimmConfiguration> remote_cfgs_;
+
+public:
+  const RemoteDimmConfiguration &operator[](int idx) const {
+    return remote_cfgs_.at(idx);
+  }
+};
+
+#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_

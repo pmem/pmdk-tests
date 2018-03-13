@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,29 +30,38 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_CONFIGURATION_H_
+#define PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_CONFIGURATION_H_
 
 #include "api_c/api_c.h"
 #include "pugixml.hpp"
 #include "read_config.h"
 
-/*
- * LocalConfiguration -- class that provides access to configuration file.
- */
-class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
+class RemoteConfiguration final {
 private:
-  friend class ReadConfig<LocalConfiguration>;
+  std::string address_;
   std::string test_dir_;
-  /*
-   * FillConfigFields -- checks that TestDir exists, creates folder 'pmdk_tests'
-   * and assigns this path to test_dir_. Returns 0 on success, prints error
-   * message and returns -1 otherwise.
-   */
-  int FillConfigFields(pugi::xml_node &&root);
 
 public:
-  const std::string &GetTestDir() { return this->test_dir_; }
+  RemoteConfiguration(const std::string &address, const std::string &test_dir)
+      : address_(address), test_dir_(test_dir) {}
+
+  const std::string &GetTestDir() const { return this->test_dir_; }
+
+  const std::string &GetIpAddress() const { return this->address_; }
 };
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+class RemoteConfigurationCollection final
+    : public ReadConfig<RemoteConfigurationCollection> {
+private:
+  friend class ReadConfig<RemoteConfigurationCollection>;
+  int FillConfigFields(pugi::xml_node &&root);
+  std::vector<RemoteConfiguration> remote_cfgs_;
+
+public:
+  const RemoteConfiguration &operator[](int idx) const {
+    return remote_cfgs_.at(idx);
+  }
+};
+
+#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_CONFIGURATION_H_

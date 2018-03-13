@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,29 +30,20 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+#include "local_dimm_configuration.h"
 
-#include "api_c/api_c.h"
-#include "pugixml.hpp"
-#include "read_config.h"
+int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
+  root = root.child("localConfiguration");
 
-/*
- * LocalConfiguration -- class that provides access to configuration file.
- */
-class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
-private:
-  friend class ReadConfig<LocalConfiguration>;
-  std::string test_dir_;
-  /*
-   * FillConfigFields -- checks that TestDir exists, creates folder 'pmdk_tests'
-   * and assigns this path to test_dir_. Returns 0 on success, prints error
-   * message and returns -1 otherwise.
-   */
-  int FillConfigFields(pugi::xml_node &&root);
+  if (root.empty()) {
+    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
+    return -1;
+  }
 
-public:
-  const std::string &GetTestDir() { return this->test_dir_; }
-};
+  if (SetTestDir(root, test_dir_) != 0 ||
+      DimmConfiguration::SetDimmDevices(root, dimm_devices_) != 0) {
+    return -1;
+  }
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+  return 0;
+}
