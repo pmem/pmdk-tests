@@ -33,6 +33,8 @@
 #ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_RAS_CONFIGURATION_H_
 #define PMDK_TESTS_SRC_UTILS_CONFIGXML_RAS_CONFIGURATION_H_
 
+#include <chrono>
+#include <thread>
 #include "configXML/read_config.h"
 #include "shell/i_shell.h"
 
@@ -42,6 +44,10 @@ class DUT final {
   std::string power_cycle_command_;
   std::string bin_dir_;
   IShell ishell_{address_};
+  const int connection_error_ = 255;
+  bool HostAvailable() {
+    return ExecuteCmd(":").GetExitCode() != connection_error_;
+  }
 
  public:
   DUT() = delete;
@@ -57,10 +63,14 @@ class DUT final {
   Output<char> ExecuteCmd(std::string cmd) {
     return ishell_.ExecuteCommand(cmd);
   }
+  const std::string& GetAddress() const {
+    return this->address_;
+  }
   Output<char> PowerCycle() {
     IShell i_shell;
     return i_shell.ExecuteCommand(power_cycle_command_);
   }
+  bool WaitForConnection(unsigned int timeout_secs);
 };
 
 class RASConfigurationCollection final
@@ -74,8 +84,17 @@ class RASConfigurationCollection final
   DUT& GetDUT(int idx) {
     return duts_collection_.at(idx);
   }
+  std::size_t GetSize() const {
+    return duts_collection_.size();
+  }
   DUT& operator[](std::size_t idx) {
     return this->duts_collection_.at(idx);
+  }
+  std::vector<DUT>::iterator begin() noexcept {
+    return duts_collection_.begin();
+  }
+  std::vector<DUT>::iterator end() noexcept {
+    return duts_collection_.end();
   }
 };
 

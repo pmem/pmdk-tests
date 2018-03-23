@@ -33,9 +33,9 @@
 #ifndef PMDK_TESTS_SRC_UTILS_POOLSET_POOLSET_H_
 #define PMDK_TESTS_SRC_UTILS_POOLSET_POOLSET_H_
 
+#include <memory>
 #include "configXML/local_configuration.h"
 #include "replica.h"
-#include <memory>
 
 using replica = std::initializer_list<std::string>;
 
@@ -43,7 +43,7 @@ using replica = std::initializer_list<std::string>;
  * Poolset -- class that represents pool set file.
  */
 class Poolset final {
-private:
+ private:
   int replica_counter_ = 0;
   std::string dir_;
   std::string name_ = "pool.set";
@@ -51,7 +51,7 @@ private:
   std::vector<Replica> replicas_;
   void InitializeReplicas(std::initializer_list<replica> &&content);
 
-public:
+ public:
   Poolset() = default;
   Poolset(const std::string &dir, std::initializer_list<replica> content)
       : dir_(dir) {
@@ -65,8 +65,12 @@ public:
     InitializeReplicas(std::move(content));
   }
 
-  const std::string &GetName() const { return this->name_; };
-  const std::string &GetFullPath() const { return path_; }
+  const std::string &GetName() const {
+    return this->name_;
+  };
+  const std::string &GetFullPath() const {
+    return path_;
+  }
   const Replica &GetReplica(unsigned index) const {
     return replicas_.at(index);
   }
@@ -74,7 +78,9 @@ public:
    * GetReplicas -- returns the vector of all replicas specified in the pool set
    * file.
    */
-  const std::vector<Replica> &GetReplicas() const { return this->replicas_; };
+  const std::vector<Replica> &GetReplicas() const {
+    return this->replicas_;
+  };
   /*
    * GetParts -- returns the vector of all parts specified in the pool set file.
    */
@@ -82,4 +88,4 @@ public:
   std::vector<std::string> GetContent() const;
 };
 
-#endif // !PMDK_TESTS_SRC_UTILS_POOLSET_POOLSET_H_
+#endif  // !PMDK_TESTS_SRC_UTILS_POOLSET_POOLSET_H_

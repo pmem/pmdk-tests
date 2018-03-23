@@ -39,8 +39,8 @@
 
 namespace string_utils {
 /*
- * Convert -- converts underlying char type of input string type provided by From
- * argument to type provided by To type argument.
+ * Convert -- converts underlying char type of input string type provided by
+ * From argument to type provided by To type argument.
  */
 template <typename To, typename From>
 std::basic_string<To> Convert(std::basic_string<From> f) {
@@ -75,6 +75,17 @@ template <typename T>
 bool IsSubstrFound(const std::basic_string<T> &substring,
                    const std::basic_string<T> &string) {
   return std::basic_string<T>::npos != string.find(substring);
+}
+
+template <typename T>
+void ReplaceAll(std::basic_string<T> &string,
+                const std::basic_string<T> &before,
+                const std::basic_string<T> &after) {
+  size_t pos = string.find(before);
+  while (pos != std::string::npos) {
+    string.replace(pos, before.size(), after);
+    pos = string.find(before, pos + before.size());
+  }
 }
 }  // namespace string_utils
 

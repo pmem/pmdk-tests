@@ -42,6 +42,28 @@ DUT::DUT(const std::string& address, const std::string& power_cycle_command,
   }
 }
 
+bool DUT::WaitForConnection(unsigned int timeout_secs) {
+  std::cout << "Waiting for connection, timeout: " << timeout_secs
+            << " minutes." << std::endl;
+  std::chrono::duration<float> timeout(timeout_secs);
+  auto elapsed = std::chrono::duration<float>::zero();
+  auto start = std::chrono::system_clock::now();
+
+  bool available = HostAvailable();
+  while (!available && elapsed < timeout) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    available = HostAvailable();
+    elapsed = std::chrono::system_clock::now() - start;
+  }
+
+  if (available) {
+    std::cout << "Connected to " << address_ << std::endl;
+  } else {
+    std::cerr << "Could not connect to " << address_ << std::endl;
+  }
+  return available;
+}
+
 int RASConfigurationCollection::FillConfigFields(pugi::xml_node&& root) {
   IShell shell;
   std::string address;
