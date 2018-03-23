@@ -30,41 +30,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_dimm_configuration.h"
+#ifndef US_REMOTE_TESTER_H
+#define US_REMOTE_TESTER_H
 
-int LocalDimmConfiguration::SetDimmCollections(pugi::xml_node &&node) {
-  int ret = -1;
+#include <vector>
+#include "gtest/gtest.h"
+#include "shell/i_shell.h"
+#include "ssh_runner/ssh_runner.h"
 
-  for (auto &&it : node.children("mountPoint")) {
-    ret = 0;
-    try {
-      DimmCollection temp = DimmCollection(it.text().get());
-      dimm_collections_.emplace_back(std::move(temp));
-    } catch (std::exception e) {
-      std::cerr << e.what() << std::endl;
-      return -1;
-    }
-  }
+extern std::string test_bin_path;
+extern std::string filter;
+extern std::string address;
+extern std::string rpmem_env;
 
-  if (ret == -1) {
-    std::cerr << "dimmConfiguration node does not exist" << std::endl;
-  }
+class USRemoteTester : public ::testing::Test {
+ public:
+  SshRunner ssh_runner_{address};
 
-  return ret;
-}
+  void SetUp() override;
+  void TearDown() override;
+  bool AllPassed(Output<char> out);
+  void PhaseExecute(std::string filter, std::string arg);
+};
 
-int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
-
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
-  }
-
-  if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmCollections(std::move(root.child("dimmConfiguration"))) != 0) {
-    return -1;
-  }
-
-  return 0;
-}
+#endif /* US_REMOTE_TESTER_H */

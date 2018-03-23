@@ -34,7 +34,7 @@
 #define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
 
 #include "configXML/read_config.h"
-#include "dimm.h"
+#include "dimm/dimm.h"
 #include "pugixml.hpp"
 
 class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
@@ -51,6 +51,9 @@ class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
   }
   DimmCollection &operator[](int idx) {
     return dimm_collections_.at(idx);
+  }
+  int GetSize() const {
+    return dimm_collections_.size();
   }
 };
 
