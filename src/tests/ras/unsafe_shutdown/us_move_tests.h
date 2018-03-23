@@ -30,39 +30,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#ifndef US_MOVE_TESTS_H
+#define US_MOVE_TESTS_H
 
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
+#include "unsafe_shutdown.h"
 
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
- private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
-
- public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
-  }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
-  }
-
-  const std::vector<DimmCollection>::const_iterator begin() const noexcept {
-    return dimm_collections_.cbegin();
-  }
-
-  const std::vector<DimmCollection>::const_iterator end() const noexcept {
-    return dimm_collections_.cend();
-  }
+struct move_param {
+  std::string description;
+  std::string src_pool_dir;
+  std::string dest_pool_dir;
+  bool enough_dimms;
 };
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+std::ostream& operator<<(std::ostream& stream, move_param const& m);
+
+class MovePoolDirty : public UnsafeShutdown,
+                      public ::testing::WithParamInterface<move_param> {
+ public:
+  std::string dest_pool_path_;
+  std::string src_pool_path_;
+
+  void SetUp() override;
+};
+
+class MovePoolClean : public UnsafeShutdown,
+                      public ::testing::WithParamInterface<move_param> {
+ public:
+  std::string dest_pool_path_;
+  std::string src_pool_path_;
+
+  MovePoolClean() {
+    this->close_pools_at_end_ = true;
+  }
+  void SetUp() override;
+};
+
+std::vector<move_param> GetMoveParams();
+
+#endif  // US_MOVE_TESTS_H

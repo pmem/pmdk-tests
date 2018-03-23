@@ -30,39 +30,33 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#ifndef INJECT_MANAGER_H
+#define INJECT_MANAGER_H
 
-#include "configXML/read_config.h"
 #include "dimm/dimm.h"
-#include "pugixml.hpp"
 
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
- private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
+/* Select whether the unsafe shutdown error is injected into the first, last or
+ * each dimm from specific dimm namespace */
+enum class InjectPolicy { all, first, last };
 
+class InjectManager {
  public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
-  }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
+  InjectManager(std::string test_dir, InjectPolicy policy)
+      : test_dir_(test_dir), policy_(policy) {
   }
 
-  const std::vector<DimmCollection>::const_iterator begin() const noexcept {
-    return dimm_collections_.cbegin();
-  }
+  bool CheckUSCDiff(const std::vector<DimmCollection> &dimm_colls,
+                    int expected_diff) const;
+  int RecordUSCAll(const std::vector<DimmCollection> &dimm_colls) const;
+  int Inject(const std::vector<DimmCollection> &us_dimm_colls) const;
 
-  const std::vector<DimmCollection>::const_iterator end() const noexcept {
-    return dimm_collections_.cend();
-  }
+ private:
+  std::string test_dir_;
+  InjectPolicy policy_;
+  const std::vector<Dimm> GetDimmsToInject(
+      const DimmCollection &us_dimm_coll) const;
+  int RecordDimmUSC(const Dimm &dimm) const;
+  int ReadRecordedUSC(std::string usc_file_path) const;
 };
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#endif  // INJECT_MANAGER_H

@@ -30,39 +30,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#include "pool_data.h"
 
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
+int LogData::Write(std::string log_text) {
+  size_t chunks = log_text.size() / chunk_size_;
 
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
- private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
-
- public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
-  }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
+  int pos = 0;
+  for (size_t i = 0; i < chunks; ++i) {
+    if (pmemlog_append(plp_, log_text.substr(pos, chunk_size_).c_str(),
+                       chunk_size_) != 0) {
+      std::cerr << "Appending line to log pool failed. Errno: " << errno
+                << std::endl;
+      return -1;
+    }
+    pos += chunk_size_;
   }
 
-  const std::vector<DimmCollection>::const_iterator begin() const noexcept {
-    return dimm_collections_.cbegin();
-  }
+  int last_chunk_size =
+      (chunks == 0) ? log_text.size() : log_text.size() % chunks;
 
-  const std::vector<DimmCollection>::const_iterator end() const noexcept {
-    return dimm_collections_.cend();
+  if (pmemlog_append(plp_, log_text.substr(pos).c_str(), last_chunk_size) !=
+      0) {
+    std::cerr << "Appending line to log pool failed. Errno :" << errno
+              << std::endl;
+    return -1;
   }
-};
+  return 0;
+}
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+std::string LogData::Read() {
+  std::string ret;
+  pmemlog_walk(plp_, 0, ReadLog, &ret);
+  return ret;
+}
+
+int LogData::ReadLog(const void *buf, size_t len, void *arg) {
+  static_cast<std::string *>(arg)->assign(static_cast<const char *>(buf), len);
+  return 0;
+}
