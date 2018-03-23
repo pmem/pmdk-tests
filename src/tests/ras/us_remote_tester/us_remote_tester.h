@@ -30,31 +30,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#ifndef US_REMOTE_TESTER_H
+#define US_REMOTE_TESTER_H
 
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
+#include <future>
+#include <thread>
+#include <vector>
+#include "exit_codes.h"
+#include "gtest/gtest.h"
+#include "ras_configXML/ras_configuration.h"
+#include "shell/i_shell.h"
 
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
- private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
+extern std::unique_ptr<std::string> filter;
+extern std::unique_ptr<RASConfigurationCollection> ras_config;
 
+class USRemoteTester : public ::testing::Test {
  public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
-  }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
+  void SetUp() override;
+  void TearDown() override;
+  int PhaseExecute(std::string filter, std::string arg);
+  bool RunPowerCycle();
+  bool WaitForDutsConnection(unsigned int timeout);
+  bool AllTestsFailed(int exit_code) {
+    return (exit_code != 0 && exit_code != exit_codes::partially_passed);
   }
 };
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#endif /* US_REMOTE_TESTER_H */

@@ -30,31 +30,31 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#include <algorithm>
+#include <exception>
+#include <iostream>
+#include <memory>
+#include "api_c/api_c.h"
+#include "exit_codes.h"
+#include "gtest/gtest.h"
+#include "ras_configXML/ras_configuration.h"
 
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
+std::unique_ptr<std::string> filter{new std::string{}};
+std::unique_ptr<RASConfigurationCollection> ras_config{new
+RASConfigurationCollection()};
 
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
- private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
+int main(int argc, char** argv) {
+  try {
+    ::testing::InitGoogleTest(&argc, argv);
 
- public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
+    if (argc > 1) {
+      *filter = argv[1];
+    }
+
+    return RUN_ALL_TESTS();
+
+  } catch (const std::exception& e) {
+    std::cerr << "Exception was caught: " << e.what() << std::endl;
+    return 1;
   }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
-  }
-};
-
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+}
