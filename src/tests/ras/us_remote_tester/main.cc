@@ -30,57 +30,31 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
-#define PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
-
-#include <ndctl/libdaxctl.h>
-#include <ndctl/libndctl.h>
-#include <stdio.h>
-#include <sys/stat.h>
+#include <algorithm>
 #include <exception>
 #include <iostream>
-#include <string>
-#include <vector>
+#include <memory>
 #include "api_c/api_c.h"
+#include "exit_codes.h"
+#include "gtest/gtest.h"
+#include "ras_configXML/ras_configuration.h"
 
-#define FOREACH_BUS_REGION_NAMESPACE(ctx, bus, region, ndns)    \
-  ndctl_bus_foreach(ctx, bus) ndctl_region_foreach(bus, region) \
-      ndctl_namespace_foreach(region, ndns)
+std::unique_ptr<std::string> filter{new std::string{}};
+std::unique_ptr<RASConfigurationCollection> ras_config{new
+RASConfigurationCollection()};
 
-class Dimm final {
- private:
-  struct ndctl_dimm *dimm_ = nullptr;
-  std::string uid_;
+int main(int argc, char** argv) {
+  try {
+    ::testing::InitGoogleTest(&argc, argv);
 
- public:
-  Dimm(struct ndctl_dimm *dimm, const char *uid) : dimm_(dimm), uid_(uid) {
+    if (argc > 1) {
+      *filter = argv[1];
+    }
+
+    return RUN_ALL_TESTS();
+
+  } catch (const std::exception& e) {
+    std::cerr << "Exception was caught: " << e.what() << std::endl;
+    return 1;
   }
-
-  int GetShutdownCount();
-  int InjectUnsafeShutdown();
-
-  const std::string &GetUid() const {
-    return this->uid_;
-  }
-};
-
-class DimmCollection final {
- private:
-  bool is_dax_ = false;
-  ndctl_ctx *ctx_ = nullptr;
-  std::string mountpoint_;
-  std::vector<Dimm> dimms_;
-
-  ndctl_interleave_set *GetInterleaveSet(ndctl_ctx *ctx, struct stat64 st);
-
- public:
-  DimmCollection(const std::string &mountpoint);
-
-  Dimm &operator[](std::size_t idx) {
-    return this->dimms_.at(idx);
-  }
-
-  ~DimmCollection();
-};
-
-#endif  // !PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
+}

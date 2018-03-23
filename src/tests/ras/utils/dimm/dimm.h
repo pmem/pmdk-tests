@@ -30,31 +30,63 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#ifndef PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
+#define PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
 
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
+#include <ndctl/libdaxctl.h>
+#include <ndctl/libndctl.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <exception>
+#include <iostream>
+#include <string>
+#include <vector>
+#include "api_c/api_c.h"
 
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
+#define FOREACH_BUS_REGION_NAMESPACE(ctx, bus, region, ndns)    \
+  ndctl_bus_foreach(ctx, bus) ndctl_region_foreach(bus, region) \
+      ndctl_namespace_foreach(region, ndns)
+
+class Dimm final {
  private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
+  struct ndctl_dimm *dimm_ = nullptr;
+  std::string uid_;
 
  public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
+  Dimm(struct ndctl_dimm *dimm, const char *uid) : dimm_(dimm), uid_(uid) {
   }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
+
+  int GetShutdownCount();
+  int InjectUnsafeShutdown();
+
+  const std::string &GetUid() const {
+    return this->uid_;
   }
 };
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+class DimmCollection final {
+ private:
+  bool is_dax_ = false;
+  ndctl_ctx *ctx_ = nullptr;
+  std::string mountpoint_;
+  std::vector<Dimm> dimms_;
+
+  ndctl_interleave_set *GetInterleaveSet(ndctl_ctx *ctx, struct stat64 st);
+
+ public:
+  DimmCollection(const std::string &mountpoint);
+  std::string GetMountpoint() const {
+    return this->mountpoint_;
+  }
+
+  Dimm &operator[](std::size_t idx) {
+    return this->dimms_.at(idx);
+  }
+  size_t GetSize() {
+    return dimms_.size();
+  }
+
+  ~DimmCollection();
+};
+
+#endif  // !PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_

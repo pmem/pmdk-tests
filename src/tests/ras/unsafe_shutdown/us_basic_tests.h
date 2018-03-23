@@ -30,5 +30,16 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int main() {
-}
+#ifndef US_BASIC_TESTS_H
+#define US_BASIC_TESTS_H
+
+#include "unsafe_shutdown.h"
+
+class UnsafeShutdownBasic : public UnsafeShutdown {
+ protected:
+  void SetUp() override;
+  std::string us_dimm_pool_path_;
+  size_t blk_size_ = PMEMBLK_MIN_BLK;
+};
+
+#endif  // US_BASIC_TESTS_H
