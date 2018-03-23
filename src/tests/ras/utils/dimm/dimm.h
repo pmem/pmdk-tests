@@ -30,69 +30,67 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
+#ifndef PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
+#define PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
 
+#include <ndctl/libdaxctl.h>
+#include <ndctl/libndctl.h>
+#include <sys/stat.h>
 #include "api_c/api_c.h"
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
-#include "shell/i_shell.h"
 
-class RemoteDimmNode final {
+#define FOREACH_BUS_REGION_NAMESPACE(ctx, bus, region, ndns)    \
+  ndctl_bus_foreach(ctx, bus) ndctl_region_foreach(bus, region) \
+      ndctl_namespace_foreach(region, ndns)
+
+class Dimm final {
  private:
-  std::string address_;
-  std::string test_dir_;
-  std::string bins_dir_;
-  IShell shell_{address_};
-  std::vector<std::string> mountpoints_;
+  struct ndctl_dimm *dimm_ = nullptr;
+  std::string uid_;
 
  public:
-  RemoteDimmNode(const std::string &address, const std::string &test_dir,
-                 const std::string &bins_dir, pugi::xml_node &&node);
-  RemoteDimmNode(RemoteDimmNode &&temp)
-      : address_(temp.address_),
-        test_dir_(temp.test_dir_),
-        bins_dir_(temp.bins_dir_),
-        mountpoints_(temp.mountpoints_) {
+  Dimm(struct ndctl_dimm *dimm, const char *uid) : dimm_(dimm), uid_(uid) {
   }
 
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
-  }
+  int GetShutdownCount() const;
+  int InjectUnsafeShutdown() const;
 
-  const std::string &GetAddress() const {
-    return this->address_;
-  }
-
-  const std::string &GetBinsDir() const {
-    return this->bins_dir_;
-  }
-
-  std::string &operator[](int idx) {
-    return mountpoints_.at(idx);
-  }
-
-  std::vector<std::string>::const_iterator begin() const {
-    return mountpoints_.begin();
-  }
-
-  std::vector<std::string>::const_iterator end() const {
-    return mountpoints_.end();
+  const std::string &GetUid() const {
+    return this->uid_;
   }
 };
 
-class RemoteDimmConfigurationsCollection final
-    : public ReadConfig<RemoteDimmConfigurationsCollection> {
+class DimmCollection final {
  private:
-  friend class ReadConfig<RemoteDimmConfigurationsCollection>;
-  int FillConfigFields(pugi::xml_node &&root);
-  std::vector<RemoteDimmNode> remote_configurations_;
+  bool is_dax_ = false;
+  ndctl_ctx *ctx_ = nullptr;
+  std::string mountpoint_;
+  std::vector<Dimm> dimms_;
+
+  ndctl_interleave_set *GetInterleaveSet(ndctl_ctx *ctx, struct stat64 st);
 
  public:
-  const RemoteDimmNode &GetNode(int idx) const {
-    return remote_configurations_.at(idx);
+  DimmCollection(const std::string &mountpoint);
+  std::string GetMountpoint() const {
+    return this->mountpoint_;
   }
+
+  Dimm &operator[](std::size_t idx) {
+    return this->dimms_.at(idx);
+  }
+
+  const std::vector<Dimm>::const_iterator begin() const noexcept {
+    return dimms_.cbegin();
+  }
+
+  const std::vector<Dimm>::const_iterator end() const noexcept {
+    return dimms_.cend();
+  }
+
+  size_t GetSize() const {
+    return dimms_.size();
+  }
+
+  ~DimmCollection();
 };
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
+#endif  // !PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
