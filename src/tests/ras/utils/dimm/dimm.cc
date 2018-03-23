@@ -36,7 +36,7 @@
 
 const int USC_VALID_FLAG = 1 << 5;
 
-int Dimm::GetShutdownCount() {
+int Dimm::GetShutdownCount() const {
   struct ndctl_cmd *cmd = ndctl_dimm_cmd_new_smart(dimm_);
 
   if (ndctl_cmd_submit(cmd)) {
@@ -50,7 +50,7 @@ int Dimm::GetShutdownCount() {
   return ndctl_cmd_smart_get_shutdown_count(cmd);
 }
 
-int Dimm::InjectUnsafeShutdown() {
+int Dimm::InjectUnsafeShutdown() const {
   struct ndctl_cmd *cmd = ndctl_dimm_cmd_new_ack_shutdown_count(dimm_);
 
   if (ndctl_cmd_submit(cmd)) {

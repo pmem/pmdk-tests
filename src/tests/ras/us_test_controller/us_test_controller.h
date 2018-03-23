@@ -30,39 +30,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#ifndef US_REMOTE_TESTER_H
+#define US_REMOTE_TESTER_H
 
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
+#include <future>
+#include "exit_codes.h"
+#include "gtest/gtest.h"
+#include "ras_configXML/ras_configuration.h"
 
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
- private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
+extern std::unique_ptr<std::string> gtest_filter;
+extern std::unique_ptr<RASConfigurationCollection> ras_config;
 
+class USTestController : public ::testing::Test {
  public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
-  }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
-  }
-
-  const std::vector<DimmCollection>::const_iterator begin() const noexcept {
-    return dimm_collections_.cbegin();
-  }
-
-  const std::vector<DimmCollection>::const_iterator end() const noexcept {
-    return dimm_collections_.cend();
+  void SetUp() override;
+  int PhaseExecute(const std::string& phase_number, const std::string& arg);
+  int RunPowerCycle();
+  bool WaitForDutsConnection(unsigned int timeout);
+  bool FatalError(int exit_code) {
+    return (exit_code != 0 && exit_code != exit_codes::partially_passed);
   }
 };
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#endif /* US_REMOTE_TESTER_H */

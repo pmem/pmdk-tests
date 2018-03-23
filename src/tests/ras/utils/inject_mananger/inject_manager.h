@@ -30,57 +30,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
-#define PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
+#ifndef INJECT_MANAGER_H
+#define INJECT_MANAGER_H
 
-#include <ndctl/libdaxctl.h>
-#include <ndctl/libndctl.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <exception>
-#include <iostream>
-#include <string>
-#include <vector>
-#include "api_c/api_c.h"
+#include "dimm/dimm.h"
 
-#define FOREACH_BUS_REGION_NAMESPACE(ctx, bus, region, ndns)    \
-  ndctl_bus_foreach(ctx, bus) ndctl_region_foreach(bus, region) \
-      ndctl_namespace_foreach(region, ndns)
+enum class InjectPolicy { all, first, last };
 
-class Dimm final {
- private:
-  struct ndctl_dimm *dimm_ = nullptr;
-  std::string uid_;
-
+class InjectManager {
  public:
-  Dimm(struct ndctl_dimm *dimm, const char *uid) : dimm_(dimm), uid_(uid) {
+  InjectManager(std::string test_dir, InjectPolicy policy)
+      : test_dir_(test_dir), policy_(policy) {
   }
 
-  int GetShutdownCount();
-  int InjectUnsafeShutdown();
+  bool UnsafelyShutdown(const std::vector<DimmCollection> &dimm_colls);
+  bool SafelyShutdown(const std::vector<DimmCollection> &dimm_colls);
+  int RecordUSCAll(const std::vector<DimmCollection> &dimm_colls);
+  int Inject(const std::vector<DimmCollection> &us_dimm_colls);
 
-  const std::string &GetUid() const {
-    return this->uid_;
-  }
+ private:
+  std::string test_dir_;
+  InjectPolicy policy_;
+  std::vector<Dimm> DimmsToInject(const DimmCollection &us_dimm_coll);
+  int RecordDimmUSC(Dimm dimm);
+  int ReadRecordedUSC(std::string usc_file_path);
 };
 
-class DimmCollection final {
- private:
-  bool is_dax_ = false;
-  ndctl_ctx *ctx_ = nullptr;
-  std::string mountpoint_;
-  std::vector<Dimm> dimms_;
-
-  ndctl_interleave_set *GetInterleaveSet(ndctl_ctx *ctx, struct stat64 st);
-
- public:
-  DimmCollection(const std::string &mountpoint);
-
-  Dimm &operator[](std::size_t idx) {
-    return this->dimms_.at(idx);
-  }
-
-  ~DimmCollection();
-};
-
-#endif  // !PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
+#endif  // INJECT_MANAGER_H
