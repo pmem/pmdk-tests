@@ -30,41 +30,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_dimm_configuration.h"
+#ifndef US_MOVE_TESTS_H
+#define US_MOVE_TESTS_H
 
-int LocalDimmConfiguration::SetDimmNamespaces(pugi::xml_node &&node) {
-  int ret = -1;
+#include "unsafe_shutdown.h"
 
-  for (auto &&it : node.children("mountPoint")) {
-    ret = 0;
-    try {
-      DimmNamespace temp = DimmNamespace(it.text().get());
-      dimm_namespaces_.emplace_back(std::move(temp));
-    } catch (const std::invalid_argument &e) {
-      std::cerr << e.what() << std::endl;
-      return -1;
-    }
+struct move_param {
+  std::string description;
+  std::string src_pool_dir;
+  std::string dest_pool_dir;
+  bool enough_dimms;
+};
+
+std::ostream& operator<<(std::ostream& stream, move_param const& m);
+
+class MovePoolDirty : public UnsafeShutdown,
+                      public ::testing::WithParamInterface<move_param> {
+ public:
+  std::string dest_pool_path_;
+  std::string src_pool_path_;
+
+  void SetUp() override;
+};
+
+class MovePoolClean : public UnsafeShutdown,
+                      public ::testing::WithParamInterface<move_param> {
+ public:
+  std::string dest_pool_path_;
+  std::string src_pool_path_;
+
+  MovePoolClean() {
+    this->close_pools_at_end_ = true;
   }
+  void SetUp() override;
+};
 
-  if (ret == -1) {
-    std::cerr << "dimmConfiguration node does not exist" << std::endl;
-  }
+std::vector<move_param> GetMoveParams();
 
-  return ret;
-}
-
-int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
-
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
-  }
-
-  if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmNamespaces(root.child("dimmConfiguration")) != 0) {
-    return -1;
-  }
-
-  return 0;
-}
+#endif  // US_MOVE_TESTS_H

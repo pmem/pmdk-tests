@@ -30,41 +30,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_dimm_configuration.h"
+#ifndef US_REMOTE_TESTER_H
+#define US_REMOTE_TESTER_H
 
-int LocalDimmConfiguration::SetDimmNamespaces(pugi::xml_node &&node) {
-  int ret = -1;
+#include <future>
+#include "exit_codes.h"
+#include "gtest/gtest.h"
+#include "ras_configXML/ras_configuration.h"
 
-  for (auto &&it : node.children("mountPoint")) {
-    ret = 0;
-    try {
-      DimmNamespace temp = DimmNamespace(it.text().get());
-      dimm_namespaces_.emplace_back(std::move(temp));
-    } catch (const std::invalid_argument &e) {
-      std::cerr << e.what() << std::endl;
-      return -1;
-    }
+extern std::unique_ptr<std::string> gtest_filter;
+extern std::unique_ptr<RASConfigurationCollection> ras_config;
+
+class USTestController : public ::testing::Test {
+ public:
+  void SetUp() override;
+  int PhaseExecute(const std::string& phase_number,
+                   const std::string& arg) const;
+  int RunPowerCycle() const;
+  int WaitForDutsConnection(unsigned int timeout) const;
+  bool IsFatalError(int exit_code) const {
+    return (exit_code != 0 && exit_code != exit_codes::partially_passed);
   }
+};
 
-  if (ret == -1) {
-    std::cerr << "dimmConfiguration node does not exist" << std::endl;
-  }
-
-  return ret;
-}
-
-int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
-
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
-  }
-
-  if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmNamespaces(root.child("dimmConfiguration")) != 0) {
-    return -1;
-  }
-
-  return 0;
-}
+#endif /* US_REMOTE_TESTER_H */
