@@ -46,6 +46,13 @@ int main(int argc, char **argv) {
     }
     ::testing::InitGoogleTest(&argc, argv);
     ret = RUN_ALL_TESTS();
+    ::testing::UnitTest *ut = ::testing::UnitTest::GetInstance();
+    std::cout << "succesfu test count" << ut->successful_test_count() <<std::endl;
+    std::cout << "failed test count" << ut->failed_test_count() <<std::endl;
+    std::cout << "test to run count" << ut->test_to_run_count() <<std::endl;
+    std::cout << "total_test_count" << ut->total_test_count() <<std::endl;
+    
+
   } catch (const std::exception &e) {
     std::cerr << "Exception was caught: " << e.what() << std::endl;
     ret = -1;
