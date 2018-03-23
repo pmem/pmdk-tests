@@ -62,16 +62,21 @@ struct PipeDeleter {
  * operations.
  */
 class IShell : NonCopyable {
-private:
+ private:
   Output<char> output_;
   bool print_log_ = false;
+  std::string address_;
 #ifdef _WIN32
   Output<wchar_t> w_output_;
-#endif // _WIN32
+#endif  // _WIN32
 
-public:
-  IShell(){};
-  IShell(bool print_log) : print_log_(print_log){};
+ public:
+  IShell() {
+  }
+  IShell(std::string address) : address_(address) {
+  }
+  IShell(bool print_log) : print_log_(print_log) {
+  }
   /*
    * GetLastOutput -- returns last received output.
    */
@@ -88,14 +93,16 @@ public:
   /*
    * GetLastOutput -- returns last received output.
    */
-  Output<wchar_t> GetWLastOutput() const { return w_output_; }
+  Output<wchar_t> GetWLastOutput() const {
+    return w_output_;
+  }
 
   /*
    * ExecuteCommand -- performs command by creating pipe with read mode. Returns
    * Output object on success, throws std::exception otherwise.
    */
   Output<wchar_t> ExecuteCommand(const std::wstring &cmd);
-#endif // _WIN32
+#endif  // _WIN32
 };
 
 #endif  // !PMDK_TESTS_SRC_UTILS_SHELL_I_SHELL_H_

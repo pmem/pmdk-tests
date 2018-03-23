@@ -30,31 +30,29 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#ifndef US_REMOTE_TESTER_H
+#define US_REMOTE_TESTER_H
 
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
+#include <vector>
+#include "gtest/gtest.h"
+#include "shell/i_shell.h"
+#include "ssh_runner/ssh_runner.h"
 
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
- private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
+extern std::unique_ptr<std::string> address;
+extern std::unique_ptr<std::string> test_bin_path;
+extern std::unique_ptr<std::string> power_on_cmd;
+extern std::unique_ptr<std::string> power_off_cmd;
+extern std::unique_ptr<std::string> filter;
 
+class USRemoteTester : public ::testing::Test {
  public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
-  }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
-  }
+  SshRunner ssh_runner_{*address};
+
+  void SetUp() override;
+  void TearDown() override;
+  bool AllPassed(Output<char> out);
+  void PhaseExecute(std::string filter, std::string arg);
+  int RunPowerCycle();
 };
 
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#endif /* US_REMOTE_TESTER_H */
