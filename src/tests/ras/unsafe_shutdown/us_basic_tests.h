@@ -30,41 +30,31 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_dimm_configuration.h"
+#ifndef US_BASIC_TESTS_H
+#define US_BASIC_TESTS_H
 
-int LocalDimmConfiguration::SetDimmNamespaces(pugi::xml_node &&node) {
-  int ret = -1;
+#include "unsafe_shutdown.h"
 
-  for (auto &&it : node.children("mountPoint")) {
-    ret = 0;
-    try {
-      DimmNamespace temp = DimmNamespace(it.text().get());
-      dimm_namespaces_.emplace_back(std::move(temp));
-    } catch (const std::invalid_argument &e) {
-      std::cerr << e.what() << std::endl;
-      return -1;
-    }
+class UnsafeShutdownBasic : public UnsafeShutdown {
+ public:
+  std::string us_dimm_pool_path_;
+  size_t blk_size_ = PMEMBLK_MIN_BLK;
+
+  void SetUp() override;
+};
+
+class UnsafeShutdownBasicClean : public UnsafeShutdownBasic {
+ public:
+  UnsafeShutdownBasicClean() {
+    close_pools_at_end_ = true;
   }
+};
 
-  if (ret == -1) {
-    std::cerr << "dimmConfiguration node does not exist" << std::endl;
-  }
+class UnsafeShutdownBasicWithoutUS : public UnsafeShutdown {
+ public:
+  std::string non_us_dimm_pool_path_;
 
-  return ret;
-}
+  void SetUp() override;
+};
 
-int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
-
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
-  }
-
-  if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmNamespaces(root.child("dimmConfiguration")) != 0) {
-    return -1;
-  }
-
-  return 0;
-}
+#endif  // US_BASIC_TESTS_H

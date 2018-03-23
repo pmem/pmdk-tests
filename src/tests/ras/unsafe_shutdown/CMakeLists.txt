@@ -28,7 +28,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-include(${CMAKE_CURRENT_LIST_DIR}/utils/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/unsafe_shutdown/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/us_test_controller/CMakeLists.txt)
+# UNSAFE_SHUTDOWN
+set(DIR ${CMAKE_CURRENT_LIST_DIR})
+set(PREFIX_FILTER "")
 
+file(GLOB_RECURSE us_SRC
+	"${DIR}/*.h"
+	"${DIR}/*.cc")
+
+add_executable(UNSAFE_SHUTDOWN
+	${us_SRC})
+
+set_source_groups("${PREFIX_FILTER}" ${us_SRC})
+include_directories(src/tests/ras/utils)
+
+target_link_libraries(UNSAFE_SHUTDOWN Utils RasUtils libgtest ${Libpmemblk_LIBRARIES}
+${Libpmemlog_LIBRARIES} ${Libpmemobj_LIBRARIES} ${Libpmempool_LIBRARIES})
+add_dependencies(UNSAFE_SHUTDOWN Utils RasUtils libgtest)

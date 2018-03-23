@@ -30,41 +30,31 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_dimm_configuration.h"
+#include "api_c/api_c.h"
+#include "exit_codes.h"
+#include "gtest/gtest.h"
+#include "ras_configXML/ras_configuration.h"
 
-int LocalDimmConfiguration::SetDimmNamespaces(pugi::xml_node &&node) {
-  int ret = -1;
+std::unique_ptr<std::string> gtest_filter{new std::string{}};
+std::unique_ptr<RASConfigurationCollection> ras_config{
+    new RASConfigurationCollection()};
 
-  for (auto &&it : node.children("mountPoint")) {
-    ret = 0;
-    try {
-      DimmNamespace temp = DimmNamespace(it.text().get());
-      dimm_namespaces_.emplace_back(std::move(temp));
-    } catch (const std::invalid_argument &e) {
-      std::cerr << e.what() << std::endl;
+int main(int argc, char** argv) {
+  try {
+    if (ras_config->ReadConfigFile() != 0) {
       return -1;
     }
+
+    ::testing::InitGoogleTest(&argc, argv);
+
+    /* Pass gtest_filter to managed test binary */
+    gtest_filter->assign(::testing::GTEST_FLAG(filter));
+    ::testing::GTEST_FLAG(filter) = "*";
+
+    return RUN_ALL_TESTS();
+
+  } catch (const std::exception& e) {
+    std::cerr << "Exception was caught: " << e.what() << std::endl;
+    return 1;
   }
-
-  if (ret == -1) {
-    std::cerr << "dimmConfiguration node does not exist" << std::endl;
-  }
-
-  return ret;
-}
-
-int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
-
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
-  }
-
-  if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmNamespaces(root.child("dimmConfiguration")) != 0) {
-    return -1;
-  }
-
-  return 0;
 }

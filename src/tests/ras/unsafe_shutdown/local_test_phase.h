@@ -29,58 +29,37 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef LOCAL_TEST_PHASE_H
+#define LOCAL_TEST_PHASE_H
 
-#ifndef PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
-#define PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
+#include "exit_codes.h"
+#include "test_phase/test_phase.h"
 
-#include <ndctl/libdaxctl.h>
-#include <ndctl/libndctl.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <exception>
-#include <iostream>
-#include <string>
-#include <vector>
-#include "api_c/api_c.h"
-
-#define FOREACH_BUS_REGION_NAMESPACE(ctx, bus, region, ndns)    \
-  ndctl_bus_foreach(ctx, bus) ndctl_region_foreach(bus, region) \
-      ndctl_namespace_foreach(region, ndns)
-
-class Dimm final {
- private:
-  struct ndctl_dimm *dimm_ = nullptr;
-  std::string uid_;
+class LocalTestPhase : public TestPhase<LocalTestPhase> {
+  friend class TestPhase<LocalTestPhase>;
 
  public:
-  Dimm(struct ndctl_dimm *dimm, const char *uid) : dimm_(dimm), uid_(uid) {
+  const std::vector<DimmNamespace> &GetSafeDimmNamespaces() const {
+    return this->safe_namespaces;
+  }
+  const std::vector<DimmNamespace> &GetUnsafeDimmNamespaces() const {
+    return this->unsafe_namespaces;
   }
 
-  int GetShutdownCount();
-  int InjectUnsafeShutdown();
-
-  const std::string &GetUid() const {
-    return this->uid_;
+  const std::string &GetTestDir() const {
+    return this->config_.GetTestDir();
   }
-};
 
-class DimmCollection final {
+ protected:
+  int Begin() const;
+  int Inject() const;
+  int CheckUSC() const;
+  int End() const;
+
  private:
-  bool is_dax_ = false;
-  ndctl_ctx *ctx_ = nullptr;
-  std::string mountpoint_;
-  std::vector<Dimm> dimms_;
-
-  ndctl_interleave_set *GetInterleaveSet(ndctl_ctx *ctx, struct stat64 st);
-
- public:
-  DimmCollection(const std::string &mountpoint);
-
-  Dimm &operator[](std::size_t idx) {
-    return this->dimms_.at(idx);
-  }
-
-  ~DimmCollection();
+  LocalDimmConfiguration config_;
+  std::vector<DimmNamespace> safe_namespaces;
+  std::vector<DimmNamespace> unsafe_namespaces;
+  LocalTestPhase();
 };
-
-#endif  // !PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
+#endif  // LOCAL_TEST_PHASE_H
