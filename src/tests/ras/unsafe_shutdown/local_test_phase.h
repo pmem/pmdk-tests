@@ -29,40 +29,37 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef LOCAL_TEST_PHASE_H
+#define LOCAL_TEST_PHASE_H
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#include "exit_codes.h"
+#include "test_phase/test_phase.h"
 
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
-
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
- private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
+class LocalTestPhase : public TestPhase<LocalTestPhase> {
+  friend class TestPhase<LocalTestPhase>;
 
  public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
+  const std::vector<DimmCollection> &GetSafeDimmNamespaces() {
+    return this->safe_dimm_colls_;
   }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
+  const std::vector<DimmCollection> &GetUnsafeDimmNamespaces() {
+    return this->unsafe_dimm_colls_;
   }
 
-  const std::vector<DimmCollection>::const_iterator begin() const noexcept {
-    return dimm_collections_.cbegin();
+  const std::string &GetTestDir() {
+    return this->local_dimm_config_.GetTestDir();
   }
 
-  const std::vector<DimmCollection>::const_iterator end() const noexcept {
-    return dimm_collections_.cend();
-  }
+ protected:
+  int Begin();
+  int Inject();
+  int CheckUSC();
+  int End();
+
+ private:
+  LocalDimmConfiguration local_dimm_config_;
+  std::vector<DimmCollection> safe_dimm_colls_;
+  std::vector<DimmCollection> unsafe_dimm_colls_;
+  LocalTestPhase();
 };
-
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#endif  // LOCAL_TEST_PHASE_H

@@ -30,39 +30,44 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
-#define PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+#include "configXML/local_dimm_configuration.h"
+#include "exit_codes.h"
+#include "gtest/gtest.h"
+#include "inject_mananger/inject_manager.h"
+#include "local_test_phase.h"
+#include "shell/i_shell.h"
 
-#include "configXML/read_config.h"
-#include "dimm/dimm.h"
-#include "pugixml.hpp"
+bool PartiallyPassed() {
+  ::testing::UnitTest *ut = ::testing::UnitTest::GetInstance();
+  return ut->successful_test_count() > 0 && ut->failed_test_count() > 0;
+}
 
-class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
- private:
-  friend class ReadConfig<LocalDimmConfiguration>;
-  std::string test_dir_;
-  std::vector<DimmCollection> dimm_collections_;
-  int FillConfigFields(pugi::xml_node &&root);
-  int SetDimmCollections(pugi::xml_node &&node);
+bool NoTestsPassed() {
+  ::testing::UnitTest *ut = ::testing::UnitTest::GetInstance();
+  return ut->successful_test_count() == 0;
+}
 
- public:
-  const std::string &GetTestDir() const {
-    return this->test_dir_;
+int main(int argc, char **argv) {
+  int ret = 0;
+  try {
+    ::testing::InitGoogleTest(&argc, argv);
+    LocalTestPhase &test_phase = LocalTestPhase::GetInstance();
+    test_phase.HandleCmdArgs(argc, argv);
+
+    if ((ret = test_phase.RunPreTestAction()) == 0) {
+      ret = RUN_ALL_TESTS();
+    }
+    if ((ret = test_phase.RunPostTestAction()) != 0) {
+      return ret;
+    }
+
+    if (PartiallyPassed()) {
+      ret = exit_codes::partially_passed;
+    }
+
+  } catch (const std::exception &e) {
+    std::cerr << "Exception was caught: " << e.what() << std::endl;
+    ret = 1;
   }
-  DimmCollection &operator[](int idx) {
-    return dimm_collections_.at(idx);
-  }
-  int GetSize() const {
-    return dimm_collections_.size();
-  }
-
-  const std::vector<DimmCollection>::const_iterator begin() const noexcept {
-    return dimm_collections_.cbegin();
-  }
-
-  const std::vector<DimmCollection>::const_iterator end() const noexcept {
-    return dimm_collections_.cend();
-  }
-};
-
-#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_DIMM_CONFIGURATION_H_
+  return ret;
+}
