@@ -36,6 +36,13 @@ file(GLOB_RECURSE ras_SRC
 	"${DIR}/*.h"
 	"${DIR}/*.cc")
 
+pkg_check_modules(Libndctl REQUIRED libndctl)
+include_directories(${Libndctl_INCLUDE_DIRS})
+link_directories(${Libndctl_LIBRARY_DIRS})
+pkg_check_modules(Libdaxctl REQUIRED libdaxctl)
+include_directories(${Libdaxctl_INCLUDE_DIRS})
+link_directories(${Libdaxctl_LIBRARY_DIRS})
+
 include_directories(src/tests/ras/utils)
 
 add_executable(RAS
@@ -43,5 +50,6 @@ add_executable(RAS
 
 set_source_groups("${PREFIX_FILTER}" ${ras_SRC})
 
-target_link_libraries(RAS Utils libgtest)
+target_link_libraries(RAS Utils libgtest ${Libdaxctl_LIBRARIES} ${Libndctl_LIBRARIES})
 add_dependencies(RAS Utils libgtest)
+

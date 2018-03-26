@@ -30,30 +30,5 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <exception>
-#include <iostream>
-#include <memory>
-#include "configXML/local_configuration.h"
-#include "gtest/gtest.h"
-
-std::unique_ptr<LocalConfiguration> local_config{new LocalConfiguration()};
-
-int main(int argc, char **argv) {
-  int ret = 0;
-  try {
-    if (local_config->ReadConfigFile() != 0) {
-      return -1;
-    }
-
-    ::testing::InitGoogleTest(&argc, argv);
-    ret = RUN_ALL_TESTS();
-  } catch (const std::exception &e) {
-    std::cerr << "Exception was caught: " << e.what() << std::endl;
-    ret = -1;
-  }
-
-  ApiC::CleanDirectory(local_config->GetTestDir());
-  ApiC::RemoveDirectoryT(local_config->GetTestDir());
-
-  return ret;
+int main() {
 }
