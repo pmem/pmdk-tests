@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,35 +30,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
-#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_INVALID_ARGUMENTS_H_
+#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_INVALID_ARGUMENTS_H_
 
-#include "pmempool_create.h"
+#include "pmempool_transform.h"
 
-namespace create {
-class ValidTests : public PmempoolCreate,
-                   public ::testing::WithParamInterface<PoolArgs> {
- public:
-  PoolArgs pool_args;
-
+namespace transform {
+class TransformInvalidTests
+    : public PmempoolTransform,
+      public ::testing::WithParamInterface<TransformArgs> {
+public:
   void SetUp() override;
 };
 
-class ValidInheritTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolInherit> {
- public:
-  PoolInherit pool_inherit;
-
-  void SetUp() override;
-};
-
-class ValidPoolsetTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolsetArgs> {
- public:
-  PoolsetArgs poolset_args;
-
+class TransformInvalidBasicTests
+    : public PmempoolTransform,
+      public ::testing::WithParamInterface<TransformArgs> {
+public:
   void SetUp() override;
 };
 }
 
-#endif  // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+#endif // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_INVALID_ARGUMENTS_H_

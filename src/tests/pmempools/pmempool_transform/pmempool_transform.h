@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,35 +30,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
-#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+#ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_H_
+#define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_H_
 
-#include "pmempool_create.h"
+#include "configXML/local_configuration.h"
+#include "pmdk_structures/obj.h"
+#include "shell/i_shell.h"
+#include "structures.h"
+#include "test_utils/file_utils.h"
+#include "gtest/gtest.h"
+#include <libpmempool.h>
 
-namespace create {
-class ValidTests : public PmempoolCreate,
-                   public ::testing::WithParamInterface<PoolArgs> {
- public:
-  PoolArgs pool_args;
+extern std::unique_ptr<LocalConfiguration> local_config;
+const std::string POOLSET_PATH_SRC = "pool_src.set";
+const std::string POOLSET_PATH_TEMP = "pool_temp.set";
+const std::string POOLSET_PATH_DST = "pool_dst.set";
 
-  void SetUp() override;
+class PmempoolTransform : public ::testing::Test {
+private:
+  std::string err_msg_;
+  Output<> output_;
+
+public:
+  ObjManagement obj_mgmt_;
+  ApiC api_c_;
+  IShell shell_;
+  PoolsetManagement p_mgmt_;
+  const std::string pool_path_ = local_config->GetTestDir() + "pool.file";
+
+  std::string GetOutputContent() const { return output_.GetContent(); }
+
+  int TransformPoolCLI(const std::string &poolset_file_src,
+                       const std::string &poolset_file_dst,
+                       const std::vector<Arg> &args = std::vector<Arg>());
+
+  void TearDown() override;
 };
 
-class ValidInheritTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolInherit> {
- public:
-  PoolInherit pool_inherit;
-
-  void SetUp() override;
-};
-
-class ValidPoolsetTests : public PmempoolCreate,
-                          public ::testing::WithParamInterface<PoolsetArgs> {
- public:
-  PoolsetArgs poolset_args;
-
-  void SetUp() override;
-};
-}
-
-#endif  // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_VALID_ARGUMENTS_H_
+#endif // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_TRANSFORM_H_

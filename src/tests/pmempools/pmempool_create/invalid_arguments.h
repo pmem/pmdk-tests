@@ -35,6 +35,7 @@
 
 #include "pmempool_create.h"
 
+namespace create {
 class InvalidArgumentsTests : public PmempoolCreate,
                               public ::testing::WithParamInterface<PoolArgs> {
  public:
@@ -59,5 +60,6 @@ class InvalidArgumentsPoolsetTests
 
   void SetUp() override;
 };
+}
 
 #endif  // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_PMEMPOOL_CREATE_INVALID_ARGUMENTS_H_

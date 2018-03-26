@@ -33,14 +33,15 @@
 #ifndef PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_STRUCTURES_H_
 #define PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_STRUCTURES_H_
 
-#include <libpmemblk.h>
-#include <libpmemlog.h>
-#include <libpmemobj.h>
+#include "constants.h"
+#include "pmdk_structures/obj.h"
+#include "poolset/poolset.h"
 #include <algorithm>
 #include <array>
 #include <iostream>
-#include "constants.h"
-#include "poolset/poolset.h"
+#include <libpmemblk.h>
+#include <libpmemlog.h>
+#include <libpmemobj.h>
 
 enum class PoolType { Obj, Blk, Log, None, Count };
 
@@ -57,6 +58,7 @@ enum class Option {
   WriteLayout,
   BSize,
   Layout,
+  DryRun,
 
   Count
 };
@@ -76,10 +78,10 @@ struct Arg {
   std::string value;
 
   Arg(Option option, OptionType arg_type, std::string value)
-      : option(option), arg_type(arg_type), value(value){}
+      : option(option), arg_type(arg_type), value(value) {}
 
   Arg(Option option, OptionType arg_type)
-      : option(option), arg_type(arg_type){}
+      : option(option), arg_type(arg_type) {}
 };
 
 struct PoolArgs {
@@ -90,16 +92,16 @@ struct PoolArgs {
   PoolArgs() = default;
 
   PoolArgs(PoolType pool_type_, std::initializer_list<Arg> args_)
-      : pool_type(pool_type_), args(args_){}
+      : pool_type(pool_type_), args(args_) {}
 
-  PoolArgs(PoolType pool_type) : pool_type(pool_type){}
+  PoolArgs(PoolType pool_type) : pool_type(pool_type) {}
 
   PoolArgs(PoolType pool_type_, std::initializer_list<Arg> args_,
            std::string err_msg_)
-      : pool_type(pool_type_), args(args_), err_msg(err_msg_){}
+      : pool_type(pool_type_), args(args_), err_msg(err_msg_) {}
 
   PoolArgs(PoolType pool_type, std::string err_msg_)
-      : pool_type(pool_type), err_msg(err_msg_){}
+      : pool_type(pool_type), err_msg(err_msg_) {}
 };
 
 struct PoolInherit {
@@ -110,6 +112,43 @@ struct PoolInherit {
 struct PoolsetArgs {
   PoolArgs args;
   Poolset poolset;
+};
+
+struct TransformArgs {
+  ObjPool obj_pool;
+  Poolset poolset_src;
+  Poolset poolset_temp;
+  Poolset poolset_dst;
+  std::vector<Arg> pool_args;
+  std::string err_msg;
+
+  TransformArgs() {}
+
+  TransformArgs(ObjPool obj_pool_, Poolset poolset_src_, Poolset poolset_dst_)
+      : obj_pool(obj_pool_), poolset_src(std::move(poolset_src_)),
+        poolset_dst(std::move(poolset_dst_)) {}
+
+  TransformArgs(ObjPool obj_pool_, Poolset poolset_src_, Poolset poolset_temp_,
+                Poolset poolset_dst_)
+      : obj_pool(obj_pool_), poolset_src(std::move(poolset_src_)),
+        poolset_temp(std::move(poolset_temp_)),
+        poolset_dst(std::move(poolset_dst_)) {}
+
+  TransformArgs(ObjPool obj_pool_, Poolset poolset_src_, Poolset poolset_dst_,
+                std::vector<Arg> pool_args_)
+      : obj_pool(obj_pool_), poolset_src(std::move(poolset_src_)),
+        poolset_dst(std::move(poolset_dst_)), pool_args(pool_args_) {}
+
+  TransformArgs(ObjPool obj_pool_, Poolset poolset_src_, Poolset poolset_dst_,
+                std::string err_msg_)
+      : obj_pool(obj_pool_), poolset_src(std::move(poolset_src_)),
+        poolset_dst(std::move(poolset_dst_)), err_msg(err_msg_) {}
+
+  TransformArgs(ObjPool obj_pool_, Poolset poolset_src_, Poolset poolset_dst_,
+                std::vector<Arg> pool_args_, std::string err_msg_)
+      : obj_pool(obj_pool_), poolset_src(std::move(poolset_src_)),
+        poolset_dst(std::move(poolset_dst_)), pool_args(pool_args_),
+        err_msg(err_msg_) {}
 };
 
 namespace struct_utils {
@@ -123,10 +162,10 @@ const std::array<std::string, ConvertEnum<int>(PoolType::Count)> POOL_TYPES{
 
 const std::array<std::string, ConvertEnum<int>(Option::Count)> LONG_OPTIONS{
     {"--size ", "--max-size ", "--mode ", "--inherit ", "--force ",
-     "--verbose ", "--help ", "--write-layout", "", "--layout "}};
+     "--verbose ", "--help ", "--write-layout", "", "--layout ", "--dry-run "}};
 
 const std::array<std::string, ConvertEnum<int>(Option::Count)> SHORT_OPTIONS{
-    {"-s", "-M", "-m", "-i", "-f", "-v", "-h", "-w", "", "-l"}};
+    {"-s", "-M", "-m", "-i", "-f", "-v", "-h", "-w", "", "-l", "-d"}};
 
 const std::array<size_t, ConvertEnum<int>(PoolType::Count)> POOL_MIN_SIZES{
     {static_cast<size_t>(PMEMOBJ_MIN_POOL),
@@ -140,23 +179,21 @@ const std::array<size_t, ConvertEnum<int>(PoolType::Count)> POOL_MIN_SIZES{
 static inline std::string ParseArg(Option option, OptionType arg_type,
                                    const std::string &value) {
   switch (arg_type) {
-    case OptionType::Long:
-      return LONG_OPTIONS[ConvertEnum<int>(option)] + value;
-      break;
-    case OptionType::Short:
-      return SHORT_OPTIONS[ConvertEnum<int>(option)] + " " + value;
-      break;
-    case OptionType::ShortNoSpace:
-      return SHORT_OPTIONS[ConvertEnum<int>(option)] + value;
-      break;
+  case OptionType::Long:
+    return LONG_OPTIONS[ConvertEnum<int>(option)] + value;
+    break;
+  case OptionType::Short:
+    return SHORT_OPTIONS[ConvertEnum<int>(option)] + " " + value;
+    break;
+  case OptionType::ShortNoSpace:
+    return SHORT_OPTIONS[ConvertEnum<int>(option)] + value;
+    break;
   }
 
   return "";
 }
 
-static inline int GetDefaultMode() {
-  return 0664 & PERMISSION_MASK;
-}
+static inline int GetDefaultMode() { return 0664 & PERMISSION_MASK; }
 
 static inline std::string CombineArguments(const std::vector<Arg> &args) {
   std::string arguments;
@@ -215,6 +252,6 @@ static inline int GetPoolMode(const PoolArgs &pool_args) {
 
   return GetDefaultMode();
 }
-}  // namespace struct_utils
+} // namespace struct_utils
 
-#endif  // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_STRUCTURES_H_
+#endif // !PMDK_TESTS_SRC_TESTS_PMEMPOOLS_PMEMPOOL_CREATE_STRUCTURES_H_

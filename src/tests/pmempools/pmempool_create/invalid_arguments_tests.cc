@@ -32,6 +32,7 @@
 
 #include "invalid_arguments.h"
 
+namespace create {
 /**
  * InvalidArgumentsTests.PMEMPOOL_CREATE
  * Creating pool of different type using wrong arguments:
@@ -223,3 +224,4 @@ INSTANTIATE_TEST_CASE_P(
              {{Option::BSize, OptionType::Long, "512"}},
              " -- replication not supported\nerror: creating pool file failed"},
             Poolset{{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}}));
+}
