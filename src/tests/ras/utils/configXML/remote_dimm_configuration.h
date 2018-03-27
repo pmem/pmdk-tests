@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,39 +30,61 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "i_shell.h"
+#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
+#define PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
 
-Output<char> IShell::ExecuteCommand(const std::string &cmd) {
-#ifdef _WIN32
-  std::string command = "PowerShell -Command " + cmd + " 2>&1";
-#else
-  std::string command =
-      "{ " + (address_.empty() ? "" : address_ + " ") + cmd + "; } 2>&1";
-#endif  // _WIN32
-  std::unique_ptr<FILE, PipeDeleter> pipe(popen(command.c_str(), "r"));
+#include "api_c/api_c.h"
+#include "configXML/read_config.h"
+#include "dimm.h"
+#include "pugixml.hpp"
+#include "shell/i_shell.h"
 
-  if (!pipe) {
-    throw std::runtime_error("popen failed");
+class RemoteDimmNode final {
+ private:
+  IShell shell_;
+  std::string address_;
+  std::string test_dir_;
+  std::string bins_dir_;
+  std::vector<std::string> mount_points_;
+
+ public:
+  RemoteDimmNode(const std::string &address, const std::string &test_dir,
+                 const std::string &bins_dir, pugi::xml_node &&node);
+  RemoteDimmNode(RemoteDimmNode &&temp)
+      : address_(temp.address_),
+        test_dir_(temp.test_dir_),
+        bins_dir_(temp.bins_dir_),
+        mount_points_(temp.mount_points_) {
   }
 
-  char buffer[BUFFER_SIZE];
-  std::string out_buffer;
-
-  while (fgets(buffer, BUFFER_SIZE, pipe.get())) {
-    out_buffer.append(buffer);
+  const std::string &GetTestDir() const {
+    return this->test_dir_;
   }
 
-  auto s_pipe = pipe.release();
-  int exit_code = pclose(s_pipe);
-#ifdef _WIN32
-  output_ = Output<char>(exit_code, out_buffer);
-#else
-  output_ = Output<char>(WEXITSTATUS(exit_code), out_buffer);
-#endif  // _WIN32
-
-  if (print_log_) {
-    std::cout << out_buffer << std::endl;
+  const std::string &GetAddress() const {
+    return this->address_;
   }
 
-  return output_;
-}
+  const std::string &GetBinsDir() const {
+    return this->bins_dir_;
+  }
+
+  std::string &operator[](int idx) {
+    return mount_points_.at(idx);
+  }
+};
+
+class RemoteDimmConfigurationCollection final
+    : public ReadConfig<RemoteDimmConfigurationCollection> {
+ private:
+  friend class ReadConfig<RemoteDimmConfigurationCollection>;
+  int FillConfigFields(pugi::xml_node &&root);
+  std::vector<RemoteDimmNode> remote_configurations_;
+
+ public:
+  const RemoteDimmNode &GetNode(int idx) const {
+    return remote_configurations_.at(idx);
+  }
+};
+
+#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
