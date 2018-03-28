@@ -36,10 +36,8 @@ file(GLOB_RECURSE ras_SRC
 	"${DIR}/*.h"
 	"${DIR}/*.cc")
 
-pkg_check_modules(Libndctl REQUIRED libndctl)
 include_directories(${Libndctl_INCLUDE_DIRS})
 link_directories(${Libndctl_LIBRARY_DIRS})
-pkg_check_modules(Libdaxctl REQUIRED libdaxctl)
 include_directories(${Libdaxctl_INCLUDE_DIRS})
 link_directories(${Libdaxctl_LIBRARY_DIRS})
 
