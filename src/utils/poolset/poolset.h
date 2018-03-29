@@ -33,47 +33,40 @@
 #ifndef PMDK_TESTS_SRC_UTILS_POOLSET_POOLSET_H_
 #define PMDK_TESTS_SRC_UTILS_POOLSET_POOLSET_H_
 
-#include <memory>
 #include "configXML/local_configuration.h"
 #include "replica.h"
+#include <memory>
 
-extern std::unique_ptr<LocalConfiguration> local_config;
 using replica = std::initializer_list<std::string>;
 
 /*
  * Poolset -- class that represents pool set file.
  */
 class Poolset final {
- private:
+private:
   int replica_counter_ = 0;
-  std::string path_ = local_config->GetTestDir();
+  std::string dir_;
   std::string name_ = "pool.set";
-  std::string full_path_ = local_config->GetTestDir() + SEPARATOR + name_;
+  std::string path_ = SEPARATOR + name_;
   std::vector<Replica> replicas_;
   void InitializeReplicas(std::initializer_list<replica> &&content);
 
- public:
+public:
   Poolset() = default;
-  Poolset(std::initializer_list<replica> content) {
+  Poolset(const std::string &dir, std::initializer_list<replica> content)
+      : dir_(dir) {
+    path_.insert(0, dir_);
     InitializeReplicas(std::move(content));
   }
-  Poolset(const std::string &path, std::initializer_list<replica> content)
-      : path_(path) {
-    InitializeReplicas(std::move(content));
-  }
-  Poolset(const std::string &path, const std::string &name,
+  Poolset(const std::string &dir, const std::string &name,
           std::initializer_list<replica> content)
-      : path_(path), name_(name) {
-    full_path_ = path + SEPARATOR + name;
+      : dir_(dir), name_(name) {
+    path_ = dir_ + SEPARATOR + name_;
     InitializeReplicas(std::move(content));
   }
 
-  const std::string &GetName() const {
-    return this->name_;
-  };
-  const std::string &GetFullPath() const {
-    return full_path_;
-  }
+  const std::string &GetName() const { return this->name_; };
+  const std::string &GetFullPath() const { return path_; }
   const Replica &GetReplica(unsigned index) const {
     return replicas_.at(index);
   }
@@ -81,9 +74,7 @@ class Poolset final {
    * GetReplicas -- returns the vector of all replicas specified in the pool set
    * file.
    */
-  const std::vector<Replica> &GetReplicas() const {
-    return this->replicas_;
-  };
+  const std::vector<Replica> &GetReplicas() const { return this->replicas_; };
   /*
    * GetParts -- returns the vector of all parts specified in the pool set file.
    */
@@ -91,4 +82,4 @@ class Poolset final {
   std::vector<std::string> GetContent() const;
 };
 
-#endif  // !PMDK_TESTS_SRC_UTILS_POOLSET_POOLSET_H_
+#endif // !PMDK_TESTS_SRC_UTILS_POOLSET_POOLSET_H_

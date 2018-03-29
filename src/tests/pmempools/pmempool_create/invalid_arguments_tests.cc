@@ -194,32 +194,39 @@ TEST_P(InvalidArgumentsPoolsetTests, PMEMPOOL_POOLSET) {
 INSTANTIATE_TEST_CASE_P(
     PmempoolCreatePoolset, InvalidArgumentsPoolsetTests,
     ::testing::Values(
-        PoolsetArgs{{PoolType::Obj,
-                     {{Option::Size, OptionType::Long, "30M"}},
-                     "error: -s|--size cannot be used with poolset file"},
-                    Poolset{{"PMEMPOOLSET", "20M"}}},
-        PoolsetArgs{{PoolType::Obj,
-                     {{Option::MaxSize, OptionType::Long}},
-                     "error: -M|--max-size cannot be used with poolset file"},
-                    Poolset{{"PMEMPOOLSET", "20M"}}},
-        PoolsetArgs{{PoolType::Obj,
-                     {{Option::Size, OptionType::Long, "30M"}},
-                     "error: -s|--size cannot be used with poolset file"},
-                    Poolset{{"PMEMPOOLSET", "20M"}}},
+        PoolsetArgs{
+            {PoolType::Obj,
+             {{Option::Size, OptionType::Long, "30M"}},
+             "error: -s|--size cannot be used with poolset file"},
+            Poolset{local_config->GetTestDir(), {{"PMEMPOOLSET", "20M"}}}},
+        PoolsetArgs{
+            {PoolType::Obj,
+             {{Option::MaxSize, OptionType::Long}},
+             "error: -M|--max-size cannot be used with poolset file"},
+            Poolset{local_config->GetTestDir(), {{"PMEMPOOLSET", "20M"}}}},
+        PoolsetArgs{
+            {PoolType::Obj,
+             {{Option::Size, OptionType::Long, "30M"}},
+             "error: -s|--size cannot be used with poolset file"},
+            Poolset{local_config->GetTestDir(), {{"PMEMPOOLSET", "20M"}}}},
+        PoolsetArgs{
+            {PoolType::Obj, "net pool size 7340032 smaller than " +
+                                std::to_string(PMEMOBJ_MIN_POOL) +
+                                "\nerror: creating pool file failed"},
+            Poolset{local_config->GetTestDir(), {{"PMEMPOOLSET", "7M"}}}},
         PoolsetArgs{{PoolType::Obj, "net pool size 7340032 smaller than " +
                                         std::to_string(PMEMOBJ_MIN_POOL) +
                                         "\nerror: creating pool file failed"},
-                    Poolset{{"PMEMPOOLSET", "7M"}}},
-        PoolsetArgs{{PoolType::Obj, "net pool size 7340032 smaller than " +
-                                        std::to_string(PMEMOBJ_MIN_POOL) +
-                                        "\nerror: creating pool file failed"},
-                    Poolset{{"PMEMPOOLSET", "20M"}, {"REPLICA", "7M"}}},
+                    Poolset{local_config->GetTestDir(),
+                            {{"PMEMPOOLSET", "20M"}, {"REPLICA", "7M"}}}},
         PoolsetArgs{
             {PoolType::Log,
              "replication not supported\nerror: creating pool file failed"},
-            Poolset{{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}},
+            Poolset{local_config->GetTestDir(),
+                    {{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}}},
         PoolsetArgs{
             {PoolType::Blk,
              {{Option::BSize, OptionType::Long, "512"}},
              " -- replication not supported\nerror: creating pool file failed"},
-            Poolset{{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}}));
+            Poolset{local_config->GetTestDir(),
+                    {{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}}}));
