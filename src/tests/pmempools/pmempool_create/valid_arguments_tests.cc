@@ -122,9 +122,15 @@ TEST_P(ValidPoolsetTests, PMEMPOOL_POOLSET) {
 INSTANTIATE_TEST_CASE_P(
     PmempoolCreatePoolset, ValidPoolsetTests,
     ::testing::Values(
-        PoolsetArgs{{PoolType::Blk, {{Option::BSize, OptionType::Short, "8"}}},
-                    Poolset{{"PMEMPOOLSET", "20M"}}},
-        PoolsetArgs{{PoolType::Obj}, Poolset{{"PMEMPOOLSET", "20M"}}},
-        PoolsetArgs{{PoolType::Log}, Poolset{{"PMEMPOOLSET", "20M"}}},
+        PoolsetArgs{
+            {PoolType::Blk, {{Option::BSize, OptionType::Short, "8"}}},
+            Poolset{local_config->GetTestDir(), {{"PMEMPOOLSET", "20M"}}}},
+        PoolsetArgs{
+            {PoolType::Obj},
+            Poolset{local_config->GetTestDir(), {{"PMEMPOOLSET", "20M"}}}},
+        PoolsetArgs{
+            {PoolType::Log},
+            Poolset{local_config->GetTestDir(), {{"PMEMPOOLSET", "20M"}}}},
         PoolsetArgs{{PoolType::Obj},
-                    Poolset{{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}}));
+                    Poolset{local_config->GetTestDir(),
+                            {{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}}}));
