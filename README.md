@@ -103,3 +103,8 @@ $ ../etc/scripts/run_tests.py -b ./PMEMPOOLS --timeout 15 -e "*VERBOSE*"
 
 ### Other Requirements ###
 Python scripts in pmdk-tests are compatible with Python 3.4.
+
+### See also ###
+Detailed documentation for specific test groups:
+* [Reliability, Availability and Serviceability
+(RAS)](src/tests/ras/README.md)
