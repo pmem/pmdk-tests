@@ -537,8 +537,9 @@ INSTANTIATE_TEST_CASE_P(
                                 out_args{-1, EEXIST})));
 INSTANTIATE_TEST_CASE_P(
     RetrieveInfoFromUnexistingClass, ObjCtlAllocClassParamTest,
-    ::testing::Values(make_pair(in_args{{{}, {}, {}, {}, 128}, Scenario::GET},
-                                out_args{-1, ENOENT})));
+    ::testing::Values(make_pair(
+        in_args{{512, 0, 1024, POBJ_HEADER_COMPACT, 128}, Scenario::GET},
+        out_args{-1, ENOENT})));
 INSTANTIATE_TEST_CASE_P(
     CreateCustomAllocationClass, ObjCtlAllocClassParamTest,
     ::testing::Values(
