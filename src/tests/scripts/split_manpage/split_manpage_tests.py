@@ -44,6 +44,10 @@ Tests check:
 
 Required argument:
   -r <PMDK_path>    the PMDK library root path.
+
+Optional argument:
+  -d <PMDK_doc_path>    PMDK library documentation path. Needs to be specified
+                        if it is not in PATH.
 """
 
 import unittest
@@ -96,11 +100,11 @@ def get_macros(pmdk_path):
                 is_macro_in_next_line = True
             elif is_macro_in_next_line:
                 parse_macro_name(exceptions, line,
-                               EXPRESSION_AT_THE_LINE_START, macros)
+                                 EXPRESSION_AT_THE_LINE_START, macros)
                 is_macro_in_next_line = False
             elif '#define' in line:
                 parse_macro_name(exceptions, line,
-                               EXPRESSION_AFTER_DEFINE_PHRASE, macros)
+                                 EXPRESSION_AFTER_DEFINE_PHRASE, macros)
     return macros
 
 
@@ -186,7 +190,7 @@ def check_completeness_of_extracted_functions_and_macros(pmdk_path):
     return missing_functions_and_macros_in_generated
 
 
-def check_linking_manpages(pmdk_path):
+def check_linking_manpages(pmdk_path, doc_path):
     """
     Checks if macros and functions from the generated directory have
     direct access to man page through command 'man function_name/macro_name'
@@ -196,11 +200,33 @@ def check_linking_manpages(pmdk_path):
         get_functions_and_macros_from_generated(pmdk_path)
     functions_without_manpage = []
     for function in functions_from_generated:
-        process_find_in_manpage = call(
-            'man ' + function, shell=True, stdout=DEVNULL, stderr=DEVNULL)
+        if doc_path:
+            process_find_in_manpage = call(
+                'man -M ' + doc_path + ' ' + function, shell=True,
+                stdout=DEVNULL, stderr=DEVNULL)
+        else:
+            process_find_in_manpage = call(
+                'man ' + function, shell=True, stdout=DEVNULL, stderr=DEVNULL)
         if process_find_in_manpage:
             functions_without_manpage.append(function)
     return functions_without_manpage
+
+
+def parse_argument(argument_option):
+    """
+    Parses an option from the command line.
+    """
+    index = sys.argv.index(argument_option)
+    try:
+        argument = sys.argv[index+1]
+    except IndexError:
+        print('ERROR: Invalid argument!')
+        print(__doc__)
+        print(unittest.main.__doc__)
+    else:
+        sys.argv.pop(index)
+        sys.argv.pop(index)
+        return argument
 
 
 class TestDocumentation(unittest.TestCase):
@@ -248,7 +274,8 @@ class TestDocumentation(unittest.TestCase):
         Checks if all functions and macros have direct access to the man page
         through use command 'man function_name/macro_name'.
         """
-        no_linked_functions_and_macros = check_linking_manpages(pmdk_path)
+        no_linked_functions_and_macros =\
+            check_linking_manpages(pmdk_path, doc_path)
         error_msg =\
             linesep + 'List of macros and functions without the linked man\
             page:'
@@ -258,21 +285,15 @@ class TestDocumentation(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    doc_path = ''
     if '-h' in sys.argv or '--help' in sys.argv:
         print(__doc__)
         unittest.main()
     elif '-r' in sys.argv:
-        index = sys.argv.index('-r')
-        try:
-            pmdk_path = sys.argv[index+1]
-        except IndexError:
-            print('ERROR: Invalid argument!')
-            print(__doc__)
-            print(unittest.main.__doc__)
-        else:
-            sys.argv.pop(index)
-            sys.argv.pop(index)
-            unittest.main()
+        pmdk_path = parse_argument('-r')
+        if '-d' in sys.argv:
+            doc_path = parse_argument('-d')
+        unittest.main()
     else:
         print(__doc__)
         print(unittest.main.__doc__)
