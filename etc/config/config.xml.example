@@ -1,4 +1,11 @@
 <configuration>
+	<rasConfiguration>
+                <DUT>
+                        <address>[<user>@]<hostname>[:<port>]</address>
+                        <powerCycleCommand>script</powerCycleCommand>
+                        <binDir>example\path</binDir>
+                </DUT>
+        </rasConfiguration>
 	<localConfiguration>
 		<testDir>example\path</testDir>
 		<dimmConfiguration>
