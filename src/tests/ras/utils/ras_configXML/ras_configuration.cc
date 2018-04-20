@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,42 +30,54 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "i_shell.h"
+#include "ras_configuration.h"
 
-Output<char> IShell::ExecuteCommand(const std::string &cmd) {
-#ifdef _WIN32
-  std::string command = "PowerShell -Command " + cmd + " 2>&1";
-#else
-  std::string command =
-      "{ " + (address_.empty()
-                  ? ""
-                  : "ssh -o PasswordAuthentication=no " + address_ + " ") +
-      cmd + "; } 2>&1";
-#endif  // _WIN32
-  std::unique_ptr<FILE, PipeDeleter> pipe(popen(command.c_str(), "r"));
+DUT::DUT(const std::string& address, const std::string& power_cycle_command,
+         const std::string& bin_dir)
+    : address_(address),
+      power_cycle_command_(power_cycle_command),
+      bin_dir_(bin_dir) {
+  if (0 != ishell_.ExecuteCommand("test -d " + bin_dir_).GetExitCode()) {
+    throw std::invalid_argument(ishell_.GetLastOutput().GetContent());
+  }
+}
 
-  if (!pipe) {
-    throw std::runtime_error("popen failed");
+int RASConfigurationCollection::FillConfigFields(pugi::xml_node&& root) {
+  IShell shell;
+  std::string address;
+  std::string port = "22";
+  size_t pos;
+  int ret = -1;
+
+  for (auto&& it : root.children("RASConfiguration")) {
+    ret = 0;
+    address = it.child("address").text().as_string();
+    pos = address.find_last_of(":");
+
+    if (pos != std::string::npos) {
+      port = address.substr(pos + 1);
+      address = address.substr(0, pos - 1);
+    }
+
+    if (shell.ExecuteCommand("ssh " + address + " -p " + port + " exit")
+            .GetExitCode() != 0) {
+      std::cerr << shell.GetLastOutput().GetContent() << std::endl;
+      return -1;
+    }
+    try {
+      duts_collection_.emplace_back(
+          DUT(address + " -p " + port,
+              it.child("powerCycleCommand").text().as_string(),
+              it.child("binDir").text().as_string()));
+    } catch (const std::invalid_argument& e) {
+      std::cerr << e.what() << std::endl;
+      return -1;
+    }
   }
 
-  char buffer[BUFFER_SIZE];
-  std::string out_buffer;
-
-  while (fgets(buffer, BUFFER_SIZE, pipe.get())) {
-    out_buffer.append(buffer);
+  if (ret == -1) {
+    std::cerr << "RASConfiguration node does not exist" << std::endl;
   }
 
-  auto s_pipe = pipe.release();
-  int exit_code = pclose(s_pipe);
-#ifdef _WIN32
-  output_ = Output<char>(exit_code, out_buffer);
-#else
-  output_ = Output<char>(WEXITSTATUS(exit_code), out_buffer);
-#endif  // _WIN32
-
-  if (print_log_) {
-    std::cout << out_buffer << std::endl;
-  }
-
-  return output_;
+  return ret;
 }
