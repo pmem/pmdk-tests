@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,42 +30,53 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "i_shell.h"
+#ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_RAS_CONFIGURATION_H_
+#define PMDK_TESTS_SRC_UTILS_CONFIGXML_RAS_CONFIGURATION_H_
 
-Output<char> IShell::ExecuteCommand(const std::string &cmd) {
-#ifdef _WIN32
-  std::string command = "PowerShell -Command " + cmd + " 2>&1";
-#else
-  std::string command =
-      "{ " + (address_.empty()
-                  ? ""
-                  : "ssh -o PasswordAuthentication=no " + address_ + " ") +
-      cmd + "; } 2>&1";
-#endif  // _WIN32
-  std::unique_ptr<FILE, PipeDeleter> pipe(popen(command.c_str(), "r"));
+#include "configXML/read_config.h"
+#include "shell/i_shell.h"
 
-  if (!pipe) {
-    throw std::runtime_error("popen failed");
+class DUT final {
+ private:
+  std::string address_;
+  std::string power_cycle_command_;
+  std::string bin_dir_;
+  IShell ishell_{address_};
+
+ public:
+  DUT() = delete;
+  DUT(const std::string& address, const std::string& power_cycle_command,
+      const std::string& bin_dir);
+  DUT(DUT&& temp)
+      : address_(temp.address_),
+        power_cycle_command_(temp.power_cycle_command_),
+        bin_dir_(temp.bin_dir_){};
+  const std::string& GetBinDir() const {
+    return this->bin_dir_;
   }
-
-  char buffer[BUFFER_SIZE];
-  std::string out_buffer;
-
-  while (fgets(buffer, BUFFER_SIZE, pipe.get())) {
-    out_buffer.append(buffer);
+  Output<char> ExecuteCmd(std::string cmd) {
+    return ishell_.ExecuteCommand(cmd);
   }
-
-  auto s_pipe = pipe.release();
-  int exit_code = pclose(s_pipe);
-#ifdef _WIN32
-  output_ = Output<char>(exit_code, out_buffer);
-#else
-  output_ = Output<char>(WEXITSTATUS(exit_code), out_buffer);
-#endif  // _WIN32
-
-  if (print_log_) {
-    std::cout << out_buffer << std::endl;
+  Output<char> PowerCycle() {
+    IShell i_shell;
+    return i_shell.ExecuteCommand(power_cycle_command_);
   }
+};
 
-  return output_;
-}
+class RASConfigurationCollection final
+    : public ReadConfig<RASConfigurationCollection> {
+ private:
+  friend class ReadConfig<RASConfigurationCollection>;
+  int FillConfigFields(pugi::xml_node&& root);
+  std::vector<DUT> duts_collection_;
+
+ public:
+  DUT& GetDUT(int idx) {
+    return duts_collection_.at(idx);
+  }
+  DUT& operator[](std::size_t idx) {
+    return this->duts_collection_.at(idx);
+  }
+};
+
+#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_RAS_CONFIGURATION_H_
