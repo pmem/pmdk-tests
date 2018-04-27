@@ -109,33 +109,10 @@ TEST_F(PmempoolCreate, PMEMPOOL_CREATE_VERBOSE) {
  * long option / SUCCESS
  *          \li \c Step2. Display help message for pmempool create command using
  * short option / SUCCESS
- *          \li \c Step3. Make sure that expected output is returned
  */
 TEST_F(PmempoolCreate, PMEMPOOL_CREATE_HELP_MESSAGES) {
-  const std::string expected_help_msg =
-      "Create pmem pool of specified size, type and name\n\n"
-      "Common options:\n"
-      "  -s, --size  <size>   size of pool\n"
-      "  -M, --max-size       use maximum available space on file system\n"
-      "  -m, --mode <octal>   set permissions to <octal> (the default is "
-      "0664)\n"
-      "  -i, --inherit <file> take required parameters from specified pool "
-      "file\n"
-      "  -f, --force          remove the pool first\n"
-      "  -v, --verbose        increase verbosity level\n"
-      "  -h, --help           display this help and exit\n\n"
-      "Options for PMEMBLK:\n"
-      "  -w, --write-layout force writing the BTT layout\n\n"
-      "Options for PMEMOBJ and PMEMCTO:\n"
-      "  -l, --layout <name>  layout name stored in pool's header\n\n"
-      "For complete documentation see pmempool-create(1) manual page.\n";
   /* Step 1 */
   EXPECT_EQ(0, shell_.ExecuteCommand("pmempool create -h").GetExitCode());
-  std::string output1 = shell_.GetLastOutput().GetContent();
   /* Step 2 */
   EXPECT_EQ(0, shell_.ExecuteCommand("pmempool create --help").GetExitCode());
-  std::string output2 = shell_.GetLastOutput().GetContent();
-  /* Step 3 */
-  EXPECT_TRUE(string_utils::IsSubstrFound(expected_help_msg, output1));
-  EXPECT_TRUE(string_utils::IsSubstrFound(expected_help_msg, output2));
 }
