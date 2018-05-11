@@ -431,6 +431,7 @@ INSTANTIATE_TEST_CASE_P(
  * Following conditions checked:
  * Positive:
  * - unit sizes (1, 8, PMEMOBJ_MAX_ALLOC_SIZE) SET&GET / SUCCESS
+ * - alignments (0(default), 1, 2MiB, equal to unit size)
  * - units per block (1024, max value of unsigned) / SUCCESS
  * - class ids (128, 254) SET&GET / SUCCESS
  * - header types (POBJ_HEADER_NONE, POBJ_HEADER_LEGACY, POBJ_HEADER_COMPACT)
@@ -438,7 +439,8 @@ INSTANTIATE_TEST_CASE_P(
  * Negative:
  * - Class id out of range (255, max value of unsigned) - SET&GET
  *   / FAIL: ret = -1, errno = ERANGE
- * - Invalid alignment (1, max value of size_t) - SET
+ * - Invalid alignment (3, 2MiB + 1, 4MiB, odd divisor of unit size, max
+ *   value of size_t) - SET, errno = EINVAL
  * - Invalid unit size (0, PMEMOBJ_MAX_ALLOC_SIZE + 1) - SET / FAIL: ret = -1,
  *   errno = EINVAL
  * - Invalid units per block (0) - SET / FAIL: ret = -1, errno = EINVAL
@@ -451,12 +453,15 @@ INSTANTIATE_TEST_CASE_P(
  * \test
  *          \li \c Step1. Create pmemobj pool / SUCCESS
  *          \li \c Step2. Execute scenario
- *          \li \c Step3. Close pool
+ *          \li \c Step3. Allocate an object from allocation class, check
+ *          object's alignment if custom alignment was set
+ *          \li \c Step4. Close pool
  */
 TEST_P(ObjCtlAllocClassParamTest, PMEMOBJ_CTL_CUSTOM_ALLOCATION_CLASS) {
   /* Step 1 */
+  size_t pool_size = PMEMOBJ_MIN_POOL;
   PMEMobjpool *pop =
-      pmemobj_create(pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL, 0666);
+      pmemobj_create(pool_path_.c_str(), nullptr, pool_size, 0666);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
   /* Step 2 */
   in_args i_args;
@@ -485,9 +490,22 @@ TEST_P(ObjCtlAllocClassParamTest, PMEMOBJ_CTL_CUSTOM_ALLOCATION_CLASS) {
     if (o_args.ret == 0 && i_args.scenario == Scenario::SET_GET) {
       EXPECT_TRUE(
           AllocClassUtils::IsAllocClassValid(i_args.write_args, read_args));
+      /* Step 3 */
+      if (i_args.write_args.unit_size * i_args.write_args.units_per_block <
+          pool_size) {
+        PMEMoid oid;
+        EXPECT_EQ(0, pmemobj_xalloc(pop, &oid, 1, 0,
+                                    POBJ_CLASS_ID(i_args.write_args.class_id),
+                                    nullptr, nullptr))
+            << pmemobj_errormsg();
+        EXPECT_FALSE(OID_IS_NULL(oid));
+        if (i_args.write_args.alignment != 0) {
+          EXPECT_EQ(0, oid.off % i_args.write_args.alignment);
+        }
+      }
     }
   }
-  /* Step 3 */
+  /* Step 4 */
   pmemobj_close(pop);
 }
 
@@ -513,13 +531,27 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     InvalidAlignment, ObjCtlAllocClassParamTest,
     ::testing::Values(
-        make_pair(in_args{{512, 1, 1024, POBJ_HEADER_COMPACT, 128},
+        make_pair(in_args{{512, 3, 1024, POBJ_HEADER_COMPACT, 128},
                           Scenario::SET},
-                  out_args{-1, ENOTSUP}),
+                  out_args{-1, EINVAL}),
         make_pair(in_args{{512, (std::numeric_limits<size_t>::max)(), 1024,
                            POBJ_HEADER_COMPACT, 128},
                           Scenario::SET},
-                  out_args{-1, ENOTSUP})));
+                  out_args{-1, EINVAL}),
+        make_pair(in_args{{1000, 512, 1024, POBJ_HEADER_COMPACT, 128},
+                          Scenario::SET},
+                  out_args{-1, EINVAL}),
+        make_pair(in_args{{4 * MEBIBYTE, 2 * MEBIBYTE + 1, 1024,
+                           POBJ_HEADER_COMPACT, 128},
+                          Scenario::SET},
+                  out_args{-1, EINVAL}),
+        make_pair(in_args{{4 * MEBIBYTE, 4 * MEBIBYTE, 1024,
+                           POBJ_HEADER_COMPACT, 128},
+                          Scenario::SET},
+                  out_args{-1, EINVAL}),
+        make_pair(in_args{{1024, 2048, 1024, POBJ_HEADER_COMPACT, 128},
+                          Scenario::SET},
+                  out_args{-1, EINVAL})));
 INSTANTIATE_TEST_CASE_P(
     InvalidUnitsPerBlock, ObjCtlAllocClassParamTest,
     ::testing::Values(make_pair(in_args{{512, 0, 0, POBJ_HEADER_COMPACT, 128},
@@ -552,7 +584,23 @@ INSTANTIATE_TEST_CASE_P(
         make_pair(in_args{{512, 0, 1024, POBJ_HEADER_COMPACT, 254},
                           Scenario::SET_GET},
                   out_args{0, 0}),
-        make_pair(in_args{{PMEMOBJ_MAX_ALLOC_SIZE, 0, 1024, POBJ_HEADER_COMPACT,
+        make_pair(in_args{{512, 1, 1024, POBJ_HEADER_COMPACT, 128},
+                          Scenario::SET_GET},
+                  out_args{0, 0}),
+        make_pair(in_args{{512, 2, 1024, POBJ_HEADER_COMPACT, 128},
+                          Scenario::SET_GET},
+                  out_args{0, 0}),
+        make_pair(in_args{{512, 512, 1024, POBJ_HEADER_COMPACT, 128},
+                          Scenario::SET_GET},
+                  out_args{0, 0}),
+        make_pair(in_args{{512, 256, 1024, POBJ_HEADER_COMPACT, 128},
+                          Scenario::SET_GET},
+                  out_args{0, 0}),
+        make_pair(in_args{{4 * MEBIBYTE, 2 * MEBIBYTE, 4, POBJ_HEADER_COMPACT,
+                           128},
+                          Scenario::SET_GET},
+                  out_args{0, 0}),
+        make_pair(in_args{{PMEMOBJ_MAX_ALLOC_SIZE, 0, 1, POBJ_HEADER_COMPACT,
                            128},
                           Scenario::SET_GET},
                   out_args{0, 0}),
