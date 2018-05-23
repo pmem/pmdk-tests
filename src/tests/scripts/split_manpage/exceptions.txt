@@ -58,3 +58,4 @@ libpmemobj_action_base_h
 pobj_max_actions
 pobj_action_xreserve_valid_flags
 libpmemobj_types_h
+pmemvlt
