@@ -44,12 +44,12 @@ LocalTestPhase::LocalTestPhase() {
   int i = 0;
   std::copy_if(config_.begin(), config_.end(),
                std::back_inserter(unsafe_namespaces),
-               [&i, this](DimmNamespace) -> bool { return i++ != 1; });
+               [&i](DimmNamespace) -> bool { return i++ != 1; });
 
   i = 0;
   std::copy_if(config_.begin(), config_.end(),
                std::back_inserter(safe_namespaces),
-               [&i, this](DimmNamespace) -> bool { return i++ == 1; });
+               [&i](DimmNamespace) -> bool { return i++ == 1; });
 }
 
 int LocalTestPhase::Begin() const {
