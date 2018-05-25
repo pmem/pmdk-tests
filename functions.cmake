@@ -180,5 +180,12 @@ function(check_workaround_flags_required)
 		set(WORKAROUND_FLAGS "${WORKAROUND_FLAGS} -D_GLIBCXX_USE_C99")
 	endif ()
 
+	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		# Removing problematic clang++ flags:
+		# 1. https://github.com/google/googletest/issues/1419
+		# 2. https://bugs.llvm.org/show_bug.cgi?id=21629
+		set(WORKAROUND_FLAGS "${WORKAROUND_FLAGS} -Wno-missing-braces -Wno-gnu-zero-variadic-macro-arguments")
+	endif()
+
 	set(WORKAROUND_FLAGS "${WORKAROUND_FLAGS}" PARENT_SCOPE)
 endfunction()
