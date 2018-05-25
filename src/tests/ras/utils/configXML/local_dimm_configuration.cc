@@ -62,7 +62,7 @@ int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
   }
 
   if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmCollections(std::move(root.child("dimmConfiguration"))) != 0) {
+      SetDimmCollections(root.child("dimmConfiguration")) != 0) {
     return -1;
   }
 
