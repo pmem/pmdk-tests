@@ -50,6 +50,7 @@ include(FindThreads)
 include(functions.cmake) # Function definitions
 
 option(DEVELOPER_MODE "enable developer checks" OFF)
+option(PMDK_SYSTEM_HEADERS "always treat PMDK headers as system headers" ON)
 include(style-format.cmake)
 
 # Find and set GTest, PugiXML and PMDK libraries paths
@@ -111,6 +112,20 @@ else ()
 				${Libpmemlog_INCLUDE_DIRS}
 				${Libpmemobj_INCLUDE_DIRS}
 				${Libpmempool_INCLUDE_DIRS})
+
+		if (PMDK_SYSTEM_HEADERS)
+			set(CMAKE_CXX_FLAGS
+				"${CMAKE_CXX_FLAGS} -isystem ${Libpmem_INCLUDE_DIRS}")
+			set(CMAKE_CXX_FLAGS
+				"${CMAKE_CXX_FLAGS} -isystem ${Libpmemblk_INCLUDE_DIRS}")
+			set(CMAKE_CXX_FLAGS
+				"${CMAKE_CXX_FLAGS} -isystem ${Libpmemlog_INCLUDE_DIRS}")
+			set(CMAKE_CXX_FLAGS
+				"${CMAKE_CXX_FLAGS} -isystem ${Libpmemobj_INCLUDE_DIRS}")
+			set(CMAKE_CXX_FLAGS
+				"${CMAKE_CXX_FLAGS} -isystem ${Libpmempool_INCLUDE_DIRS}")
+		endif ()
+
 		link_directories(${Libpmem_LIBRARY_DIRS}
 				${Libpmemblk_LIBRARY_DIRS}
 				${Libpmemlog_LIBRARY_DIRS}
@@ -126,6 +141,11 @@ else ()
 
 		find_path(PMDK_INCLUDE_DIR NAMES "libpmem.h" "libpmemblk.h" "libpmemlog.h" "libpmemobj.h" "libpmempool.h")
 		include_directories(${PMDK_INCLUDE_DIR})
+		if (PMDK_SYSTEM_HEADERS)
+			set(CMAKE_CXX_FLAGS
+				"${CMAKE_CXX_FLAGS} -isystem ${PMDK_INCLUDE_DIR}")
+		endif ()
+
 	endif ()
 endif ()
 
