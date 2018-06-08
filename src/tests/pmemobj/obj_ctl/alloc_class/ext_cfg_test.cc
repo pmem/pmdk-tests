@@ -113,7 +113,7 @@ INSTANTIATE_TEST_CASE_P(
  * - configuration file pointed by PMEMOBJ_CONF_FILE environment variable
  * Following scenarios are considered:
  * - unit sizes: 0, PMEMOBJ_MAX_ALLOC_SIZE + 1
- * - alignments: 1
+ * - alignments: 3
  * - class of ids: 0, 255
  * - units per block: 0, greater than internal bitmap size(i.e. 2432)
  * - header types: invalid
@@ -139,7 +139,7 @@ INSTANTIATE_TEST_CASE_P(
             pobj_alloc_class_desc{0, 0, 1024, POBJ_HEADER_COMPACT, 128},
             pobj_alloc_class_desc{PMEMOBJ_MAX_ALLOC_SIZE + 1, 0, 1024,
                                   POBJ_HEADER_COMPACT, 128},
-            pobj_alloc_class_desc{1024, 1, 1024, POBJ_HEADER_COMPACT, 128},
+            pobj_alloc_class_desc{1024, 3, 1024, POBJ_HEADER_COMPACT, 128},
             pobj_alloc_class_desc{1024, 0, 1024, POBJ_HEADER_COMPACT, 0},
             pobj_alloc_class_desc{1024, 0, 1024, POBJ_HEADER_COMPACT, 255},
             pobj_alloc_class_desc{1024, 0, 0, POBJ_HEADER_COMPACT,
