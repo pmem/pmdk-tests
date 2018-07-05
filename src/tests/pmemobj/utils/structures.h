@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,29 +30,47 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "poolset.h"
+#ifndef PMDK_TESTS_SRC_TESTS_PMEMOBJ_STRUCTURES_H_
+#define PMDK_TESTS_SRC_TESTS_PMEMOBJ_STRUCTURES_H_
 
-void Poolset::InitializeReplicas(std::initializer_list<replica> &&content) {
-  InitializeReplicas(content.begin(), content.end());
-}
+#include <functional>
+#include <string>
+#include "poolset/poolset.h"
 
-std::vector<Part> Poolset::GetParts() const {
-  std::vector<Part> parts;
-  for (const auto &replica : this->replicas_) {
-    for (const auto &part : replica.GetParts()) {
-      parts.emplace_back(part);
-    }
-  }
-  return parts;
-}
+struct PoolExtendParamA {
+  std::vector<std::string> poolset;
+  size_t growth;
+  size_t alloc_size;
+  std::function<void(size_t)> assert_f;
+};
 
-std::vector<std::string> Poolset::GetContent() const {
-  std::vector<std::string> content;
-  for (const auto &replica : replicas_) {
-    content.emplace_back(replica.GetHeader());
-    for (const auto &part : replica.GetParts()) {
-      content.emplace_back(part.GetSize() + " " + part.GetPath());
-    }
-  }
-  return content;
-}
+struct PoolExtendParamB {
+	std::vector<std::string> poolset;
+  size_t growth;
+  size_t alloc_size;
+  std::function<void(int)> assert_f1;
+  std::function<void(size_t)> assert_f2;
+};
+
+struct PoolExtendManualParamA {
+	std::vector<std::string> poolset;
+  size_t growth;
+  std::function<void(int)> assert_f1;
+  std::function<void(const char *)> assert_f2;
+};
+
+struct PoolExtendManualParamB {
+	std::vector<std::string> poolset;
+  size_t growth;
+  std::function<void(const long long &)> assert_f;
+};
+
+struct PoolExtendMultiThreadParam {
+  std::vector<std::string> poolset;
+  size_t no_of_alloc_threads;
+  size_t no_allocs_per_thread;
+  size_t no_of_extend_threads;
+  size_t no_extends_per_thread;
+};
+
+#endif  // PMDK_TESTS_SRC_TESTS_PMEMOBJ_STRUCTURES_H_

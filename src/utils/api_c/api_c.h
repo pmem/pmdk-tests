@@ -39,6 +39,7 @@
 #include <string>
 #include <sys/stat.h>
 #include <vector>
+#include <functional>
 
 class ApiC final : NonCopyable {
 public:
@@ -151,6 +152,15 @@ public:
   /* UnsetEnv -- deletes the variable name from the environment.
    * Returns 0 on success, -1 otherwise. */
   static int UnsetEnv(const std::string &name);
+
+  /* IsDirectoryEmpty -- Returns 0 if directory is empty, -1 otherwise. */
+  static bool IsDirectoryEmpty(std::string &path);
+
+  /* CountFilesWithAction -- Performs operation defined by func
+   * on all files from path recursively. File_count is set to number
+   * of regular files found under dir directory */
+  static void CountFilesWithAction(const std::string &dir,
+    std::function<void(const std::string &)> func, int* file_count);
 
 #ifdef _WIN32
   /*

@@ -51,6 +51,14 @@ private:
   std::vector<Replica> replicas_;
   void InitializeReplicas(std::initializer_list<replica> &&content);
 
+  template<typename T>
+  void InitializeReplicas(T first, T last) {
+    for (auto it = first; it != last; ++it) {
+      this->replicas_.emplace_back(std::vector<std::string>{*it}, path_, replica_counter_);
+      ++replica_counter_;
+    }
+  }
+
 public:
   Poolset() = default;
   Poolset(const std::string &dir, std::initializer_list<replica> content)
@@ -63,6 +71,13 @@ public:
       : dir_(dir), name_(name) {
     path_ = dir_ + SEPARATOR + name_;
     InitializeReplicas(std::move(content));
+  }
+
+  Poolset(const std::string &dir, const std::string &name,
+          const std::vector<std::string> &content)
+      : dir_(dir), name_(name) {
+    path_ = dir_ + SEPARATOR + name_;
+    InitializeReplicas(content.begin(), content.end());
   }
 
   const std::string &GetName() const { return this->name_; };
