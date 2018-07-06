@@ -49,9 +49,7 @@ void ObjCtlPoolExtendTest::ReopenAndCheckPool(PMEMobjpool *pop, std::string path
   pop = nullptr;
   pop = pmemobj_open(path.c_str(), layout);
 
-  auto err = pmemobj_errormsg();
   ASSERT_TRUE(nullptr != pop);
-  (void)err;
   pmemobj_close(pop);
 
   int ret = pmemobj_check(path.c_str(), layout);

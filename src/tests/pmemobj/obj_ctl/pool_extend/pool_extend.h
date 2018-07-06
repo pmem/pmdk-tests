@@ -45,12 +45,6 @@
 #include "poolset/poolset_management.h"
 #include "shell/i_shell.h"
 #include "test_utils/file_utils.h"
-#include "shell/i_shell.h"
-#include "constants.h"
-#include <libpmemobj.h>
-#include <memory>
-#include <string>
-#include <math.h>
 
 extern std::unique_ptr<LocalConfiguration> local_config;
 
