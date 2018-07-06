@@ -700,8 +700,7 @@ TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_MANUAL_EXTEND_01) {
  *          space reservation set in poolset
  *          \li \c Step6. Reopen and check the pool
  */
-TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_MANUAL_EXTEND_02)
-{
+TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_MANUAL_EXTEND_02) {
   Poolset poolset{
       test_dir,
       "pool.set",
@@ -743,8 +742,7 @@ TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_MANUAL_EXTEND_02)
  *          \li \c Step3. Check if error message is non-empty
  *          \li \c Step4. Reopen and check the pool
  */
-TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_MANUAL_EXTEND_03)
-{
+TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_MANUAL_EXTEND_03) {
   Poolset poolset{
       test_dir,
       "pool.set",
@@ -779,8 +777,7 @@ TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_MANUAL_EXTEND_03)
  *          \li \c Step4. Check if files were created for both replicas
  *          \li \c Step5. Reopen and check the pool
  */
-TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_MANUAL_EXTEND_04)
-{
+TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_MANUAL_EXTEND_04) {
   Poolset poolset{test_dir,
                   "pool.set",
                   {{"PMEMPOOLSET"},
