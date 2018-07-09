@@ -180,6 +180,8 @@ def get_cmd_args():
     parser.add_argument('--check-prerequisites', nargs=0,
                         help='Check prerequisites only.',
                         action=CheckPrerequisitesAction)
+    parser.add_argument('--all', action='store_true', default=False,
+                        help='Check all files in repository')
     return parser.parse_args()
 
 
@@ -189,18 +191,23 @@ def main():
     """
     args = get_cmd_args()
     check_prerequisites()
-
     files_to_process = []
-    if args.recursive:
-        if not path.isdir(args.path):
-            sys.exit('{} is not a directory'.format(path.abspath(args.path)))
-        files_to_process = check_utils.get_files_to_process(
-            args.path, args.ignore, DESIGN_EXTENSIONS + CPP_EXTENSIONS)
+
+    if args.all:
+        if args.recursive:
+            if not path.isdir(args.path):
+                sys.exit('{} is not a directory'.format(
+                    path.abspath(args.path)))
+            files_to_process = check_utils.get_files_to_process(
+                args.path, args.ignore, DESIGN_EXTENSIONS + CPP_EXTENSIONS)
+        else:
+            if not path.isfile(args.path):
+                sys.exit('{} is not a regular file'.format(
+                    path.abspath(args.path)))
+            files_to_process.append(args.path)
     else:
-        if not path.isfile(args.path):
-            sys.exit('{} is not a regular file'.format(
-                path.abspath(args.path)))
-        files_to_process.append(args.path)
+        files_to_process = check_utils.get_diff_files_to_process(
+            args.path, args.ignore, DESIGN_EXTENSIONS + CPP_EXTENSIONS)
 
     diffs_after_formatting = False
     for filepath in files_to_process:

@@ -32,8 +32,9 @@
 """Utility function for code checking scripts."""
 
 import os
+from ntpath import basename
 from os import path
-from subprocess import check_output, STDOUT, CalledProcessError
+from subprocess import check_output, STDOUT, CalledProcessError, call
 from pathlib import PurePath
 from difflib import unified_diff
 
@@ -55,20 +56,36 @@ def has_extension(filepath, extensions):
     return any(filepath.endswith(ext) for ext in extensions)
 
 
+def is_ignored(file, ignored):
+    """Check if files are in the list of ignored files."""
+    return any(i in PurePath(path.abspath(file)).parts for i in ignored)
+
+
 def get_files_to_process(root_dir, ignored, extensions):
     """Get a list of files under root_dir with given extensions, omit ignored
     path parts."""
     if isinstance(ignored, str):
         ignored = [ignored]
-
-    def is_ignored(file):
-        return any(i in PurePath(path.abspath(file)).parts for i in ignored)
-
     to_format = []
     for root, _, files in os.walk(root_dir):
         to_format.extend(path.join(root, file) for file in files
                          if has_extension(file, extensions) and not
-                         is_ignored(path.join(root, file)))
+                         is_ignored(path.join(root, file), ignored))
+    return to_format
+
+
+def get_diff_files_to_process(root_dir, ignored, extensions):
+    """Get a list of changed files under root_dir with given extensions,
+    omit ignored path parts."""
+    to_format = []
+    output = check_output('git status --short -uall', shell=True,
+                          cwd=root_dir).decode("UTF-8")
+    for line in output.split('\n'):
+        raw = line.strip().split(' ')
+        file_name = basename(line)
+        if line and raw[0] != "D" and has_extension(file_name, extensions) and \
+                not is_ignored(raw[1], ignored):
+            to_format.append(path.join(root_dir, (raw[1])))
     return to_format
 
 
