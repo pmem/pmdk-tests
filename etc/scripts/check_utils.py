@@ -32,8 +32,9 @@
 """Utility function for code checking scripts."""
 
 import os
+from ntpath import basename
 from os import path
-from subprocess import check_output, STDOUT, CalledProcessError
+from subprocess import check_output, STDOUT, CalledProcessError, call
 from pathlib import PurePath
 from difflib import unified_diff
 
@@ -55,21 +56,44 @@ def has_extension(filepath, extensions):
     return any(filepath.endswith(ext) for ext in extensions)
 
 
+def is_ignored(file, ignored):
+    """Check if files are in the list of ignored files."""
+    return any(i in PurePath(path.abspath(file)).parts for i in ignored)
+
+
 def get_files_to_process(root_dir, ignored, extensions):
     """Get a list of files under root_dir with given extensions, omit ignored
     path parts."""
     if isinstance(ignored, str):
         ignored = [ignored]
-
-    def is_ignored(file):
-        return any(i in PurePath(path.abspath(file)).parts for i in ignored)
-
     to_format = []
     for root, _, files in os.walk(root_dir):
         to_format.extend(path.join(root, file) for file in files
                          if has_extension(file, extensions) and not
-                         is_ignored(path.join(root, file)))
+                         is_ignored(path.join(root, file), ignored))
     return to_format
+
+
+def get_diff_files_to_process(root_dir, ignored, extensions):
+    """Get a list of changed files under root_dir with given extensions,
+    omit ignored path parts."""
+    to_format = []
+    try:
+        current_branch = check_output('git symbolic-ref --short HEAD',
+                                      shell=True,
+                                      cwd=root_dir).decode("UTF-8").strip()
+    except CalledProcessError as ex:
+        return ex.returncode, ex.output
+    else:
+        output = check_output((' ').join(('git diff --name-only', current_branch,
+                                          'master')), shell=True,
+                              cwd=root_dir).decode("UTF-8")
+        for line in output.splitlines():
+            file_name = basename(line)
+            if line and has_extension(file_name, extensions) and \
+                    not is_ignored(line, ignored):
+                to_format.append(path.join(root_dir, line))
+        return to_format
 
 
 def run(cmd, shell=False, cwd=None):
