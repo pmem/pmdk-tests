@@ -554,7 +554,7 @@ TEST_F(ObjCtlPoolExtendTest, PMEMOBJ_POOL_EXTEND_12) {
 
   /* Step 4,5,6 */
   auto output = shell.ExecuteCommand("POOL_EXTEND_TEST " + pool_dir1 + " " +
-                                     layout + " 30M");
+                                     layout + " 30M -1");
   ASSERT_EQ(0, output.GetExitCode());
 }
 
