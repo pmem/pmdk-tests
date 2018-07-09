@@ -30,6 +30,7 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/pmempools/CMakeLists.txt)
 include(${CMAKE_CURRENT_LIST_DIR}/pmemobj/CMakeLists.txt)
+include(${CMAKE_CURRENT_LIST_DIR}/helpers/pool_extend/CMakeLists.txt)
 
 if (NOT WIN32)
 		pkg_check_modules(Libndctl QUIET libndctl)
