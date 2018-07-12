@@ -32,14 +32,16 @@
 
 #ifdef __linux__
 
-#include "api_c.h"
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <ftw.h>
 #include <libgen.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
 #include <cstring>
+#include "api_c.h"
 
 int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   if (static_cast<off_t>(length) < 0) {
@@ -101,55 +103,35 @@ int ApiC::CreateDirectoryT(const std::string &path) {
 }
 
 int ApiC::CleanDirectory(const std::string &dir) {
-  FTS *fts;
-  FTSENT *f_sent;
-  int options = FTS_COMFOLLOW | FTS_LOGICAL | FTS_NOCHDIR;
-  int ret = 0;
-  char *d[] = {(char *)dir.c_str(), nullptr};
-
-  fts = fts_open(d, options, nullptr);
-
-  if (fts == nullptr) {
-    std::cerr << "fts_open failed: " << strerror(errno) << std::endl;
-    return -1;
-  }
-
-  f_sent = fts_children(fts, 0);
-
-  if (f_sent == nullptr) {
+  auto RemFile = [](const char *fpath, const struct stat *, int,
+                    struct FTW *ftwbuf) {
+    if (ftwbuf->level)
+      return remove(fpath);
     return 0;
+  };
+
+  // Iterate over directories structure and remove from the bottom
+  int ret = nftw(dir.c_str(), RemFile, 64, FTW_DEPTH | FTW_PHYS);
+
+  if (ret != 0) {
+    std::cerr << "Unable to clean directory: " << strerror(errno) << std::endl;
+    return ret;
   }
 
-  while ((f_sent = fts_read(fts)) != nullptr) {
-    switch (f_sent->fts_info) {
-    case FTS_D:
-      if (f_sent->fts_path != dir && RemoveDirectoryT(f_sent->fts_path) != 0) {
-        std::cerr << "Unable to remove directory " << f_sent->fts_path << ": "
-                  << strerror(errno) << std::endl;
-        ret = -1;
-      }
-      break;
-    case FTS_F:
-      if (RemoveFile(f_sent->fts_path) != 0) {
-        std::cerr << "Unable to remove file: " << f_sent->fts_path << std::endl;
-        ret = -1;
-      }
-      break;
-    default:
-      break;
-    }
-  }
-
-  if (fts_close(fts) != 0) {
-    std::cerr << "fts_close failed: " << strerror(errno) << std::endl;
-    ret = -1;
-  }
-
-  return ret;
+  return 0;
 }
 
+#include <ftw.h>
 int ApiC::RemoveDirectoryT(const std::string &path) {
-  int ret = rmdir(path.c_str());
+  auto RemFile = [](const char *fpath, const struct stat *, int, struct FTW *) {
+    int rv = remove(fpath);
+    if (rv)
+      perror(fpath);
+    return rv;
+  };
+
+  // Iterate over directories structure and remove from the bottom
+  int ret = nftw(path.c_str(), RemFile, 64, FTW_DEPTH | FTW_PHYS);
 
   if (ret != 0) {
     std::cerr << "Unable to remove directory: " << strerror(errno) << std::endl;
@@ -162,8 +144,28 @@ int ApiC::RemoveDirectoryT(const std::string &path) {
 int ApiC::SetEnv(const std::string &name, const std::string &value) {
   return setenv(name.c_str(), value.c_str(), 1);
 }
+
 int ApiC::UnsetEnv(const std::string &name) {
   return unsetenv(name.c_str());
 }
 
-#endif // __linux__
+void ApiC::CountFilesWithAction(const std::string &path,
+                                std::function<void(const std::string &)> func,
+                                int *file_count) {
+  if (auto dir = opendir(path.c_str())) {
+    while (auto f = readdir(dir)) {
+      if (f->d_name[0] == '.')
+        continue;
+      if (f->d_type == DT_DIR) {
+        CountFilesWithAction(path + f->d_name + "/", func, file_count);
+      }
+      if (f->d_type == DT_REG) {
+        func(path + f->d_name);
+        ++(*file_count);
+      }
+    }
+    closedir(dir);
+  }
+}
+
+#endif  // __linux__

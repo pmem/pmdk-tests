@@ -34,6 +34,7 @@
 #define PMDK_TESTS_SRC_UTILS_TEST_UTILS_FILE_UTILS_H_
 
 #include <string>
+#include <array>
 #include "api_c/api_c.h"
 #include "constants.h"
 #include "poolset/poolset.h"

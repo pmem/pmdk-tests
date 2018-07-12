@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -28,22 +28,19 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-include(${CMAKE_CURRENT_LIST_DIR}/pmempools/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/pmemobj/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/helpers/pool_extend/CMakeLists.txt)
+# PMEMOBJ POOL EXTENDING HELPER
+set(DIR ${CMAKE_CURRENT_LIST_DIR})
+set(PREFIX_FILTER "")
 
-if (NOT WIN32)
-		pkg_check_modules(Libndctl QUIET libndctl)
-		pkg_check_modules(Libdaxctl QUIET libdaxctl)
-		if (Libndctl_FOUND AND Libdaxctl_FOUND)
-			include(${CMAKE_CURRENT_LIST_DIR}/ras/CMakeLists.txt)
-		else ()
-			if (NOT Libndctl_FOUND AND NOT Libdaxctl_FOUND)
-				message(WARNING "Cannot find libndctl and libdaxctl libraries. Skip building RAS tests.")
-			elseif (NOT Libndctl_FOUND)
-				message(WARNING "Cannot find libndctl library. Skip building RAS tests.")
-			else ()
-				message(WARNING "Cannot find libdaxctl library. Skip building RAS tests.")
-			endif()
-		endif ()
-endif ()
+file(GLOB_RECURSE pool_extend_test_SRC
+	"${DIR}/*.h"
+	"${DIR}/*.cc")
+
+add_executable(POOL_EXTEND_TEST ${pool_extend_test_SRC})
+
+set_source_groups("${PREFIX_FILTER}" ${pool_extend_test_SRC})
+set_target_properties (POOL_EXTEND_TEST PROPERTIES
+    FOLDER helpers
+)
+target_link_libraries(POOL_EXTEND_TEST Utils ${Libpmemobj_LIBRARIES})
+add_dependencies(POOL_EXTEND_TEST Utils PMEMOBJ)
