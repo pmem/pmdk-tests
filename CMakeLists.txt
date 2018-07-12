@@ -130,7 +130,7 @@ include_directories(src/utils)
 
 # Set platform specific flags/includes/libs
 if (MSVC)
-        set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /D_CRT_SECURE_NO_WARNINGS /DNVML_UTF8_API /DGTEST_LANG_CXX11")
 	include_directories($ENV{PMDK_IncludePath})
 else ()
