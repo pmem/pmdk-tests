@@ -30,41 +30,33 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_dimm_configuration.h"
+#ifndef INJECT_MANAGER_H
+#define INJECT_MANAGER_H
 
-int LocalDimmConfiguration::SetDimmNamespaces(pugi::xml_node &&node) {
-  int ret = -1;
+#include "dimm/dimm.h"
 
-  for (auto &&it : node.children("mountPoint")) {
-    ret = 0;
-    try {
-      DimmNamespace temp = DimmNamespace(it.text().get());
-      dimm_namespaces_.emplace_back(std::move(temp));
-    } catch (const std::invalid_argument &e) {
-      std::cerr << e.what() << std::endl;
-      return -1;
-    }
+/* Select whether the unsafe shutdown error is injected into the first, last or
+ * each dimm from specific dimm namespace */
+enum class InjectPolicy { all, first, last };
+
+class InjectManager {
+ public:
+  InjectManager(std::string test_dir, InjectPolicy policy)
+      : test_dir_(test_dir), policy_(policy) {
   }
 
-  if (ret == -1) {
-    std::cerr << "dimmConfiguration node does not exist" << std::endl;
-  }
+  bool CheckUSCDiff(const std::vector<DimmNamespace> &dimm_namespaces,
+                    int expected_diff) const;
+  int RecordUSCAll(const std::vector<DimmNamespace> &dimm_namespaces) const;
+  int Inject(const std::vector<DimmNamespace> &us_namespaces) const;
 
-  return ret;
-}
+ private:
+  std::string test_dir_;
+  InjectPolicy policy_;
+  const std::vector<Dimm> GetDimmsToInject(
+      const DimmNamespace &us_dimm_coll) const;
+  int RecordDimmUSC(const Dimm &dimm) const;
+  int ReadRecordedUSC(std::string usc_file_path) const;
+};
 
-int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
-
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
-  }
-
-  if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmNamespaces(root.child("dimmConfiguration")) != 0) {
-    return -1;
-  }
-
-  return 0;
-}
+#endif  // INJECT_MANAGER_H

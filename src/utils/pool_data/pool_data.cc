@@ -30,41 +30,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_dimm_configuration.h"
+#include "pool_data.h"
 
-int LocalDimmConfiguration::SetDimmNamespaces(pugi::xml_node &&node) {
-  int ret = -1;
+int LogData::Write(std::string log_text) {
+  size_t chunks = log_text.size() / chunk_size_;
 
-  for (auto &&it : node.children("mountPoint")) {
-    ret = 0;
-    try {
-      DimmNamespace temp = DimmNamespace(it.text().get());
-      dimm_namespaces_.emplace_back(std::move(temp));
-    } catch (const std::invalid_argument &e) {
-      std::cerr << e.what() << std::endl;
+  int pos = 0;
+  for (size_t i = 0; i < chunks; ++i) {
+    if (pmemlog_append(plp_, log_text.substr(pos, chunk_size_).c_str(),
+                       chunk_size_) != 0) {
+      std::cerr << "Appending line to log pool failed. Errno: " << errno
+                << std::endl;
       return -1;
     }
+    pos += chunk_size_;
   }
 
-  if (ret == -1) {
-    std::cerr << "dimmConfiguration node does not exist" << std::endl;
-  }
+  int last_chunk_size =
+      (chunks == 0) ? log_text.size() : log_text.size() % chunks;
 
+  if (pmemlog_append(plp_, log_text.substr(pos).c_str(), last_chunk_size) !=
+      0) {
+    std::cerr << "Appending line to log pool failed. Errno :" << errno
+              << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+std::string LogData::Read() {
+  std::string ret;
+  pmemlog_walk(plp_, 0, ReadLog, &ret);
   return ret;
 }
 
-int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
-
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
-  }
-
-  if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmNamespaces(root.child("dimmConfiguration")) != 0) {
-    return -1;
-  }
-
+int LogData::ReadLog(const void *buf, size_t len, void *arg) {
+  static_cast<std::string *>(arg)->assign(static_cast<const char *>(buf), len);
   return 0;
 }

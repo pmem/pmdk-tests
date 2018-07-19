@@ -30,41 +30,36 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_dimm_configuration.h"
+#ifndef US_LOCAL_REPLICAS_TESTS_H
+#define US_LOCAL_REPLICAS_TESTS_H
 
-int LocalDimmConfiguration::SetDimmNamespaces(pugi::xml_node &&node) {
-  int ret = -1;
+#include "unsafe_shutdown.h"
 
-  for (auto &&it : node.children("mountPoint")) {
-    ret = 0;
-    try {
-      DimmNamespace temp = DimmNamespace(it.text().get());
-      dimm_namespaces_.emplace_back(std::move(temp));
-    } catch (const std::invalid_argument &e) {
-      std::cerr << e.what() << std::endl;
-      return -1;
-    }
-  }
+struct sync_local_replica_tc {
+  std::string description;
+  Poolset poolset;
+  bool enough_dimms;
+  bool is_syncable;
+};
 
-  if (ret == -1) {
-    std::cerr << "dimmConfiguration node does not exist" << std::endl;
-  }
+class SyncLocalReplica
+    : public UnsafeShutdown,
+      public ::testing::WithParamInterface<sync_local_replica_tc> {
+ public:
+  void SetUp() override;
+};
 
-  return ret;
-}
+std::ostream& operator<<(std::ostream& stream, sync_local_replica_tc const& p);
 
-int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
-  root = root.child("localConfiguration");
+std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams();
 
-  if (root.empty()) {
-    std::cerr << "Cannot find 'localConfiguration' node" << std::endl;
-    return -1;
-  }
+class UnsafeShutdownTransform : public UnsafeShutdown {
+ public:
+  Poolset origin_;
+  Poolset added_;
+  Poolset final_;
 
-  if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmNamespaces(root.child("dimmConfiguration")) != 0) {
-    return -1;
-  }
+  void SetUp() override;
+};
 
-  return 0;
-}
+#endif  // US_LOCAL_REPLICAS_TESTS_H
