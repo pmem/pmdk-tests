@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,46 +30,39 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "i_shell.h"
+#include "configXML/local_dimm_configuration.h"
+#include "exit_codes.h"
+#include "gtest/gtest.h"
+#include "inject_manager/inject_manager.h"
+#include "shell/i_shell.h"
+#include "test_phase/local_test_phase.h"
 
-Output<char> IShell::ExecuteCommand(const std::string &cmd) {
-#ifdef _WIN32
-  std::string command = "PowerShell -Command " + cmd + " 2>&1";
-#else
+bool PartiallyPassed() {
+  ::testing::UnitTest *ut = ::testing::UnitTest::GetInstance();
+  return ut->successful_test_count() > 0 && ut->failed_test_count() > 0;
+}
 
-  std::string command;
-  if (!address_.empty()) {
-    command = "{ ssh -o PasswordAuthentication=no " + address_ + " \"" + cmd +
-              "\"; } 2>&1";
-  } else {
-    command = "{ " + cmd + "; } 2>&1";
+int main(int argc, char **argv) {
+  int ret = 0;
+  try {
+    ::testing::InitGoogleTest(&argc, argv);
+    LocalTestPhase &test_phase = LocalTestPhase::GetInstance();
+    test_phase.ParseCmdArgs(argc, argv);
+
+    if ((ret = test_phase.RunPreTestAction()) == 0) {
+      ret = RUN_ALL_TESTS();
+    }
+    if (test_phase.RunPostTestAction() != 0) {
+      return 1;
+    }
+
+    if (PartiallyPassed()) {
+      ret = exit_codes::partially_passed;
+    }
+
+  } catch (const std::exception &e) {
+    std::cerr << "Exception was caught: " << e.what() << std::endl;
+    ret = 1;
   }
-
-#endif  // _WIN32
-  std::unique_ptr<FILE, PipeDeleter> pipe(popen(command.c_str(), "r"));
-
-  if (!pipe) {
-    throw std::runtime_error("popen failed");
-  }
-
-  char buffer[BUFFER_SIZE];
-  std::string out_buffer;
-
-  while (fgets(buffer, BUFFER_SIZE, pipe.get())) {
-    out_buffer.append(buffer);
-  }
-
-  auto s_pipe = pipe.release();
-  int exit_code = pclose(s_pipe);
-#ifdef _WIN32
-  output_ = Output<char>(exit_code, out_buffer);
-#else
-  output_ = Output<char>(WEXITSTATUS(exit_code), out_buffer);
-#endif  // _WIN32
-
-  if (print_log_) {
-    std::cout << out_buffer << std::endl;
-  }
-
-  return output_;
+  return ret;
 }

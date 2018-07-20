@@ -29,25 +29,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef LOCAL_TEST_PHASE_H
-#define LOCAL_TEST_PHASE_H
+#ifndef REMOTE_TEST_PHASE_H
+#define REMOTE_TEST_PHASE_H
 
+#include "configXML/remote_dimm_configuration.h"
 #include "exit_codes.h"
 #include "test_phase/test_phase.h"
 
-class LocalTestPhase : public TestPhase<LocalTestPhase> {
-  friend class TestPhase<LocalTestPhase>;
+class RemoteTestPhase : public TestPhase<RemoteTestPhase> {
+  friend class TestPhase<RemoteTestPhase>;
 
  public:
-  const std::vector<DimmNamespace> &GetSafeDimmNamespaces() const {
-    return this->safe_namespaces;
-  }
-  const std::vector<DimmNamespace> &GetUnsafeDimmNamespaces() const {
-    return this->unsafe_namespaces;
-  }
+  const std::vector<std::string> GetSafeMountpoints(
+      const RemoteDimmNode& node) const;
+  const std::vector<std::string> GetUnsafeMountpoints(
+      const RemoteDimmNode& node) const;
 
-  const std::string &GetTestDir() const {
-    return this->config_.GetTestDir();
+  const RemoteDimmNode& GetNode(int idx) const {
+    return configs_[idx];
   }
 
  protected:
@@ -57,9 +56,11 @@ class LocalTestPhase : public TestPhase<LocalTestPhase> {
   int End() const;
 
  private:
-  LocalDimmConfiguration config_;
-  std::vector<DimmNamespace> safe_namespaces;
-  std::vector<DimmNamespace> unsafe_namespaces;
-  LocalTestPhase();
+  const std::string GetRemoteAgentPath(const RemoteDimmNode& node) const {
+    return node.GetBinsDir() + SEPARATOR + "US_REMOTE_AGENT";
+  }
+
+  RemoteDimmConfigurationsCollection configs_;
+  RemoteTestPhase();
 };
-#endif  // LOCAL_TEST_PHASE_H
+#endif  // REMOTE_TEST_PHASE_H

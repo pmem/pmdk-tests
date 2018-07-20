@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "us_local_replicas_tests.h"
+#include "local_replicas_tests.h"
 
 std::ostream& operator<<(std::ostream& stream, sync_local_replica_tc const& p) {
   stream << p.description;
