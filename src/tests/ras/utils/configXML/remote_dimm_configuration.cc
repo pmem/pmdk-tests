@@ -30,6 +30,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __linux__
+
 #include "remote_dimm_configuration.h"
 #include "shell/i_shell.h"
 
@@ -41,8 +43,7 @@ RemoteDimmNode::RemoteDimmNode(const std::string &address,
   for (auto &&it : node.children("mountPoint")) {
     std::string mount_point = it.text().get();
     if (mount_point.empty() ||
-        shell_.ExecuteCommand("test -d " + mount_point)
-                .GetExitCode() != 0) {
+        shell_.ExecuteCommand("test -d " + mount_point).GetExitCode() != 0) {
       throw std::invalid_argument("Cannot find " + mount_point +
                                   " on host described by address: " + address);
     }
@@ -50,7 +51,8 @@ RemoteDimmNode::RemoteDimmNode(const std::string &address,
   }
 }
 
-int RemoteDimmConfigurationsCollection::FillConfigFields(pugi::xml_node &&root) {
+int RemoteDimmConfigurationsCollection::FillConfigFields(
+    pugi::xml_node &&root) {
   IShell shell;
   std::string address;
   std::string port = "22";
@@ -91,3 +93,5 @@ int RemoteDimmConfigurationsCollection::FillConfigFields(pugi::xml_node &&root) 
 
   return ret;
 }
+
+#endif  // __linux__

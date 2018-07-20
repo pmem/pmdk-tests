@@ -30,9 +30,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __linux__
+
 #include "inject_manager.h"
 
-int InjectManager::ReadRecordedUSC(std::string usc_file_path) const {
+int InjectManager::ReadRecordedUSC(const std::string &usc_file_path) const {
   std::string content;
   if (ApiC::ReadFile(usc_file_path, content) != 0) {
     return -1;
@@ -64,7 +66,7 @@ int InjectManager::RecordDimmUSC(const Dimm &dimm) const {
   return 0;
 }
 
-int InjectManager::RecordUSCAll(
+int InjectManager::RecordUSC(
     const std::vector<DimmNamespace> &dimm_namespaces) const {
   for (const auto &dc : dimm_namespaces) {
     for (const auto &d : dc) {
@@ -107,23 +109,53 @@ const std::vector<Dimm> InjectManager::GetDimmsToInject(
 
 bool InjectManager::CheckUSCDiff(
     const std::vector<DimmNamespace> &dimm_namespaces,
-    int expected_diff) const {
+    std::function<bool(int, int)> compare) const {
   for (const auto &dn : dimm_namespaces) {
     for (const auto &d : GetDimmsToInject(dn)) {
       int recorded_usc = ReadRecordedUSC(test_dir_ + d.GetUid());
+
       if (recorded_usc == -1) {
         std::cerr << "Could not read USC in DIMM: " << d.GetUid()
                   << " with test dir: " << dn.GetTestDir() << std::endl;
         return false;
       }
-      if (recorded_usc + expected_diff != d.GetShutdownCount()) {
-        std::cerr << "Value of USC (" << d.GetShutdownCount() << ") on DIMM "
-                  << d.GetUid() << " with test dir: " << dn.GetTestDir()
-                  << "is different than expected ("
-                  << recorded_usc + expected_diff << ")" << std::endl;
+
+      if (!compare(recorded_usc, d.GetShutdownCount())) {
+        std::cerr << "NVDIMM: " << d.GetUid()
+                  << " (test dir: " << dn.GetTestDir()
+                  << "). Current USC: " << d.GetShutdownCount()
+                  << " Last recorded USC: " << recorded_usc << std::endl;
         return false;
       }
     }
   }
   return true;
 }
+
+bool InjectManager::IsLastShutdownUnsafe(
+    const std::vector<DimmNamespace> &dimm_namespaces) const {
+  std::function<bool(int, int)> compare = [](int rec, int cur) -> bool {
+    return cur > rec;
+  };
+
+  if (!CheckUSCDiff(dimm_namespaces, compare)) {
+    std::cerr << "Unexpected safe shutdown of NVDIMM" << std::endl;
+    return false;
+  }
+  return true;
+}
+
+bool InjectManager::IsLastShutdownSafe(
+    const std::vector<DimmNamespace> &dimm_namespaces) const {
+  std::function<bool(int, int)> compare = [](int rec, int cur) -> bool {
+    return cur == rec;
+  };
+
+  if (!CheckUSCDiff(dimm_namespaces, compare)) {
+    std::cerr << "Unexpected unsafe shutdown of NVDIMM" << std::endl;
+    return false;
+  }
+  return true;
+}
+
+#endif  // __LINUX__

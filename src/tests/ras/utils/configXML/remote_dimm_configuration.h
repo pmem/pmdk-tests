@@ -33,6 +33,8 @@
 #ifndef PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
 #define PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_
 
+#ifdef __linux__
+
 #include "api_c/api_c.h"
 #include "configXML/read_config.h"
 #include "dimm/dimm.h"
@@ -94,5 +96,7 @@ class RemoteDimmConfigurationsCollection final
     return remote_configurations_.at(idx);
   }
 };
+
+#endif  // __linux__
 
 #endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_DIMM_CONFIGURATION_H_

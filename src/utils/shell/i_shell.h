@@ -65,12 +65,14 @@ class IShell : NonCopyable {
  private:
   Output<char> output_;
   bool print_log_ = false;
+
 #ifndef _WIN32
   std::string address_;
 #endif
+
 #ifdef _WIN32
   Output<wchar_t> w_output_;
-#endif  // _WIN32
+#endif
 
  public:
   IShell(){};

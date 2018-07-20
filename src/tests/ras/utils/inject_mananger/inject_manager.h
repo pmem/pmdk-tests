@@ -33,6 +33,7 @@
 #ifndef INJECT_MANAGER_H
 #define INJECT_MANAGER_H
 
+#include <functional>
 #include "dimm/dimm.h"
 
 /* Select whether the unsafe shutdown error is injected into the first, last or
@@ -45,18 +46,26 @@ class InjectManager {
       : test_dir_(test_dir), policy_(policy) {
   }
 
-  bool CheckUSCDiff(const std::vector<DimmNamespace> &dimm_namespaces,
-                    int expected_diff) const;
-  int RecordUSCAll(const std::vector<DimmNamespace> &dimm_namespaces) const;
+  bool IsLastShutdownUnsafe(
+      const std::vector<DimmNamespace> &dimm_namespaces) const;
+  bool IsLastShutdownSafe(
+      const std::vector<DimmNamespace> &dimm_namespaces) const;
+  int RecordUSC(const std::vector<DimmNamespace> &dimm_namespaces) const;
   int Inject(const std::vector<DimmNamespace> &us_namespaces) const;
 
  private:
   std::string test_dir_;
   InjectPolicy policy_;
+  bool CheckUSCDiff(const std::vector<DimmNamespace> &dimm_namespaces,
+                    std::function<bool(int, int)> compare) const;
+
+  int ReadRecordedUSC(const std::string &usc_file_path) const;
+
+#ifdef __linux__
+  int RecordDimmUSC(const Dimm &dimm) const;
   const std::vector<Dimm> GetDimmsToInject(
       const DimmNamespace &us_dimm_coll) const;
-  int RecordDimmUSC(const Dimm &dimm) const;
-  int ReadRecordedUSC(std::string usc_file_path) const;
+#endif
 };
 
 #endif  // INJECT_MANAGER_H
