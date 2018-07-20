@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "us_basic_tests.h"
+#include "local_basic_tests.h"
 
 void UnsafeShutdownBasic::SetUp() {
   ASSERT_LE(1, test_phase_.GetUnsafeDimmNamespaces().size())
