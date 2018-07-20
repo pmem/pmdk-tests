@@ -48,9 +48,9 @@ if (NOT WIN32)
 	pkg_check_modules(Libdaxctl REQUIRED libdaxctl)
 	include_directories(${Libdaxctl_INCLUDE_DIRS})
 	link_directories(${Libdaxctl_LIBRARY_DIRS})	
-	target_link_libraries(Utils ${Libpmemobj_LIBRARIES} ${Libdaxctl_LIBRARIES}
-		${Libndctl_LIBRARIES})
+	target_link_libraries(RasUtils Utils ${Libpmemobj_LIBRARIES}
+            ${Libdaxctl_LIBRARIES} ${Libndctl_LIBRARIES})
 else()
-	target_link_libraries(Utils ${Libpmemobj_LIBRARIES})
+	target_link_libraries(RasUtils Utils ${Libpmemobj_LIBRARIES})
 endif()
 

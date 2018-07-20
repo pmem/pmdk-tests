@@ -29,37 +29,45 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef LOCAL_TEST_PHASE_H
-#define LOCAL_TEST_PHASE_H
 
+#include "configXML/local_dimm_configuration.h"
 #include "exit_codes.h"
-#include "test_phase/test_phase.h"
+#include "gtest/gtest.h"
+#include "inject_manager/inject_manager.h"
+#include "shell/i_shell.h"
+#include "test_phase/local_test_phase.h"
 
-class LocalTestPhase : public TestPhase<LocalTestPhase> {
-  friend class TestPhase<LocalTestPhase>;
+bool PartiallyPassed() {
+  ::testing::UnitTest *ut = ::testing::UnitTest::GetInstance();
+  return ut->successful_test_count() > 0 && ut->failed_test_count() > 0;
+}
 
- public:
-  const std::vector<DimmNamespace> &GetSafeDimmNamespaces() const {
-    return this->safe_namespaces;
+int main(int argc, char **argv) {
+  int ret = 0;
+  try {
+    ::testing::InitGoogleTest(&argc, argv);
+    LocalTestPhase &test_phase = LocalTestPhase::GetInstance();
+    test_phase.ParseCmdArgs(argc, argv);
+
+    /* Modify --gtest_filter flag to run only tests from specific phase" */
+    ::testing::GTEST_FLAG(filter) =
+        "*" + test_phase.GetPhaseName() + "*" + ::testing::GTEST_FLAG(filter);
+
+    if ((ret = test_phase.RunPreTestAction()) == 0) {
+      ret = RUN_ALL_TESTS();
+    }
+    if (test_phase.RunPostTestAction() != 0) {
+      return 1;
+    }
+
+    if (PartiallyPassed()) {
+      ret = exit_codes::partially_passed;
+    }
+
+  } catch (const std::exception &e) {
+    std::cerr << "Exception was caught: " << e.what() << std::endl;
+    ret = 1;
   }
-  const std::vector<DimmNamespace> &GetUnsafeDimmNamespaces() const {
-    return this->unsafe_namespaces;
-  }
 
-  const std::string &GetTestDir() const {
-    return this->config_.GetTestDir();
-  }
-
- protected:
-  int Begin() const;
-  int Inject() const;
-  int CheckUSC() const;
-  int End() const;
-
- private:
-  LocalDimmConfiguration config_;
-  std::vector<DimmNamespace> safe_namespaces;
-  std::vector<DimmNamespace> unsafe_namespaces;
-  LocalTestPhase();
-};
-#endif  // LOCAL_TEST_PHASE_H
+  return ret;
+}
