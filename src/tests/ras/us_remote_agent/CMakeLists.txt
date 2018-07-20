@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Intel Corporation
+# Copyright (c) 2017-2018, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -28,8 +28,27 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-include(${CMAKE_CURRENT_LIST_DIR}/utils/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/unsafe_shutdown/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/us_remote_agent/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/us_test_controller/CMakeLists.txt)
+if (NOT WIN32)
 
+# US_REMOTE_AGENT
+set(DIR ${CMAKE_CURRENT_LIST_DIR})
+set(PREFIX_FILTER "")
+
+file(GLOB_RECURSE us_remote_agent_SRC
+	"${DIR}/*.h"
+	"${DIR}/*.cc")
+
+file(GLOB inject_utils
+    "${DIR}/../inject_utils/*.h"
+    "${DIR}/../inject_utils/*.cc")
+
+add_executable(US_REMOTE_AGENT
+	${us_remote_agent_SRC} ${inject_utils})
+
+set_source_groups("${PREFIX_FILTER}" ${us_remote_agent_SRC})
+include_directories(src/tests/RAS/ras_utils "${DIR}/../inject_utils")
+
+target_link_libraries(US_REMOTE_AGENT RasUtils Utils)
+add_dependencies(US_REMOTE_AGENT RasUtils Utils)
+
+endif()

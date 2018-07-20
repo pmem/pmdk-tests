@@ -45,8 +45,9 @@ add_executable(US_TEST_CONTROLLER
 set_source_groups("${PREFIX_FILTER}" ${us_test_controller_SRC})
 include_directories(src/tests/ras/ras_utils)
 
-target_link_libraries(US_TEST_CONTROLLER RasUtils Utils libgtest ${Libpmemblk_LIBRARIES}
-${Libpmemlog_LIBRARIES} ${Libpmemobj_LIBRARIES} ${Libpmempool_LIBRARIES})
+target_link_libraries(US_TEST_CONTROLLER RasUtils Utils libgtest
+    ${Libpmemblk_LIBRARIES} ${Libpmemlog_LIBRARIES} ${Libpmemobj_LIBRARIES}
+    ${Libpmempool_LIBRARIES})
 add_dependencies(US_TEST_CONTROLLER RasUtils Utils libgtest)
 
 endif()

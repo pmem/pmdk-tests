@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,47 +29,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef LOCAL_TEST_PHASE_H
+#define LOCAL_TEST_PHASE_H
 
-#include "i_shell.h"
+#include "configXML/local_dimm_configuration.h"
+#include "exit_codes.h"
+#include "test_phase/test_phase.h"
 
-Output<char> IShell::ExecuteCommand(const std::string &cmd) {
-#ifdef _WIN32
-  std::string command = "PowerShell -Command " + cmd + " 2>&1";
-#else
+class LocalTestPhase : public TestPhase<LocalTestPhase> {
+  friend class TestPhase<LocalTestPhase>;
 
-  std::string command;
-  if (!address_.empty()) {
-    command = "{ ssh -o PasswordAuthentication=no " + address_ + " \"" + cmd +
-              "\"; } 2>&1";
-  } else {
-    command = "{ " + cmd + "; } 2>&1";
+ public:
+  const std::vector<DimmNamespace> &GetSafeDimmNamespaces() const {
+    return this->safe_namespaces;
+  }
+  const std::vector<DimmNamespace> &GetUnsafeDimmNamespaces() const {
+    return this->unsafe_namespaces;
   }
 
-#endif  // _WIN32
-  std::unique_ptr<FILE, PipeDeleter> pipe(popen(command.c_str(), "r"));
-
-  if (!pipe) {
-    throw std::runtime_error("popen failed");
+  const std::string &GetTestDir() const {
+    return this->config_.GetTestDir();
   }
 
-  char buffer[BUFFER_SIZE];
-  std::string out_buffer;
+ protected:
+  int Begin() const;
+  int Inject() const;
+  int CheckUSC() const;
+  int End() const;
 
-  while (fgets(buffer, BUFFER_SIZE, pipe.get())) {
-    out_buffer.append(buffer);
-  }
-
-  auto s_pipe = pipe.release();
-  int exit_code = pclose(s_pipe);
-#ifdef _WIN32
-  output_ = Output<char>(exit_code, out_buffer);
-#else
-  output_ = Output<char>(WEXITSTATUS(exit_code), out_buffer);
-#endif  // _WIN32
-
-  if (print_log_) {
-    std::cout << out_buffer << std::endl;
-  }
-
-  return output_;
-}
+ private:
+  LocalDimmConfiguration config_;
+  std::vector<DimmNamespace> safe_namespaces;
+  std::vector<DimmNamespace> unsafe_namespaces;
+  LocalTestPhase();
+};
+#endif  // LOCAL_TEST_PHASE_H

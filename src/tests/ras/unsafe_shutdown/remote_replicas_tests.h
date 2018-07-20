@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,46 +30,55 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "i_shell.h"
+#ifndef US_REMOTE_REPLICAS_TESTS_H
+#define US_REMOTE_REPLICAS_TESTS_H
 
-Output<char> IShell::ExecuteCommand(const std::string &cmd) {
-#ifdef _WIN32
-  std::string command = "PowerShell -Command " + cmd + " 2>&1";
-#else
+#include "configXML/remote_dimm_configuration.h"
+#include "test_phase/remote_test_phase.h"
+#include "unsafe_shutdown.h"
 
-  std::string command;
-  if (!address_.empty()) {
-    command = "{ ssh -o PasswordAuthentication=no " + address_ + " \"" + cmd +
-              "\"; } 2>&1";
-  } else {
-    command = "{ " + cmd + "; } 2>&1";
+class RemotePoolset {
+  friend class RemotePoolsetTC;
+
+ public:
+  std::string GetReplicaLine() const;
+  int CreateRemotePoolsetFile() const;
+
+ private:
+  RemotePoolset(const std::string& h, const Poolset& p)
+      : host_{h}, poolset_{p} {
   }
+  std::string host_;
+  Poolset poolset_;
+};
 
-#endif  // _WIN32
-  std::unique_ptr<FILE, PipeDeleter> pipe(popen(command.c_str(), "r"));
-
-  if (!pipe) {
-    throw std::runtime_error("popen failed");
+class RemotePoolsetTC {
+ public:
+  RemotePoolsetTC(const std::string& d) : description_{d} {
   }
-
-  char buffer[BUFFER_SIZE];
-  std::string out_buffer;
-
-  while (fgets(buffer, BUFFER_SIZE, pipe.get())) {
-    out_buffer.append(buffer);
+  RemotePoolset& AddRemotePoolset(const std::string& host, const Poolset& p) {
+    remote_poolsets_.emplace_back(RemotePoolset{host, p});
+    return remote_poolsets_.back();
   }
+  Poolset poolset_;
+  bool enough_dimms_ = false;
+  bool is_syncable_;
+  std::string description_;
+  std::vector<RemotePoolset> remote_poolsets_;
+};
 
-  auto s_pipe = pipe.release();
-  int exit_code = pclose(s_pipe);
-#ifdef _WIN32
-  output_ = Output<char>(exit_code, out_buffer);
-#else
-  output_ = Output<char>(WEXITSTATUS(exit_code), out_buffer);
-#endif  // _WIN32
+class SyncRemoteReplica
+    : public UnsafeShutdown,
+      public ::testing::WithParamInterface<RemotePoolsetTC> {
+ public:
+  void SetUp() override;
 
-  if (print_log_) {
-    std::cout << out_buffer << std::endl;
-  }
+ private:
+  std::unique_ptr<RemoteDimmNode> remote_node_;
+};
 
-  return output_;
-}
+std::ostream& operator<<(std::ostream& stream, RemotePoolsetTC const& p);
+
+std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams();
+
+#endif  // US_REMOTE_REPLICAS_TESTS_H

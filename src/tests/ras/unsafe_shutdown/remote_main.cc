@@ -31,11 +31,13 @@
  */
 
 #include "configXML/local_dimm_configuration.h"
+#include "configXML/remote_dimm_configuration.h"
 #include "exit_codes.h"
 #include "gtest/gtest.h"
-#include "inject_mananger/inject_manager.h"
-#include "local_test_phase.h"
+#include "inject_manager/inject_manager.h"
 #include "shell/i_shell.h"
+#include "test_phase/local_test_phase.h"
+#include "test_phase/remote_test_phase.h"
 
 bool PartiallyPassed() {
   ::testing::UnitTest *ut = ::testing::UnitTest::GetInstance();
@@ -46,13 +48,21 @@ int main(int argc, char **argv) {
   int ret = 0;
   try {
     ::testing::InitGoogleTest(&argc, argv);
-    LocalTestPhase &test_phase = LocalTestPhase::GetInstance();
-    test_phase.ParseCmdArgs(argc, argv);
+    LocalTestPhase &local_test_phase = LocalTestPhase::GetInstance();
+    RemoteTestPhase &remote_test_phase = RemoteTestPhase::GetInstance();
+    local_test_phase.ParseCmdArgs(argc, argv);
+    remote_test_phase.ParseCmdArgs(argc, argv);
 
-    if ((ret = test_phase.RunPreTestAction()) == 0) {
+    /* Modify --gtest_filter flag to run only tests from specific phase" */
+    ::testing::GTEST_FLAG(filter) = "*" + remote_test_phase.GetPhaseName() +
+                                    "*" + ::testing::GTEST_FLAG(filter);
+
+    if (local_test_phase.RunPreTestAction() == 0 ||
+        remote_test_phase.RunPreTestAction() == 0) {
       ret = RUN_ALL_TESTS();
     }
-    if (test_phase.RunPostTestAction() != 0) {
+    if (local_test_phase.RunPostTestAction() != 0 ||
+        remote_test_phase.RunPostTestAction() != 0) {
       return 1;
     }
 
