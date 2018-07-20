@@ -58,7 +58,7 @@ int LocalTestPhase::Begin() const {
 
 int LocalTestPhase::Inject() const {
   InjectManager inject_mgmt{config_.GetTestDir(), policy_};
-  if (inject_mgmt.RecordUSCAll(
+  if (inject_mgmt.RecordUSC(
           std::vector<DimmNamespace>{config_.begin(), config_.end()}) != 0) {
     return -1;
   }
@@ -72,8 +72,8 @@ int LocalTestPhase::Inject() const {
 
 int LocalTestPhase::CheckUSC() const {
   InjectManager inject_mgmt{config_.GetTestDir(), policy_};
-  if (inject_mgmt.CheckUSCDiff(safe_namespaces, 0) &&
-      inject_mgmt.CheckUSCDiff(unsafe_namespaces, 1)) {
+  if (inject_mgmt.IsLastShutdownSafe(safe_namespaces) &&
+      inject_mgmt.IsLastShutdownUnsafe(unsafe_namespaces)) {
     return 0;
   }
   return -1;

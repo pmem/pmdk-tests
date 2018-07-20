@@ -65,19 +65,13 @@ class IShell : NonCopyable {
  private:
   Output<char> output_;
   bool print_log_ = false;
-#ifndef _WIN32
   std::string address_;
-#endif
-#ifdef _WIN32
   Output<wchar_t> w_output_;
-#endif  // _WIN32
 
  public:
   IShell(){};
   IShell(bool print_log) : print_log_(print_log){};
-#ifndef _WIN32
   IShell(const std::string &address) : address_(address){};
-#endif
   /*
    * GetLastOutput -- returns last received output.
    */

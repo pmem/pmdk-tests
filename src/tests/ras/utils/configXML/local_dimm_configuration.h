@@ -52,7 +52,7 @@ class LocalDimmConfiguration final : public ReadConfig<LocalDimmConfiguration> {
   DimmNamespace &operator[](int idx) {
     return dimm_namespaces_.at(idx);
   }
-  int GetSize() const {
+  size_t GetSize() const {
     return dimm_namespaces_.size();
   }
 

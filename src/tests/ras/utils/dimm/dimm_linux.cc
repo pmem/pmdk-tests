@@ -30,9 +30,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "dimm.h"
+#ifdef __linux__
+
 #include <linux/limits.h>
 #include <cstring>
+#include "dimm.h"
+
+#define FOREACH_BUS_REGION_NAMESPACE(ctx, bus, region, ndns)    \
+  ndctl_bus_foreach(ctx, bus) ndctl_region_foreach(bus, region) \
+      ndctl_namespace_foreach(region, ndns)
 
 const int USC_VALID_FLAG = 1 << 5;
 
@@ -182,3 +188,5 @@ DimmNamespace::~DimmNamespace() {
 
   ctx_ = nullptr;
 }
+
+#endif  // __linux__
