@@ -29,40 +29,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef LOCAL_TEST_PHASE_H
+#define LOCAL_TEST_PHASE_H
 
 #include "configXML/local_dimm_configuration.h"
 #include "exit_codes.h"
-#include "gtest/gtest.h"
-#include "inject_mananger/inject_manager.h"
-#include "local_test_phase.h"
-#include "shell/i_shell.h"
+#include "test_phase/test_phase.h"
 
-bool PartiallyPassed() {
-  ::testing::UnitTest *ut = ::testing::UnitTest::GetInstance();
-  return ut->successful_test_count() > 0 && ut->failed_test_count() > 0;
-}
+class LocalTestPhase : public TestPhase<LocalTestPhase> {
+  friend class TestPhase<LocalTestPhase>;
 
-int main(int argc, char **argv) {
-  int ret = 0;
-  try {
-    ::testing::InitGoogleTest(&argc, argv);
-    LocalTestPhase &test_phase = LocalTestPhase::GetInstance();
-    test_phase.ParseCmdArgs(argc, argv);
-
-    if ((ret = test_phase.RunPreTestAction()) == 0) {
-      ret = RUN_ALL_TESTS();
-    }
-    if (test_phase.RunPostTestAction() != 0) {
-      return 1;
-    }
-
-    if (PartiallyPassed()) {
-      ret = exit_codes::partially_passed;
-    }
-
-  } catch (const std::exception &e) {
-    std::cerr << "Exception was caught: " << e.what() << std::endl;
-    ret = 1;
+ public:
+  const std::vector<DimmNamespace> &GetSafeDimmNamespaces() const {
+    return this->safe_namespaces;
   }
-  return ret;
-}
+  const std::vector<DimmNamespace> &GetUnsafeDimmNamespaces() const {
+    return this->unsafe_namespaces;
+  }
+
+  const std::string &GetTestDir() const {
+    return this->config_.GetTestDir();
+  }
+
+ protected:
+  int Begin() const;
+  int Inject() const;
+  int CheckUSC() const;
+  int End() const;
+
+ private:
+  LocalDimmConfiguration config_;
+  std::vector<DimmNamespace> safe_namespaces;
+  std::vector<DimmNamespace> unsafe_namespaces;
+  LocalTestPhase();
+};
+#endif  // LOCAL_TEST_PHASE_H

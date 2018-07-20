@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "us_basic_tests.h"
+#include "local_basic_tests.h"
 
 void UnsafeShutdownBasic::SetUp() {
   ASSERT_LE(1, test_phase_.GetUnsafeDimmNamespaces().size())
@@ -71,7 +71,7 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_OBJ_phase_2) {
 
   /* Step4 */
   pop_ = pmemobj_open(us_dimm_pool_path_.c_str(), nullptr);
-  ASSERT_EQ(nullptr, pop_)
+  ASSERT_TRUE(pop_ == nullptr)
       << "Pool was opened after unsafe shutdown but should be not";
   ASSERT_EQ(EINVAL, errno);
 
@@ -120,7 +120,7 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_BLK_phase_2) {
 
   /* Step4 */
   pbp_ = pmemblk_open(us_dimm_pool_path_.c_str(), blk_size_);
-  ASSERT_EQ(nullptr, pbp_)
+  ASSERT_TRUE(pbp_ == nullptr)
       << "Pool was opened after unsafe shutdown but should be not";
   ASSERT_EQ(EINVAL, errno);
 
@@ -170,7 +170,7 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_LOG_phase_2) {
 
   /* Step4 */
   plp_ = pmemlog_open(us_dimm_pool_path_.c_str());
-  ASSERT_EQ(nullptr, plp_)
+  ASSERT_TRUE(plp_ == nullptr)
       << "Pool was opened after unsafe shutdown but should be not";
   ASSERT_EQ(EINVAL, errno);
 
@@ -223,7 +223,7 @@ TEST_F(UnsafeShutdownBasic, TC_TRY_OPEN_AFTER_DOUBLE_US_phase_3) {
 
   /* step4 */
   pop_ = pmemobj_open(us_dimm_pool_path_.c_str(), nullptr);
-  ASSERT_EQ(nullptr, pop_)
+  ASSERT_TRUE(pop_ == nullptr)
       << "Pool was opened after unsafe shutdown but should be not";
   ASSERT_EQ(EINVAL, errno);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2018, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,46 +30,48 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "i_shell.h"
+#ifdef __linux__
 
-Output<char> IShell::ExecuteCommand(const std::string &cmd) {
-#ifdef _WIN32
-  std::string command = "PowerShell -Command " + cmd + " 2>&1";
-#else
+#ifndef REMOTE_TEST_PHASE_H
+#define REMOTE_TEST_PHASE_H
 
-  std::string command;
-  if (!address_.empty()) {
-    command = "{ ssh -o PasswordAuthentication=no " + address_ + " \"" + cmd +
-              "\"; } 2>&1";
-  } else {
-    command = "{ " + cmd + "; } 2>&1";
+#include "configXML/remote_dimm_configuration.h"
+#include "exit_codes.h"
+#include "test_phase/test_phase.h"
+
+class RemoteTestPhase : public TestPhase<RemoteTestPhase> {
+  friend class TestPhase<RemoteTestPhase>;
+
+ public:
+  const std::vector<std::string> GetSafeMountpoints(
+      const RemoteDimmNode& node) const;
+  const std::vector<std::string> GetUnsafeMountpoints(
+      const RemoteDimmNode& node) const;
+
+  const RemoteDimmNode& GetNode(int idx) const {
+    return configs_[idx];
   }
 
-#endif  // _WIN32
-  std::unique_ptr<FILE, PipeDeleter> pipe(popen(command.c_str(), "r"));
-
-  if (!pipe) {
-    throw std::runtime_error("popen failed");
+  const std::string& GetRemotePoolsetsDir() const {
+    return remote_poolsets_dir_;
   }
 
-  char buffer[BUFFER_SIZE];
-  std::string out_buffer;
+ protected:
+  int Begin() const;
+  int Inject() const;
+  int CheckUSC() const;
+  int End() const;
 
-  while (fgets(buffer, BUFFER_SIZE, pipe.get())) {
-    out_buffer.append(buffer);
+ private:
+  const std::string GetRemoteAgentPath(const RemoteDimmNode& node) const {
+    return node.GetBinsDir() + SEPARATOR + "US_REMOTE_AGENT";
   }
 
-  auto s_pipe = pipe.release();
-  int exit_code = pclose(s_pipe);
-#ifdef _WIN32
-  output_ = Output<char>(exit_code, out_buffer);
-#else
-  output_ = Output<char>(WEXITSTATUS(exit_code), out_buffer);
-#endif  // _WIN32
+  const std::string remote_poolsets_dir_ = "usc_remote_testdir/";
 
-  if (print_log_) {
-    std::cout << out_buffer << std::endl;
-  }
+  RemoteDimmConfigurationsCollection configs_;
+  RemoteTestPhase();
+};
+#endif  // REMOTE_TEST_PHASE_H
 
-  return output_;
-}
+#endif  // __linux__
