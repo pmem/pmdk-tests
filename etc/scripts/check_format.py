@@ -33,9 +33,9 @@
 """Check code style and formatting for selected files.
 
 Check involves applying clang-format and checking format of test designs
-documentation comments above test fixture macros.
+documentation comments located above test fixture macros.
 
-Requires clang-format in version 3.9 installed on system.
+Requires clang-format in version 3.9 installed on the system.
 """
 
 import sys
@@ -80,7 +80,8 @@ def get_designs_line_indices(lines):
     iterations = range(len(lines))
 
     def end_found(i):
-        """Check if the last line of test design section was found."""
+        """Check if the last line of test design section was found.
+        'TEST_F' or 'TEST_P' occurs directly after the end of test design."""
         return lines[i].strip() == DESIGN_END and i + 1 in iterations \
             and ('TEST_F' in lines[i + 1] or 'TEST_P' in lines[i + 1])
 
@@ -172,35 +173,43 @@ def get_cmd_args():
         help='Recursive mode with root directory provided by'
              ' -p/--path argument')
     parser.add_argument('-i', '--in-place', action='store_true', default=False,
-                        help="Format files in place,"
-                             " don't end with failure in case of diffs.")
+                        help='Apply edits to files and display diffs')
     parser.add_argument('--ignore', default=['build'], nargs='+',
                         help='In recursive mode ignore elements with given '
                              'name in path. Default: build')
     parser.add_argument('--check-prerequisites', nargs=0,
                         help='Check prerequisites only.',
                         action=CheckPrerequisitesAction)
+    parser.add_argument('--all', action='store_true', default=False,
+                        help='Check all files in repository')
     return parser.parse_args()
 
 
 def main():
-    """Check or apply formatting in-place to all selected and appropriate files
-    according to command line arguments.
+    """Check and/or apply formatting in-place to all selected and appropriate
+    files according to command line arguments. Script ends with failure when
+    checking files without formatting them ("-i" param not used) and
+    issues (diffs) found.
     """
     args = get_cmd_args()
     check_prerequisites()
-
     files_to_process = []
-    if args.recursive:
-        if not path.isdir(args.path):
-            sys.exit('{} is not a directory'.format(path.abspath(args.path)))
-        files_to_process = check_utils.get_files_to_process(
-            args.path, args.ignore, DESIGN_EXTENSIONS + CPP_EXTENSIONS)
+
+    if args.all:
+        if args.recursive:
+            if not path.isdir(args.path):
+                sys.exit('{} is not a directory'.format(
+                    path.abspath(args.path)))
+            files_to_process = check_utils.get_files_to_process(
+                args.path, args.ignore, DESIGN_EXTENSIONS + CPP_EXTENSIONS)
+        else:
+            if not path.isfile(args.path):
+                sys.exit('{} is not a regular file'.format(
+                    path.abspath(args.path)))
+            files_to_process.append(args.path)
     else:
-        if not path.isfile(args.path):
-            sys.exit('{} is not a regular file'.format(
-                path.abspath(args.path)))
-        files_to_process.append(args.path)
+        files_to_process = check_utils.get_diff_files_to_process(
+            args.path, args.ignore, DESIGN_EXTENSIONS + CPP_EXTENSIONS)
 
     diffs_after_formatting = False
     for filepath in files_to_process:
