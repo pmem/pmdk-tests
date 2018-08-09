@@ -40,7 +40,7 @@ import argparse
 from os import path
 import check_utils
 
-COPYRIGHT_HEADER_PATTERN = r'^(.*)Copyright (.*), Intel Corporation'
+COPYRIGHT_HEADER_PATTERN = r'^(.*)Copyright ([0-9]+), Intel Corporation'
 LICENSE_EXTENSIONS = ('.cc', '.cpp', '.h', '.sh',
                       '.py', '.tpp', '.hpp', '.txt', '.cmake')
 IGNORED_FILES = ['__init__.py']
@@ -75,7 +75,7 @@ def check_license_date(filepath, copyright_line):
 
 def get_first_line_with_license(file_lines):
     """Find line in file containing copyright header, return its index or
-    return -1 if line was not found."""
+    return -1 if copyright header was not found."""
     license_start = -1
     for i, line in enumerate(file_lines):
         if re.search(COPYRIGHT_HEADER_PATTERN, line):
