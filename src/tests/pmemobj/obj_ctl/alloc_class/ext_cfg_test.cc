@@ -77,11 +77,11 @@ TEST_P(ObjCtlExtCfgPosTest, PMEMOBJ_CTL_ALLOC_CLASS_FROM_EXT_CFG_POS) {
   /* Step 6 */
   EXPECT_TRUE(AllocClassUtils::IsAllocClassValid(write_arg_, read_arg));
   /* Step 7 */
-  EXPECT_EQ(0, pmemobj_xalloc(
-                   pop, &oid,
-                   read_arg.unit_size -
-                       AllocClassUtils::hdrs[write_arg_.header_type].size,
-                   0, POBJ_CLASS_ID(write_arg_.class_id), nullptr, nullptr))
+  EXPECT_EQ(
+      0, pmemobj_xalloc(
+             pop, &oid, read_arg.unit_size -
+                            AllocClassUtils::hdrs[write_arg_.header_type].size,
+             0, POBJ_CLASS_ID(write_arg_.class_id), nullptr, nullptr))
       << pmemobj_errormsg();
   /* Step 8 */
   EXPECT_FALSE(OID_IS_NULL(oid));

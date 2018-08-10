@@ -46,11 +46,11 @@ class ReadConfig : public NonCopyable {
  private:
   const std::string config_{"config.xml"};
 
-protected:
+ protected:
   int SetTestDir(const pugi::xml_node &root, std::string &test_dir);
   int FillConfigFields(pugi::xml_node &&root) {
-    return static_cast<DerivedConfig *>(this)
-        ->FillConfigFields(std::move(root));
+    return static_cast<DerivedConfig *>(this)->FillConfigFields(
+        std::move(root));
   }
 
  public:
@@ -89,7 +89,8 @@ inline int ReadConfig<DerivedConfig>::SetTestDir(const pugi::xml_node &root,
   return 0;
 }
 
-template <class DerivedConfig> int ReadConfig<DerivedConfig>::ReadConfigFile() {
+template <class DerivedConfig>
+int ReadConfig<DerivedConfig>::ReadConfigFile() {
   pugi::xml_document config;
   std::string path;
   int ret = ApiC::GetExecutableDirectory(path);
@@ -121,4 +122,4 @@ template <class DerivedConfig> int ReadConfig<DerivedConfig>::ReadConfigFile() {
   return FillConfigFields(std::move(root));
 }
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_READ_CONFIG_H_
+#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_READ_CONFIG_H_

@@ -30,11 +30,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "configXML/local_configuration.h"
-#include "gtest/gtest.h"
 #include <exception>
 #include <iostream>
 #include <memory>
+#include "configXML/local_configuration.h"
+#include "gtest/gtest.h"
 
 std::unique_ptr<LocalConfiguration> local_config{new LocalConfiguration()};
 

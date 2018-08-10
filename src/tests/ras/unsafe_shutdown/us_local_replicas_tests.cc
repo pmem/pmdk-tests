@@ -50,7 +50,7 @@ void SyncLocalReplica::SetUp() {
  * If syncable: restore pool from replica and confirm written data correctness
  * else: repair, sync, confirm written data.
  * \test
- *         \li \c Step1. Create and open pool from poolset with primary pool on unsafely shutdown DIMM
+ *          \li \c Step1. Create and open pool from poolset with primary pool on unsafely shutdown DIMM
  * and replicas according to given parameter. / SUCCESS
  *          \li \c Step2. Write pattern to pool persistently.
  *          \li \c Step3. Trigger unsafely shutdown on specified dimms, power cycle,

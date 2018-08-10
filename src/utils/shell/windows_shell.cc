@@ -61,4 +61,4 @@ Output<wchar_t> IShell::ExecuteCommand(const std::wstring &cmd) {
   return w_output_;
 }
 
-#endif // _WIN32
+#endif  // _WIN32

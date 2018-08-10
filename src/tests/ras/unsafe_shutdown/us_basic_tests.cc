@@ -35,9 +35,8 @@
 void UnsafeShutdownBasic::SetUp() {
   ASSERT_LE(1, test_phase_.GetUnsafeDimmNamespaces().size())
       << "Insufficient number of dimms to run this test";
-  us_dimm_pool_path_ =
-      test_phase_.GetUnsafeDimmNamespaces()[0].GetTestDir() +
-      GetNormalizedTestName() + "_pool";
+  us_dimm_pool_path_ = test_phase_.GetUnsafeDimmNamespaces()[0].GetTestDir() +
+                       GetNormalizedTestName() + "_pool";
 }
 
 /**
@@ -284,9 +283,8 @@ TEST_F(UnsafeShutdownBasicClean, TC_OPEN_CLEAN_phase_2) {
 void UnsafeShutdownBasicWithoutUS::SetUp() {
   ASSERT_LE(1, test_phase_.GetSafeDimmNamespaces().size())
       << "Insufficient number of dimms to run this test";
-  non_us_dimm_pool_path_ =
-      test_phase_.GetSafeDimmNamespaces()[0].GetTestDir() +
-      GetNormalizedTestName() + "_pool";
+  non_us_dimm_pool_path_ = test_phase_.GetSafeDimmNamespaces()[0].GetTestDir() +
+                           GetNormalizedTestName() + "_pool";
 }
 
 /*

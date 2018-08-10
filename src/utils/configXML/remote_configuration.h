@@ -38,30 +38,35 @@
 #include "read_config.h"
 
 class RemoteConfiguration final {
-private:
+ private:
   std::string address_;
   std::string test_dir_;
 
-public:
+ public:
   RemoteConfiguration(const std::string &address, const std::string &test_dir)
-      : address_(address), test_dir_(test_dir) {}
+      : address_(address), test_dir_(test_dir) {
+  }
 
-  const std::string &GetTestDir() const { return this->test_dir_; }
+  const std::string &GetTestDir() const {
+    return this->test_dir_;
+  }
 
-  const std::string &GetIpAddress() const { return this->address_; }
+  const std::string &GetIpAddress() const {
+    return this->address_;
+  }
 };
 
 class RemoteConfigurationCollection final
     : public ReadConfig<RemoteConfigurationCollection> {
-private:
+ private:
   friend class ReadConfig<RemoteConfigurationCollection>;
   int FillConfigFields(pugi::xml_node &&root);
   std::vector<RemoteConfiguration> remote_cfgs_;
 
-public:
+ public:
   const RemoteConfiguration &operator[](int idx) const {
     return remote_cfgs_.at(idx);
   }
 };
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_CONFIGURATION_H_
+#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_REMOTE_CONFIGURATION_H_
