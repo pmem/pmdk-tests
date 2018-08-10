@@ -32,12 +32,12 @@
 
 #ifdef _WIN32
 
-#include "api_c.h"
 #include <windows.h>
 #include <codecvt>
 #include <fstream>
 #include <locale>
 #include <sstream>
+#include "api_c.h"
 
 int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
   if (length < 0) {
@@ -352,4 +352,4 @@ long long ApiC::GetFreeSpaceT(const std::wstring &dir) {
   return total_number_of_free_bytes.QuadPart;
 }
 
-#endif // !_WIN32
+#endif  // !_WIN32

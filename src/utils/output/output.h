@@ -37,7 +37,8 @@
 #include "non_copyable/non_copyable.h"
 
 /*
- * Output -- template class that contains information about exit code and standard
+ * Output -- template class that contains information about exit code and
+ * standard
  * output from shell command. Standard output can be a char-like object.
  */
 template <typename T = char>

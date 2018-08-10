@@ -33,15 +33,15 @@
 #ifndef PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
 #define PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
 
-#include "constants.h"
-#include "non_copyable/non_copyable.h"
+#include <sys/stat.h>
 #include <iostream>
 #include <string>
-#include <sys/stat.h>
 #include <vector>
+#include "constants.h"
+#include "non_copyable/non_copyable.h"
 
 class ApiC final : NonCopyable {
-public:
+ public:
   /*
    * GetExecutableDirectory -- assigns a path to a folder containing the
    * executable file to the input argument. Returns 0 on success, -1 otherwise.
@@ -92,8 +92,8 @@ public:
    * GetFileSize -- returns vector of file sizes specified in bytes on success,
    * prints error message and returns empty vector otherwise.
    */
-  static std::vector<long long>
-  GetFilesSize(const std::vector<std::string> &paths);
+  static std::vector<long long> GetFilesSize(
+      const std::vector<std::string> &paths);
 
   /*
    * GetFilePermission -- returns UNIX-style file mode bits in decimal on
@@ -214,4 +214,4 @@ public:
 #endif
 };
 
-#endif // !PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
+#endif  // !PMDK_TESTS_SRC_UTILS_API_C_API_C_H_
