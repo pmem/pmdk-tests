@@ -41,7 +41,7 @@
  * LocalConfiguration -- class that provides access to configuration file.
  */
 class LocalConfiguration final : public ReadConfig<LocalConfiguration> {
-private:
+ private:
   friend class ReadConfig<LocalConfiguration>;
   std::string test_dir_;
   /*
@@ -51,8 +51,10 @@ private:
    */
   int FillConfigFields(pugi::xml_node &&root);
 
-public:
-  const std::string &GetTestDir() { return this->test_dir_; }
+ public:
+  const std::string &GetTestDir() {
+    return this->test_dir_;
+  }
 };
 
-#endif // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
+#endif  // !PMDK_TESTS_SRC_UTILS_CONFIGXML_LOCAL_CONFIGURATION_H_
