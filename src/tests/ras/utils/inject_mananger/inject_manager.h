@@ -46,6 +46,8 @@ class InjectManager {
       : test_dir_(test_dir), policy_(policy) {
   }
 
+  InjectManager(std::string test_dir, std::string policy);
+
   bool IsLastShutdownUnsafe(
       const std::vector<DimmNamespace> &dimm_namespaces) const;
   bool IsLastShutdownSafe(

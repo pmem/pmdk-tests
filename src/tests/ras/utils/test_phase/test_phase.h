@@ -35,7 +35,7 @@
 #include "inject_mananger/inject_manager.h"
 #include "non_copyable/non_copyable.h"
 
-enum class ExecutionAction { begin, check_usc, inject, end };
+enum class ExecutionAction { begin, check_usc, inject, end, none };
 
 template <class T>
 class TestPhase : public NonCopyable {
@@ -84,6 +84,8 @@ int TestPhase<T>::RunPreTestAction() const {
       return Begin();
     case ExecutionAction::check_usc:
       return CheckUSC();
+    case ExecutionAction::none:
+      return 0;
     default:
       throw std::invalid_argument("Invalid pre execution action");
   }
@@ -110,12 +112,15 @@ void TestPhase<T>::ParseCmdArgs(int argc, char** argv) {
     throw std::invalid_argument(usage);
   }
 
+  int phase_number = std::atoi(argv[1]);
   phase_name_ = std::string{"phase_"} + argv[1];
   /* Modify --gtest_filter flag to run only tests from specific phase" */
   ::testing::GTEST_FLAG(filter) =
       ::testing::GTEST_FLAG(filter) + "*" + phase_name_ + "*";
 
-  if (phase_name_.compare("phase_1") == 0) {
+  if (phase_number < 1) {
+    pre_test_action_ = ExecutionAction::none;
+  } else if (phase_number == 1) {
     pre_test_action_ = ExecutionAction::begin;
   } else {
     pre_test_action_ = ExecutionAction::check_usc;

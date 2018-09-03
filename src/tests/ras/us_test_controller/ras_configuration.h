@@ -43,6 +43,7 @@ class DUT final {
   std::string address_;
   std::string power_cycle_command_;
   std::string bin_dir_;
+  std::string inject_policy_;
   IShell ishell_{address_};
   const int connection_error_ = 255;
   bool HostAvailable() {
@@ -52,30 +53,43 @@ class DUT final {
  public:
   DUT() = delete;
   DUT(const std::string& address, const std::string& power_cycle_command,
-      const std::string& bin_dir);
+      const std::string& bin_dir, const std::string& inject_policy);
+
   DUT(DUT&& temp)
       : address_(temp.address_),
         power_cycle_command_(temp.power_cycle_command_),
-        bin_dir_(temp.bin_dir_){};
+        bin_dir_(temp.bin_dir_),
+        inject_policy_(temp.inject_policy_) {
+  }
+
   const std::string& GetBinDir() const {
     return this->bin_dir_;
   }
-  Output<char> ExecuteCmd(std::string cmd) {
-    return ishell_.ExecuteCommand(cmd);
-  }
+
   const std::string& GetAddress() const {
     return this->address_;
   }
+
+  const std::string& GetInjectPolicy() const {
+    return this->inject_policy_;
+  }
+
+  Output<char> ExecuteCmd(std::string cmd) {
+    return ishell_.ExecuteCommand(cmd);
+  }
+
   Output<char> PowerCycle() {
     IShell i_shell;
     return i_shell.ExecuteCommand(power_cycle_command_);
   }
+
   bool WaitForConnection(unsigned int timeout_secs);
 };
 
 class RASConfigurationCollection final
     : public ReadConfig<RASConfigurationCollection> {
  private:
+  int phases_count_;
   friend class ReadConfig<RASConfigurationCollection>;
   int FillConfigFields(pugi::xml_node&& root);
   std::vector<DUT> duts_collection_;
@@ -84,15 +98,23 @@ class RASConfigurationCollection final
   DUT& GetDUT(int idx) {
     return duts_collection_.at(idx);
   }
+
   std::size_t GetSize() const {
     return duts_collection_.size();
   }
+
+  int GetPhasesCount() const {
+    return phases_count_;
+  }
+
   DUT& operator[](std::size_t idx) {
     return this->duts_collection_.at(idx);
   }
+
   std::vector<DUT>::iterator begin() noexcept {
     return duts_collection_.begin();
   }
+
   std::vector<DUT>::iterator end() noexcept {
     return duts_collection_.end();
   }

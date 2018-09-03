@@ -41,9 +41,10 @@ int USTestController::PhaseExecute(const std::string& phase_number,
   auto& primary_dut = (*ras_config)[0];
 
   std::string cmd = primary_dut.GetBinDir() + SEPARATOR + "UNSAFE_SHUTDOWN " +
-                    phase_number + " " + arg + "--gtest_filter=" +
+                    phase_number + " " + arg + " " +
+                    primary_dut.GetInjectPolicy() + " --gtest_filter=" +
                     *gtest_filter;
-  ;
+
   std::cout << "Executing command: " << cmd << std::endl;
 
   auto out = primary_dut.ExecuteCmd(cmd);
@@ -93,17 +94,21 @@ int USTestController::WaitForDutsConnection(unsigned int timeout) const {
 }
 
 TEST_F(USTestController, USC_TEST) {
-  const int phases_count = 2;
-
+  int phases_count = ras_config->GetPhasesCount();
   for (int i = 1; i <= phases_count; ++i) {
     std::string action{i == phases_count ? "cleanup" : "inject"};
     int exit_code = PhaseExecute(std::to_string(i), action);
-    EXPECT_EQ(0, exit_code) << "Phase " << i << " failed";
-    ASSERT_FALSE(IsFatalError(exit_code)) << "Fatal error occured.";
+
+    EXPECT_EQ(0, exit_code) << "At least one test failed during phase " << i;
+
+    if (IsFatalError(exit_code)) {
+      PhaseExecute("-1", "cleanup");
+      FAIL() << "Fatal error, execution will not be continued";
+    }
 
     if (i < phases_count) {
       ASSERT_EQ(0, RunPowerCycle()) << "Power cycle on DUTs failed";
-      ASSERT_TRUE(WaitForDutsConnection(15 * 60))
+      ASSERT_EQ(0, WaitForDutsConnection(15 * 60))
           << "Could not connect to at least one of DUTs";
     }
   }
