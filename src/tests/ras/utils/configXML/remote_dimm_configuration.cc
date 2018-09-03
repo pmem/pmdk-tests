@@ -30,6 +30,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __linux__
+
 #include "remote_dimm_configuration.h"
 #include "shell/i_shell.h"
 
@@ -91,3 +93,5 @@ int RemoteDimmConfigurationsCollection::FillConfigFields(
 
   return ret;
 }
+
+#endif  // __linux__

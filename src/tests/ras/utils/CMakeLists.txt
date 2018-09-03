@@ -38,15 +38,19 @@ file(GLOB_RECURSE ras_utils_SRC
 	"${DIR}/*.cc")
 
 set_source_groups("${PREFIX_FILTER}" ${ras_utils_SRC})
-
-pkg_check_modules(Libndctl REQUIRED libndctl)
-include_directories(${Libndctl_INCLUDE_DIRS})
-link_directories(${Libndctl_LIBRARY_DIRS})
-pkg_check_modules(Libdaxctl REQUIRED libdaxctl)
-include_directories(${Libdaxctl_INCLUDE_DIRS})
-link_directories(${Libdaxctl_LIBRARY_DIRS})
-
 add_library(RasUtils STATIC ${ras_utils_SRC})
 add_dependencies(RasUtils Utils)
-target_link_libraries(Utils ${Libpmemobj_LIBRARIES} ${Libdaxctl_LIBRARIES}
-${Libndctl_LIBRARIES})
+
+if (NOT WIN32)
+	pkg_check_modules(Libndctl REQUIRED libndctl)
+	include_directories(${Libndctl_INCLUDE_DIRS})
+	link_directories(${Libndctl_LIBRARY_DIRS})
+	pkg_check_modules(Libdaxctl REQUIRED libdaxctl)
+	include_directories(${Libdaxctl_INCLUDE_DIRS})
+	link_directories(${Libdaxctl_LIBRARY_DIRS})	
+	target_link_libraries(Utils ${Libpmemobj_LIBRARIES} ${Libdaxctl_LIBRARIES}
+		${Libndctl_LIBRARIES})
+else()
+	target_link_libraries(Utils ${Libpmemobj_LIBRARIES})
+endif()
+

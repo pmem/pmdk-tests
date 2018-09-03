@@ -35,7 +35,7 @@ std::string UnsafeShutdown::GetNormalizedTestName() const {
   auto &test_info = GetTestInfo();
   std::string test_name{std::string{test_info.test_case_name()} + "_" +
                         std::string{test_info.name()}};
-  string_utils::ReplaceAll(test_name, SEPARATOR, std::string{"_"});
+  string_utils::ReplaceAll(test_name, std::string{"/"}, std::string{"_"});
   string_utils::ReplaceAll(test_name, test_phase_.GetPhaseName(),
                            std::string{""});
   return test_name;

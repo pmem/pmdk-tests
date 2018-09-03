@@ -30,9 +30,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "dimm.h"
+#ifdef __linux__
+
 #include <linux/limits.h>
 #include <cstring>
+#include "dimm.h"
+
+#define FOREACH_BUS_REGION_NAMESPACE(ctx, bus, region, ndns)    \
+  ndctl_bus_foreach(ctx, bus) ndctl_region_foreach(bus, region) \
+      ndctl_namespace_foreach(region, ndns)
 
 const int USC_VALID_FLAG = 1 << 5;
 
@@ -77,7 +83,7 @@ int Dimm::InjectUnsafeShutdown() const {
 }
 
 ndctl_interleave_set *DimmNamespace::GetInterleaveSet(ndctl_ctx *ctx,
-                                                      struct stat64 st) {
+                                                      const struct stat64 &st) {
   struct ndctl_bus *bus;
   struct ndctl_region *region;
   struct ndctl_namespace *ndns;
@@ -167,7 +173,7 @@ DimmNamespace::DimmNamespace(const std::string &mountpoint) {
     test_dir_ = mountpoint + SEPARATOR + "pmdk_tests" + SEPARATOR;
     if (!ApiC::DirectoryExists(test_dir_) &&
         ApiC::CreateDirectoryT(test_dir_) != 0) {
-      throw std::invalid_argument("");
+      throw std::invalid_argument("Could not create: " + test_dir_);
     }
 
   } else {
@@ -182,3 +188,5 @@ DimmNamespace::~DimmNamespace() {
 
   ctx_ = nullptr;
 }
+
+#endif  // __linux__

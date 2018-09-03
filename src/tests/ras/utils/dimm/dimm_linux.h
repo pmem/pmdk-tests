@@ -30,41 +30,65 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "pool_data.h"
+#ifndef PMDK_TESTS_SRC_RAS_UTILS_DIMM_LINUX_H_
+#define PMDK_TESTS_SRC_RAS_UTILS_DIMM_LINUX_H_
 
-int LogData::Write(std::string log_text) {
-  size_t chunks = log_text.size() / chunk_size_;
+#include <ndctl/libdaxctl.h>
+#include <ndctl/libndctl.h>
+#include <sys/stat.h>
+#include "api_c/api_c.h"
 
-  size_t pos = 0;
-  for (size_t i = 0; i < chunks; ++i) {
-    if (pmemlog_append(plp_, log_text.substr(pos, chunk_size_).c_str(),
-                       chunk_size_) != 0) {
-      std::cerr << "Appending line to log pool failed. Errno: " << errno
-                << std::endl;
-      return -1;
-    }
-    pos += chunk_size_;
+class Dimm final {
+ private:
+  struct ndctl_dimm *dimm_ = nullptr;
+  std::string uid_;
+
+ public:
+  Dimm(struct ndctl_dimm *dimm, const char *uid) : dimm_(dimm), uid_(uid) {
   }
 
-  size_t last_chunk_size =
-      (chunks == 0) ? log_text.size() : log_text.size() % chunks;
+  int GetShutdownCount() const;
+  int InjectUnsafeShutdown() const;
 
-  if (pmemlog_append(plp_, log_text.substr(pos).c_str(), last_chunk_size) !=
-      0) {
-    std::cerr << "Appending line to log pool failed. Errno :" << errno
-              << std::endl;
-    return -1;
+  const std::string &GetUid() const {
+    return this->uid_;
   }
-  return 0;
-}
+};
 
-std::string LogData::Read() {
-  std::string ret;
-  pmemlog_walk(plp_, 0, ReadLog, &ret);
-  return ret;
-}
+class DimmNamespace final {
+ private:
+  bool is_dax_ = false;
+  std::string test_dir_;
+  std::vector<Dimm> dimms_;
+  ndctl_ctx *ctx_ = nullptr;
 
-int LogData::ReadLog(const void *buf, size_t len, void *arg) {
-  static_cast<std::string *>(arg)->assign(static_cast<const char *>(buf), len);
-  return 0;
-}
+  ndctl_interleave_set *GetInterleaveSet(ndctl_ctx *ctx,
+                                         const struct stat64 &st);
+
+ public:
+  DimmNamespace(const std::string &mountpoint);
+
+  std::string GetTestDir() const {
+    return this->test_dir_;
+  }
+
+  Dimm &operator[](std::size_t idx) {
+    return this->dimms_.at(idx);
+  }
+
+  const std::vector<Dimm>::const_iterator begin() const noexcept {
+    return dimms_.cbegin();
+  }
+
+  const std::vector<Dimm>::const_iterator end() const noexcept {
+    return dimms_.cend();
+  }
+
+  size_t GetSize() const {
+    return dimms_.size();
+  }
+
+  ~DimmNamespace();
+};
+
+#endif  // !PMDK_TESTS_SRC_RAS_UTILS_DIMM_LINUX_H_

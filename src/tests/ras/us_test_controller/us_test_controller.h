@@ -36,7 +36,7 @@
 #include <future>
 #include "exit_codes.h"
 #include "gtest/gtest.h"
-#include "ras_configXML/ras_configuration.h"
+#include "ras_configuration.h"
 
 extern std::unique_ptr<std::string> gtest_filter;
 extern std::unique_ptr<RASConfigurationCollection> ras_config;
