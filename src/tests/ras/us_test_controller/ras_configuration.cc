@@ -33,10 +33,11 @@
 #include "ras_configuration.h"
 
 DUT::DUT(const std::string& address, const std::string& power_cycle_command,
-         const std::string& bin_dir)
+         const std::string& bin_dir, const std::string& inject_policy)
     : address_(address),
       power_cycle_command_(power_cycle_command),
-      bin_dir_(bin_dir) {
+      bin_dir_(bin_dir),
+      inject_policy_(inject_policy) {
   if (0 != ishell_.ExecuteCommand("test -d " + bin_dir_).GetExitCode()) {
     throw std::invalid_argument(ishell_.GetLastOutput().GetContent());
   }
@@ -71,7 +72,14 @@ int RASConfigurationCollection::FillConfigFields(pugi::xml_node&& root) {
   size_t pos;
   int ret = -1;
 
-  for (auto&& it : root.children("RASConfiguration")) {
+  phases_count_ =
+      root.child("RASConfiguration").child("phasesCount").text().as_int();
+  if (phases_count_ <= 0) {
+    throw std::invalid_argument("Wrong phases count value: " +
+                                std::to_string(phases_count_));
+  }
+
+  for (auto&& it : root.child("RASConfiguration").children("DUT")) {
     ret = 0;
     address = it.child("address").text().as_string();
     pos = address.find_last_of(":");
@@ -90,7 +98,8 @@ int RASConfigurationCollection::FillConfigFields(pugi::xml_node&& root) {
       duts_collection_.emplace_back(
           DUT(address + " -p " + port,
               it.child("powerCycleCommand").text().as_string(),
-              it.child("binDir").text().as_string()));
+              it.child("binDir").text().as_string(),
+              it.child("injectPolicy").text().as_string()));
     } catch (const std::invalid_argument& e) {
       std::cerr << e.what() << std::endl;
       return -1;
