@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 include(${CMAKE_CURRENT_LIST_DIR}/pmempools/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/pmemobj/CMakeLists.txt)
+#include(${CMAKE_CURRENT_LIST_DIR}/pmemobj/CMakeLists.txt)
 
 if (NOT WIN32)
 		pkg_check_modules(Libndctl QUIET libndctl)
