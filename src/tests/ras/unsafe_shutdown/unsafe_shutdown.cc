@@ -56,7 +56,7 @@ bool UnsafeShutdown::PassedOnPreviousPhase() const {
 }
 
 int UnsafeShutdown::PmempoolRepair(std::string pool_file_path) const {
-  int flags = PMEMPOOL_CHECK_FORMAT_STR | PMEMPOOL_CHECK_REPAIR |
+  unsigned int flags = PMEMPOOL_CHECK_FORMAT_STR | PMEMPOOL_CHECK_REPAIR |
               PMEMPOOL_CHECK_VERBOSE | PMEMPOOL_CHECK_ALWAYS_YES;
   struct pmempool_check_args args = {pool_file_path.c_str(), nullptr,
                                      PMEMPOOL_POOL_TYPE_DETECT, flags};
