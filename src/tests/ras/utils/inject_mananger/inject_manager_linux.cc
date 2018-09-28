@@ -132,6 +132,21 @@ bool InjectManager::CheckUSCDiff(
   return true;
 }
 
+InjectManager::InjectManager(std::string test_dir, std::string policy) {
+  std::map<std::string, InjectPolicy> string_reprs = {
+      {"all", InjectPolicy::all},
+      {"first", InjectPolicy::first},
+      {"last", InjectPolicy::last}};
+
+  auto search = string_reprs.find(policy);
+  if (search == string_reprs.end()) {
+    throw std::invalid_argument(policy +
+                                " is not a valid policy string representation");
+  }
+  policy_ = search->second;
+  test_dir_ = test_dir;
+}
+
 bool InjectManager::IsLastShutdownUnsafe(
     const std::vector<DimmNamespace> &dimm_namespaces) const {
   std::function<bool(int, int)> compare = [](int rec, int cur) -> bool {
