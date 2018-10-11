@@ -47,6 +47,7 @@ class UnsafeShutdown : public ::testing::Test {
     this->close_pools_at_end_ = !test_phase_.HasInjectAtEnd();
   }
 
+  size_t blk_size_ = PMEMBLK_MIN_BLK;
   IShell shell_;
   LocalTestPhase& test_phase_ = LocalTestPhase::GetInstance();
   PMEMobjpool* pop_ = nullptr;
@@ -67,7 +68,12 @@ class UnsafeShutdown : public ::testing::Test {
 
   bool PassedOnPreviousPhase() const;
   std::string GetNormalizedTestName() const;
+
   int PmempoolRepair(std::string pool_file_path) const;
+
+  int ObjCreateHelper(const std::string& path, size_t size);
+  int ObjOpenSuccessHelper(const std::string& path);
+  int ObjOpenFailureHelper(const std::string& path, int expected_errno);
 
   ~UnsafeShutdown() {
     StampPassedResult();

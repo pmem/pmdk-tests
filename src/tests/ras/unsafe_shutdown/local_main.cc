@@ -30,6 +30,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <libpmemblk.h>
+#include <libpmemlog.h>
+#include <libpmemobj.h>
 #include "configXML/local_dimm_configuration.h"
 #include "exit_codes.h"
 #include "gtest/gtest.h"
@@ -42,16 +45,45 @@ bool PartiallyPassed() {
   return ut->successful_test_count() > 0 && ut->failed_test_count() > 0;
 }
 
+int EnableSDS() {
+  int enabled = 1;
+  int ret = pmemobj_ctl_set(nullptr, "sds.at_create", &enabled);
+  if (ret != 0) {
+    std::cerr << "Could not enable SDS: " << pmemobj_errormsg()
+              << "errno: " << errno << std::endl;
+    return ret;
+  }
+  ret = pmemlog_ctl_set(nullptr, "sds.at_create", &enabled);
+  if (ret != 0) {
+    std::cerr << "Could not enable SDS: " << pmemlog_errormsg()
+              << "errno: " << errno << std::endl;
+    return ret;
+  }
+  ret = pmemblk_ctl_set(nullptr, "sds.at_create", &enabled);
+  if (ret != 0) {
+    std::cerr << "Could not enable SDS: " << pmemblk_errormsg()
+              << "errno: " << errno << std::endl;
+    return ret;
+  }
+  return 0;
+}
+
 int main(int argc, char **argv) {
   int ret = 0;
   try {
+    if (EnableSDS() != 0) {
+      return 1;
+    }
+
     ::testing::InitGoogleTest(&argc, argv);
     LocalTestPhase &test_phase = LocalTestPhase::GetInstance();
     test_phase.ParseCmdArgs(argc, argv);
 
     /* Modify --gtest_filter flag to run only tests from specific phase" */
-    ::testing::GTEST_FLAG(filter) =
-        "*" + test_phase.GetPhaseName() + "*" + ::testing::GTEST_FLAG(filter);
+    ::testing::GTEST_FLAG(filter) = "*" + test_phase.GetPhaseName() + "*" +
+                                    ::testing::GTEST_FLAG(filter) + ":" +
+                                    ::testing::GTEST_FLAG(filter) + "*" +
+                                    test_phase.GetPhaseName() + "*";
 
     if ((ret = test_phase.RunPreTestAction()) == 0) {
       ret = RUN_ALL_TESTS();

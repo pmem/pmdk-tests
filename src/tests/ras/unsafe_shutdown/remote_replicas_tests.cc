@@ -80,13 +80,6 @@ PMEMobjpool* RemotePoolsetTC::CreatePoolWithSDS() {
   }
   pmemobj_close(pop);
 
-  // Enable SDS
-  if (pmempool_feature_enable(local_poolset_.GetFullPath().c_str(),
-                              PMEMPOOL_FEAT_SHUTDOWN_STATE, 0) != 0) {
-    std::cerr << "Enabling shutdown state failed" << std::endl;
-    return nullptr;
-  }
-
   // Create poolest file with remote replicas
   std::vector<std::string> content{local_poolset_.GetContent()};
   for (const auto& rp : remote_poolsets_) {

@@ -52,6 +52,8 @@ bool UnsafeShutdown::PassedOnPreviousPhase() const {
   bool ret = ApiC::RegularFileExists(GetPassedStamp());
   if (ret) {
     ApiC::RemoveFile(GetPassedStamp());
+  } else {
+    std::cerr << "Previous phase of the test failed" << std::endl;
   }
   return ret;
 }
@@ -84,4 +86,40 @@ int UnsafeShutdown::PmempoolRepair(std::string pool_file_path) const {
   }
 
   return pmempool_check_end(ppc);
+}
+
+int UnsafeShutdown::ObjCreateHelper(const std::string &path, size_t size) {
+  pop_ = pmemobj_create(path.c_str(), nullptr, size, 0644 & PERMISSION_MASK);
+  if (pop_ == nullptr) {
+    std::cerr << "Pool creating failed. Errno: " << strerror(errno) << std::endl
+              << pmemobj_errormsg() << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+int UnsafeShutdown::ObjOpenSuccessHelper(const std::string &path) {
+  pop_ = pmemobj_open(path.c_str(), nullptr);
+  if (pop_ == nullptr) {
+    std::cerr << "Pool opening failed. Errno: " << strerror(errno) << std::endl
+              << pmemobj_errormsg();
+    return -1;
+  }
+  return 0;
+}
+
+int UnsafeShutdown::ObjOpenFailureHelper(const std::string &path,
+                                         int expected_errno) {
+  pop_ = pmemobj_open(path.c_str(), nullptr);
+  if (pop_ != nullptr) {
+    std::cerr << "Pool was unexpectedly opened with success." << std::endl;
+    return -1;
+  }
+
+  if (expected_errno != errno) {
+    std::cerr << "Expected errno (" << expected_errno
+              << ") is different than actual (" << errno << ")" << std::endl;
+    return -1;
+  }
+  return 0;
 }

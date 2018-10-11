@@ -30,30 +30,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef US_BASIC_TESTS_H
-#define US_BASIC_TESTS_H
+#ifndef SDS_FEATURE_TESTS_H
+#define SDS_FEATURE_TESTS_H
 
 #include "unsafe_shutdown.h"
 
-class UnsafeShutdownBasic : public UnsafeShutdown {
+class PmempoolSDSFeature : public UnsafeShutdown {
  public:
   std::string us_dimm_pool_path_;
 
   void SetUp() override;
+  void TearDown() override;
+
+  int ObjEnableShutdownState(const std::string& path);
+  int BlkEnableShutdownState(const std::string& path);
+  int LogEnableShutdownState(const std::string& path);
+
+  int ObjDisableShutdownState(const std::string& path);
+
+ private:
+  int EnableAndQuerySDS(const std::string& path);
+  int DisableAndQuerySDS(const std::string& path);
 };
 
-class UnsafeShutdownBasicClean : public UnsafeShutdownBasic {
- public:
-  UnsafeShutdownBasicClean() {
-    close_pools_at_end_ = true;
-  }
-};
-
-class UnsafeShutdownBasicWithoutUS : public UnsafeShutdown {
- public:
-  std::string non_us_dimm_pool_path_;
-
-  void SetUp() override;
-};
-
-#endif  // US_BASIC_TESTS_H
+#endif  // SDS_FEATURE_TESTS_H
