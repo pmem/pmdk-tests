@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "us_move_tests.h"
+#include "local_move_tests.h"
 
 std::ostream& operator<<(std::ostream& stream, move_param const& m) {
   stream << m.description;

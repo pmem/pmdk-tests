@@ -80,7 +80,7 @@ int RemoteDimmConfigurationsCollection::FillConfigFields(
       remote_configurations_.emplace_back(RemoteDimmNode(
           address + " -p " + port, it.child("testDir").text().as_string(),
           it.child("binsDir").text().as_string(),
-          root.child("dimmConfiguration")));
+          it.child("dimmConfiguration")));
     } catch (const std::invalid_argument &e) {
       std::cerr << "Exception was caught: " << e.what() << std::endl;
       return -1;

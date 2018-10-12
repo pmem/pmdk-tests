@@ -29,6 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "unsafe_shutdown.h"
 
 std::string UnsafeShutdown::GetNormalizedTestName() const {
@@ -57,7 +58,7 @@ bool UnsafeShutdown::PassedOnPreviousPhase() const {
 
 int UnsafeShutdown::PmempoolRepair(std::string pool_file_path) const {
   unsigned int flags = PMEMPOOL_CHECK_FORMAT_STR | PMEMPOOL_CHECK_REPAIR |
-              PMEMPOOL_CHECK_VERBOSE | PMEMPOOL_CHECK_ALWAYS_YES;
+                       PMEMPOOL_CHECK_VERBOSE | PMEMPOOL_CHECK_ALWAYS_YES;
   struct pmempool_check_args args = {pool_file_path.c_str(), nullptr,
                                      PMEMPOOL_POOL_TYPE_DETECT, flags};
 

@@ -36,10 +36,10 @@
 #include "configXML/local_dimm_configuration.h"
 #include "gtest/gtest.h"
 #include "libpmempool.h"
-#include "local_test_phase.h"
 #include "pool_data/pool_data.h"
 #include "poolset/poolset_management.h"
 #include "shell/i_shell.h"
+#include "test_phase/local_test_phase.h"
 
 class UnsafeShutdown : public ::testing::Test {
  public:

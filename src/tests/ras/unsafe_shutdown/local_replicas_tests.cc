@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "us_local_replicas_tests.h"
+#include "local_replicas_tests.h"
 
 std::ostream& operator<<(std::ostream& stream, sync_local_replica_tc const& p) {
   stream << p.description;
@@ -50,7 +50,7 @@ void SyncLocalReplica::SetUp() {
  * If syncable: restore pool from replica and confirm written data correctness
  * else: repair, sync, confirm written data.
  * \test
- *          \li \c Step1. Create and open pool from poolset with primary pool on unsafely shutdown DIMM
+ *          \li \c Step1. Create a pool from poolset with primary pool on unsafely shutdown DIMM
  * and replicas according to given parameter. / SUCCESS
  *          \li \c Step2. Write pattern to pool persistently.
  *          \li \c Step3. Trigger unsafely shutdown on specified dimms, power cycle,
@@ -62,16 +62,16 @@ void SyncLocalReplica::SetUp() {
  *          \li \c Step8. Close the pool / SUCCESS
  */
 TEST_P(SyncLocalReplica, TC_SYNC_LOCAL_REPLICA_phase_1) {
-  sync_local_replica_tc param = GetParam();
+  Poolset ps = GetParam().poolset;
 
   /* Step1 */
   PoolsetManagement p_mgmt;
-  ASSERT_EQ(0, p_mgmt.CreatePoolsetFile(param.poolset))
+  ASSERT_EQ(0, p_mgmt.CreatePoolsetFile(ps))
       << "error while creating poolset file";
-  ASSERT_TRUE(p_mgmt.PoolsetFileExists(param.poolset))
-      << "Poolset file " << param.poolset.GetFullPath() << " does not exist";
+  ASSERT_TRUE(p_mgmt.PoolsetFileExists(ps))
+      << "Poolset file " << ps.GetFullPath() << " does not exist";
 
-  pop_ = pmemobj_create(param.poolset.GetFullPath().c_str(), nullptr, 0,
+  pop_ = pmemobj_create(ps.GetFullPath().c_str(), nullptr, 0,
                         0644 & PERMISSION_MASK);
   ASSERT_TRUE(pop_ != nullptr)
       << "Error while creating the pool. Errno:" << errno << std::endl
@@ -96,13 +96,14 @@ TEST_P(SyncLocalReplica, TC_SYNC_LOCAL_REPLICA_phase_2) {
   ASSERT_EQ(EINVAL, errno);
 
   /* Step5 */
-  int expected_sync_exit = (param.is_syncable ? 0 : 1);
+  int expected_sync_exit = (param.is_syncable ? 0 : -1);
   ASSERT_EQ(pmempool_sync(param.poolset.GetFullPath().c_str(), 0),
             expected_sync_exit);
   pop_ = pmemobj_open(param.poolset.GetFullPath().c_str(), nullptr);
 
   if (!param.is_syncable) {
-    ASSERT_EQ(nullptr, pop_) << "Unsyncable pool was opened but should be not";
+    ASSERT_EQ(nullptr, pop_)
+        << "Pool was unexpectedly opened after failed sync";
     ASSERT_EQ(EINVAL, errno);
     ASSERT_EQ(PMEMPOOL_CHECK_RESULT_REPAIRED,
               PmempoolRepair(param.poolset.GetFullPath()))
@@ -404,7 +405,7 @@ void UnsafeShutdownTransform::SetUp() {
  * pool should be valid.
  * \test
  *          \li \c Step1. Create pool from poolset with primary pool on
- *  unsafely shutdown DIMM and healthy replica, open pool. / SUCCESS
+ * unsafely shutdown DIMM and healthy replica, open pool. / SUCCESS
  *          \li \c Step2. Write data to pool / SUCCESS
  *          \li \c Step3. Increment USC on DIMM with primary pool, power cycle,
  * confirm USC is incremented. / SUCCESS
@@ -435,8 +436,7 @@ TEST_F(UnsafeShutdownTransform, TC_TRANSFORM_POOLSET_TO_US_DIMM_phase_1) {
 
 /* Step3 - oustide test macros */
 
-TEST_F(UnsafeShutdownTransform,
-       TC_TRANSFORM_HEALTHY_REPLICA_TO_US_DIMM_phase_2) {
+TEST_F(UnsafeShutdownTransform, TC_TRANSFORM_POOLSET_TO_US_DIMM_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
 
   /* Step4 */

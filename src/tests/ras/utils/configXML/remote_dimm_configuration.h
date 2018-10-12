@@ -92,8 +92,16 @@ class RemoteDimmConfigurationsCollection final
   std::vector<RemoteDimmNode> remote_configurations_;
 
  public:
-  const RemoteDimmNode &GetNode(int idx) const {
+  const RemoteDimmNode &operator[](int idx) const {
     return remote_configurations_.at(idx);
+  }
+
+  const std::vector<RemoteDimmNode>::const_iterator begin() const noexcept {
+    return remote_configurations_.cbegin();
+  }
+
+  const std::vector<RemoteDimmNode>::const_iterator end() const noexcept {
+    return remote_configurations_.cend();
   }
 };
 

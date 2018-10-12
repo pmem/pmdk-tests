@@ -30,9 +30,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "configXML/local_dimm_configuration.h"
+#ifndef RAS_TEST_PHASE_H
+#define RAS_TEST_PHASE_H
+
 #include "gtest/gtest.h"
-#include "inject_mananger/inject_manager.h"
+#include "inject_manager/inject_manager.h"
 #include "non_copyable/non_copyable.h"
 
 enum class ExecutionAction { begin, check_usc, inject, end, none };
@@ -49,6 +51,7 @@ class TestPhase : public NonCopyable {
   int RunPostTestAction() const;
 
   void ParseCmdArgs(int argc, char** argv);
+
   bool HasInjectAtEnd() const {
     return post_test_action_ == ExecutionAction::inject;
   }
@@ -58,6 +61,8 @@ class TestPhase : public NonCopyable {
 
  protected:
   InjectPolicy policy_;
+  std::string policy_arg_;
+
   int Begin() const {
     return static_cast<const T*>(this)->Begin();
   }
@@ -72,6 +77,8 @@ class TestPhase : public NonCopyable {
   }
 
  private:
+  enum class ExecutionAction { none, begin, check_usc, inject, end };
+
   ExecutionAction pre_test_action_;
   ExecutionAction post_test_action_;
   std::string phase_name_;
@@ -114,9 +121,6 @@ void TestPhase<T>::ParseCmdArgs(int argc, char** argv) {
 
   int phase_number = std::atoi(argv[1]);
   phase_name_ = std::string{"phase_"} + argv[1];
-  /* Modify --gtest_filter flag to run only tests from specific phase" */
-  ::testing::GTEST_FLAG(filter) =
-      ::testing::GTEST_FLAG(filter) + "*" + phase_name_ + "*";
 
   if (phase_number < 1) {
     pre_test_action_ = ExecutionAction::none;
@@ -126,21 +130,24 @@ void TestPhase<T>::ParseCmdArgs(int argc, char** argv) {
     pre_test_action_ = ExecutionAction::check_usc;
   }
 
-  if (std::string{argv[2]}.compare("cleanup") == 0) {
-    post_test_action_ = ExecutionAction::end;
-  } else if (std::string{argv[2]}.compare("inject") == 0) {
-    post_test_action_ = ExecutionAction::inject;
-  } else {
+  std::map<std::string, ExecutionAction> action_args = {
+      {"cleanup", ExecutionAction::end}, {"inject", ExecutionAction::inject}};
+  auto search_action = action_args.find(std::string{argv[2]});
+  if (search_action == action_args.end()) {
     throw std::invalid_argument(usage);
   }
+  post_test_action_ = search_action->second;
 
-  if (std::string{argv[3]}.compare("all") == 0) {
-    policy_ = InjectPolicy::all;
-  } else if (std::string{argv[3]}.compare("first") == 0) {
-    policy_ = InjectPolicy::first;
-  } else if (std::string{argv[3]}.compare("last") == 0) {
-    policy_ = InjectPolicy::last;
-  } else {
+  std::map<std::string, InjectPolicy> policy_args = {
+      {"all", InjectPolicy::all},
+      {"first", InjectPolicy::first},
+      {"last", InjectPolicy::last}};
+  auto search_policy = policy_args.find(std::string{argv[3]});
+  if (search_policy == policy_args.end()) {
     throw std::invalid_argument(usage);
   }
+  policy_ = search_policy->second;
+  policy_arg_ = search_policy->first;
 }
+
+#endif  // RAS_TEST_PHASE
