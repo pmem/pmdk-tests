@@ -54,17 +54,27 @@ class RemotePoolset {
 
 class RemotePoolsetTC {
  public:
+  bool enough_dimms_ = false;
+  bool is_syncable_;
+  std::string description_;
+  std::vector<RemotePoolset> remote_poolsets_;
+
+  Poolset local_poolset_;
+
   RemotePoolsetTC(const std::string& d) : description_{d} {
   }
   RemotePoolset& AddRemotePoolset(const std::string& host, const Poolset& p) {
     remote_poolsets_.emplace_back(RemotePoolset{host, p});
     return remote_poolsets_.back();
   }
-  Poolset poolset_;
-  bool enough_dimms_ = false;
-  bool is_syncable_;
-  std::string description_;
-  std::vector<RemotePoolset> remote_poolsets_;
+  const std::string GetPathTransformed() const {
+    return local_poolset_.GetFullPath() + "_after";
+  }
+  const std::string& GetPath() const {
+    return local_poolset_.GetFullPath();
+  }
+  PMEMobjpool* CreatePoolWithSDS();
+  int CreatePoolsetFiles() const;
 };
 
 class SyncRemoteReplica

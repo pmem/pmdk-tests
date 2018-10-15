@@ -66,6 +66,68 @@ std::ostream& operator<<(std::ostream& stream, RemotePoolsetTC const& p) {
   return stream;
 }
 
+/* Currently there is no way to directly enable SDS on a poolset with remote
+ replicas. A workaround involving pmempool_transform must be used for this
+ purpose. */
+PMEMobjpool* RemotePoolsetTC::CreatePoolWithSDS() {
+  // Create pool without remote replicas
+  PMEMobjpool* pop = pmemobj_create(local_poolset_.GetFullPath().c_str(),
+                                    nullptr, 0, 0644 & PERMISSION_MASK);
+  if (pop == nullptr) {
+    std::cerr << "Pool creating failed. Errno: " << strerror(errno) << std::endl
+              << pmemobj_errormsg() << std::endl;
+    return pop;
+  }
+  pmemobj_close(pop);
+
+  // Enable SDS
+  if (pmempool_feature_enable(local_poolset_.GetFullPath().c_str(),
+                              PMEMPOOL_FEAT_SHUTDOWN_STATE, 0) != 0) {
+    std::cerr << "Enabling shutdown state failed" << std::endl;
+    return nullptr;
+  }
+
+  // Create poolest file with remote replicas
+  std::vector<std::string> content{local_poolset_.GetContent()};
+  for (const auto& rp : remote_poolsets_) {
+    content.emplace_back(rp.GetReplicaLine());
+  }
+
+  ApiC api;
+  if (api.CreateFileT(GetPathTransformed(), content) != 0) {
+    std::cerr << "Error while creating poolset file: " << GetPathTransformed()
+              << std::endl;
+    return nullptr;
+  }
+
+  // Add remote replicas to pool with enabled SDS with pmempool_transform
+  if (pmempool_transform(local_poolset_.GetFullPath().c_str(),
+                         GetPathTransformed().c_str(), 0) != 0) {
+    std::cerr << "transform failed" << std::endl;
+    return nullptr;
+  }
+
+  return pmemobj_open(GetPathTransformed().c_str(), nullptr);
+}
+
+int RemotePoolsetTC::CreatePoolsetFiles() const {
+  PoolsetManagement psm;
+  if (psm.CreatePoolsetFile(local_poolset_) != 0) {
+    std::cerr << "error while creating local poolset file: "
+              << local_poolset_.GetFullPath() << std::endl;
+    return -1;
+  }
+
+  for (const auto& rp : remote_poolsets_) {
+    if (rp.CreateRemotePoolsetFile() != 0) {
+      std::cerr << "Error while creating remote poolset: "
+                << rp.poolset_.GetFullPath() << std::endl;
+      return -1;
+    }
+  }
+  return 0;
+}
+
 /**
  * TC_SYNC_WITH_REMOTE_REPLICAS
  * Create poolset with remote replicas specified by parameter write data,
@@ -85,25 +147,11 @@ std::ostream& operator<<(std::ostream& stream, RemotePoolsetTC const& p) {
  */
 TEST_P(SyncRemoteReplica, TC_SYNC_REMOTE_REPLICA_phase_1) {
   RemotePoolsetTC param = GetParam();
-  Poolset& ps = param.poolset_;
 
   /* Step1 */
-  PoolsetManagement psm;
-  ASSERT_EQ(0, psm.CreatePoolsetFile(ps))
-      << "error while creating local poolset file";
-  ASSERT_TRUE(psm.PoolsetFileExists(ps)) << "Poolset file " << ps.GetFullPath()
-                                         << " does not exist";
-
-  for (const auto& rp : param.remote_poolsets_) {
-    int ret = rp.CreateRemotePoolsetFile();
-    ASSERT_EQ(0, ret) << "Error while creating remote poolset";
-  }
-
-  pop_ = pmemobj_create(param.poolset_.GetFullPath().c_str(), nullptr, 0,
-                        0644 & PERMISSION_MASK);
-  ASSERT_TRUE(pop_ != nullptr)
-      << "Error while creating the pool. Errno:" << errno << std::endl
-      << pmemobj_errormsg();
+  ASSERT_EQ(0, param.CreatePoolsetFiles());
+  pop_ = param.CreatePoolWithSDS();
+  ASSERT_TRUE(pop_ != nullptr) << pmemobj_errormsg();
 
   /* Step2 */
   ObjData<int> pd{pop_};
@@ -115,17 +163,18 @@ TEST_P(SyncRemoteReplica, TC_SYNC_REMOTE_REPLICA_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase());
 
   /* Step4 */
-  pop_ = pmemobj_open(param.poolset_.GetFullPath().c_str(), nullptr);
-  ASSERT_EQ(nullptr, pop_) << "Pool after US was opened but should be not";
-  ASSERT_EQ(EINVAL, errno);
+  pop_ = pmemobj_open(param.GetPathTransformed().c_str(), nullptr);
+  ASSERT_EQ(nullptr, pop_) << "Pool : " << param.GetPath().c_str()
+                           << " after US was opened but should be not";
+  ASSERT_EQ(EINVAL, errno) << param.GetPathTransformed();
 
   /* Step5 */
   int expected_sync_exit = (param.is_syncable_ ? 0 : -1);
   ASSERT_EQ(expected_sync_exit,
-            pmempool_sync(param.poolset_.GetFullPath().c_str(), 0));
+            pmempool_sync(param.GetPathTransformed().c_str(), 0));
 
   /* Step6 */
-  pop_ = pmemobj_open(param.poolset_.GetFullPath().c_str(), nullptr);
+  pop_ = pmemobj_open(param.GetPathTransformed().c_str(), nullptr);
   if (param.is_syncable_) {
     ASSERT_TRUE(pop_ != nullptr) << "Syncable pool was not opened after sync";
     ObjData<int> pd{pop_};
@@ -134,7 +183,7 @@ TEST_P(SyncRemoteReplica, TC_SYNC_REMOTE_REPLICA_phase_2) {
     ASSERT_EQ(nullptr, pop_)
         << "Pool was unexpectedly opened after failed sync";
     ASSERT_EQ(EINVAL, errno);
-    ASSERT_EQ(-1, PmempoolRepair(param.poolset_.GetFullPath()))
+    ASSERT_EQ(-1, PmempoolRepair(param.GetPathTransformed()))
         << "Pool repair should not be possible";
   }
 }
@@ -167,22 +216,21 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
           loc_unsafe_dn[1].GetTestDir() + SEPARATOR + "replica7";
       std::string rp_part_path = rem_safe_mnts[0] + SEPARATOR + "remote1";
 
-      RemotePoolset rp = tc.AddRemotePoolset(
+      tc.AddRemotePoolset(
           node.GetAddress(),
           Poolset{rps_dir,
                   "remote_pool1.set",
                   {{"PMEMPOOLSET", "18MB " + rp_part_path + ".part0",
                     "9MB " + rp_part_path + ".part1"}}});
 
-      tc.poolset_ =
+      tc.local_poolset_ =
           Poolset{loc_unsafe_dn[0].GetTestDir(),
                   "pool7.set",
                   {{"PMEMPOOLSET", "9MB " + local_master_part_path + ".part0",
                     "9MB " + local_master_part_path + ".part1",
                     "9MB " + local_master_part_path + ".part2"},
                    {"REPLICA", "9MB " + local_replica_part_path + ".part0",
-                    "18MB " + local_replica_part_path + ".part1"},
-                   {rp.GetReplicaLine()}}};
+                    "18MB " + local_replica_part_path + ".part1"}}};
     }
     ret.emplace_back(tc);
   }
@@ -200,22 +248,21 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
           loc_safe_dn[0].GetTestDir() + SEPARATOR + "replica8";
       std::string rp_part_path = rem_unsafe_mnts[0] + SEPARATOR + "remote2";
 
-      RemotePoolset rp = tc.AddRemotePoolset(
+      tc.AddRemotePoolset(
           node.GetAddress(),
           Poolset{rps_dir,
                   "remote_pool2.set",
                   {{"PMEMPOOLSET", "18MB " + rp_part_path + ".part0",
                     "9MB " + rp_part_path + ".part1"}}});
 
-      tc.poolset_ =
+      tc.local_poolset_ =
           Poolset{loc_safe_dn[0].GetTestDir(),
                   "pool_8.set",
                   {{"PMEMPOOLSET", "9MB " + local_master_part_path + ".part0",
                     "9MB " + local_master_part_path + ".part1",
                     "9MB " + local_master_part_path + ".part2"},
                    {"REPLICA", "9MB " + local_replica_part_path + ".part0",
-                    "18MB " + local_replica_part_path + ".part1"},
-                   {rp.GetReplicaLine()}}};
+                    "18MB " + local_replica_part_path + ".part1"}}};
     }
     ret.emplace_back(tc);
   }
@@ -235,21 +282,20 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
           loc_safe_dn[0].GetTestDir() + SEPARATOR + "replica9";
       std::string rp1_part_path = rem_unsafe_mnts[0] + SEPARATOR + "remote3";
 
-      RemotePoolset rp = tc.AddRemotePoolset(
+      tc.AddRemotePoolset(
           node.GetAddress(),
           Poolset{rps_dir,
                   "remote_pool3.set",
                   {{"PMEMPOOLSET", "18MB " + rp1_part_path + ".part0",
                     "9MB " + rp1_part_path + ".part1"}}});
-      tc.poolset_ =
+      tc.local_poolset_ =
           Poolset{loc_unsafe_dn[0].GetTestDir(),
                   "pool_9.set",
                   {{"PMEMPOOLSET", "9MB " + local_master_part_path + ".part0",
                     "9MB " + local_master_part_path + ".part1",
                     "9MB " + local_master_part_path + ".part2"},
                    {"REPLICA", "9MB " + local_replica_part_path + ".part0",
-                    "18MB " + local_replica_part_path + ".part1"},
-                   {rp.GetReplicaLine()}}};
+                    "18MB " + local_replica_part_path + ".part1"}}};
     }
     ret.emplace_back(tc);
   }
@@ -266,27 +312,25 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
       std::string rp1_part_path = rem_unsafe_mnts[0] + SEPARATOR + "remote4";
       std::string rp2_part_path = node.GetTestDir() + SEPARATOR + "remote5";
 
-      RemotePoolset rp1 = tc.AddRemotePoolset(
+      tc.AddRemotePoolset(
           node.GetAddress(),
           Poolset{rps_dir,
                   "remote_pool4.set",
                   {{"PMEMPOOLSET", "18MB " + rp1_part_path + ".part0",
                     "9MB " + rp1_part_path + ".part1"}}});
 
-      RemotePoolset rp2 = tc.AddRemotePoolset(
+      tc.AddRemotePoolset(
           node.GetAddress(),
           Poolset{rps_dir,
                   "remote_pool5.set",
                   {{"PMEMPOOLSET", "18MB " + rp2_part_path + ".part0",
                     "9MB " + rp2_part_path + ".part1"}}});
-      tc.poolset_ =
+      tc.local_poolset_ =
           Poolset{loc_unsafe_dn[0].GetTestDir(),
                   "pool_10.set",
                   {{"PMEMPOOLSET", "9MB " + local_master_path + ".part0",
                     "9MB " + local_master_path + ".part1",
-                    "9MB " + local_master_path + ".part2"},
-                   {rp1.GetReplicaLine()},
-                   {rp2.GetReplicaLine()}}};
+                    "9MB " + local_master_path + ".part2"}}};
     }
     ret.emplace_back(tc);
   }
@@ -304,39 +348,37 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
       std::string rp1_part_path = rem_unsafe_mnts[0] + SEPARATOR + "remote6";
       std::string rp2_part_part = rem_unsafe_mnts[0] + SEPARATOR + "remote7";
 
-      RemotePoolset rp1 = tc.AddRemotePoolset(
+      tc.AddRemotePoolset(
           node.GetAddress(),
           Poolset{rps_dir,
                   "remote_pool6.set",
                   {{"PMEMPOOLSET", "18MB " + rp1_part_path + ".part0",
                     "9MB " + rp1_part_path + ".part1"}}});
 
-      RemotePoolset rp2 = tc.AddRemotePoolset(
+      tc.AddRemotePoolset(
           node.GetAddress(),
           Poolset{rps_dir,
                   "remote_pool7.set",
                   {{"PMEMPOOLSET", "18MB " + rp2_part_part + ".part0",
                     "9MB " + rp2_part_part + ".part1"}}});
 
-      tc.poolset_ =
+      tc.local_poolset_ =
           Poolset{loc_unsafe_dn[0].GetTestDir(),
                   "pool_11.set",
                   {{"PMEMPOOLSET", "9MB " + local_master_part_path + ".part0",
                     "9MB " + local_master_part_path + ".part1",
-                    "9MB " + local_master_part_path + ".part2"},
-                   {rp1.GetReplicaLine()},
-                   {rp2.GetReplicaLine()}}};
+                    "9MB " + local_master_part_path + ".part2"}}};
     }
     ret.emplace_back(tc);
   }
 
   {
     RemotePoolsetTC tc{
-        "Master: unsafe DIMM 0, local: unsafe DIMM 0, remote: unsafe DIMM "
+        "Master: unsafe DIMM 0, local: safe  DIMM 0, remote: unsafe DIMM "
         "0"};
     if (rem_unsafe_mnts.size() >= 1 && loc_unsafe_dn.size() >= 1) {
       tc.enough_dimms_ = true;
-      tc.is_syncable_ = false;
+      tc.is_syncable_ = true;
 
       std::string local_master_part_path =
           loc_unsafe_dn[0].GetTestDir() + SEPARATOR + "master12";
@@ -344,22 +386,21 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
           loc_safe_dn[0].GetTestDir() + SEPARATOR + "replica10";
       std::string rp_part_path = rem_unsafe_mnts[0] + SEPARATOR + "remote8";
 
-      RemotePoolset rp = tc.AddRemotePoolset(
+      tc.AddRemotePoolset(
           node.GetAddress(),
           Poolset{rps_dir,
                   "remote_pool8.set",
                   {{"PMEMPOOLSET", "18MB " + rp_part_path + ".part0",
                     "9MB " + rp_part_path + ".part1"}}});
 
-      tc.poolset_ =
+      tc.local_poolset_ =
           Poolset{loc_unsafe_dn[0].GetTestDir(),
-                  "pool_11.set",
+                  "pool_12.set",
                   {{"PMEMPOOLSET", "9MB " + local_master_part_path + ".part0",
                     "9MB " + local_master_part_path + ".part1",
                     "9MB " + local_master_part_path + ".part2"},
                    {"REPLICA", "9MB " + local_replica_part_path + ".part0",
-                    "18MB " + local_replica_part_path + ".part1"},
-                   {rp.GetReplicaLine()}}};
+                    "18MB " + local_replica_part_path + ".part1"}}};
     }
     ret.emplace_back(tc);
   }
