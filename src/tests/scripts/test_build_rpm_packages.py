@@ -153,8 +153,10 @@ def find_missing_packages(pmdk_path, without_rpmem):
                                 debuginfo=True, debug_debuginfo=False),
         'pmempool': PACKAGES_INFO(basic=True, devel=False, debug=False,
                                   debuginfo=True, debug_debuginfo=False),
-        'libpmemobj++': PACKAGES_INFO(basic=False, devel=False, debug=True,
-                                      debuginfo=False, debug_debuginfo=False)
+        'pmreorder': PACKAGES_INFO(basic=True, devel=False, debug=False,
+                                   debuginfo=False, debug_debuginfo=False),
+        'daxio': PACKAGES_INFO(basic=True, devel=False, debug=False,
+                               debuginfo=True, debug_debuginfo=False)
     }
     exceptional_packages = get_names_of_packages(exceptions, without_rpmem)
     missing_exceptional_packages = [
@@ -173,7 +175,7 @@ def find_missing_libraries_and_exceptions(pmdk_path):
     functions extracted from built rpm packages and returns missing functions.
     Exceptions are taken into account.
     """
-    exceptions = ['pmempool', 'libpmemobj++', 'rpmemd', 'pmdk']
+    exceptions = ['pmempool', 'daxio', 'rpmemd', 'pmdk', 'pmreorder']
     built_packages = get_built_packages(pmdk_path)
     is_pmdk_debuginfo =\
         check_existence_of_pmdk_debuginfo_package(pmdk_path, built_packages)
