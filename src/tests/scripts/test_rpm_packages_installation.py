@@ -48,7 +48,8 @@ import unittest
 import sys
 import re
 
-NO_PKG_CONFIGS = ('pmdk', 'pmempool')
+NO_PKG_CONFIGS = ('pmdk', 'pmempool', 'daxio', 'pmreorder', 'rpmemd')
+PMDK_TOOLS = ('pmempool', 'daxio', 'pmreorder', 'rpmemd')
 PMDK_VERSION = ''
 SYSTEM_ARCHITECTURE = ''
 PMDK_PATH = ''
@@ -82,46 +83,18 @@ def get_libraries_names():
     return set(libraries_names)
 
 
-def get_missing_headers():
-    """
-    Returns names of missing 'libpmemobj++' header files.
-    """
-    no_headers = {'README.md'}
-    source_headers = []
-    installed_headers = []
-    for _, _, files in walk('/usr/include/libpmemobj++/'):
-        installed_headers += files
-    for _, _, files in walk(
-            path.join(PMDK_PATH, 'src/include/libpmemobj++/')):
-        source_headers += files
-    diff = (set(source_headers) ^ set(installed_headers)) - no_headers
-    return diff
-
-def condition_if_no_action(elem):
-    if elem == 'pmempool' and elem in listdir('/usr/bin/'):
-        return True
-    elif elem == "pmdk" or elem + '.so' in listdir('/usr/lib64/'):
-        return True
-    elif elem == "pmdk" or elem + '.so' in listdir('/usr/lib64/'):
-        return True
-    return False
-
 def get_not_installed_rpm_packages():
     """
     Returns names of rpm packages from PMDK library, which are not installed.
     """
+    def is_installed(elem):
+        return elem in PMDK_TOOLS and elem in listdir('/usr/bin/') or\
+            elem == "pmdk" or elem + '.so' in listdir('/usr/lib64/')
+
     elements = get_libraries_names()
     not_installed_packages = []
-    missing_headers = set()
     for elem in elements:
-        if condition_if_no_action(elem):
-            pass
-        elif elem == "libpmemobj++":
-            missing_headers =\
-                get_missing_headers()
-            if missing_headers:
-                not_installed_packages.append(elem)
-        else:
+        if not is_installed(elem):
             not_installed_packages.append(elem)
     return not_installed_packages
 
@@ -162,13 +135,9 @@ class TestBuildRpmPackages(unittest.TestCase):
         Checks if all rpm packages from PMDK library are installed.
         """
         not_installed_packages = get_not_installed_rpm_packages()
-        missing_headers = get_missing_headers()
         error_msg = linesep + 'List of not installed packages: '
         for package in not_installed_packages:
             error_msg += linesep + package
-        error_msg += linesep + 'List of missing libpmemobj++ headers: '
-        for header in missing_headers:
-            error_msg += linesep + header
         self.assertFalse(not_installed_packages, error_msg)
 
 
