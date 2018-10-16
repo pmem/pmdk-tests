@@ -37,7 +37,7 @@ built correctly.
 Tests check:
 -if all required rpm packages are built,
 -if built rpm packages are consistent with names of libraries read from
- .so files and exceptions.
+ .so files and other elements (tools and "PMDK").
 
 Required arguments:
 -r <PMDK_path>    the PMDK library root path.
@@ -142,50 +142,52 @@ def check_existence_of_pmdk_debuginfo_package(pmdk_path, built_packages):
 def find_missing_packages(pmdk_path, without_rpmem):
     """
     Checks if names of built rpm packages are the same as names of packages,
-    which should be built and returns missing packages. Exceptions are taken
+    which should be built and returns missing packages. Tools are taken
     into account.
     """
     built_packages = get_built_packages(pmdk_path)
     is_pmdk_debuginfo =\
         check_existence_of_pmdk_debuginfo_package(pmdk_path, built_packages)
-    exceptions = {
+    tools = {
         'rpmemd': PACKAGES_INFO(basic=True, devel=False, debug=False,
                                 debuginfo=True, debug_debuginfo=False),
         'pmempool': PACKAGES_INFO(basic=True, devel=False, debug=False,
                                   debuginfo=True, debug_debuginfo=False),
-        'libpmemobj++': PACKAGES_INFO(basic=False, devel=False, debug=True,
-                                      debuginfo=False, debug_debuginfo=False)
+        'pmreorder': PACKAGES_INFO(basic=True, devel=False, debug=False,
+                                   debuginfo=False, debug_debuginfo=False),
+        'daxio': PACKAGES_INFO(basic=True, devel=False, debug=False,
+                               debuginfo=True, debug_debuginfo=False)
     }
-    exceptional_packages = get_names_of_packages(exceptions, without_rpmem)
-    missing_exceptional_packages = [
-        elem for elem in exceptional_packages if elem not in built_packages]
+    tools_packages = get_names_of_packages(tools, without_rpmem)
+    missing_tools_packages = [
+        elem for elem in tools_packages if elem not in built_packages]
     libraries = get_libraries_names_from_so_files(pmdk_path, is_pmdk_debuginfo)
     library_packages = get_names_of_packages(libraries, without_rpmem)
     missing_library_packages = [
         elem for elem in library_packages if elem not in built_packages]
-    missing_packages = missing_library_packages + missing_exceptional_packages
+    missing_packages = missing_library_packages + missing_tools_packages
     return missing_packages
 
 
-def find_missing_libraries_and_exceptions(pmdk_path):
+def find_missing_libraries_and_other_elements(pmdk_path):
     """
     Checks if names of functions from .so files are the same as names of
     functions extracted from built rpm packages and returns missing functions.
-    Exceptions are taken into account.
+    Others rpm (tools and "PMDK") are taken into account.
     """
-    exceptions = ['pmempool', 'libpmemobj++', 'rpmemd', 'pmdk']
+    others_rpm = ['pmempool', 'daxio', 'rpmemd', 'pmdk', 'pmreorder']
     built_packages = get_built_packages(pmdk_path)
     is_pmdk_debuginfo =\
         check_existence_of_pmdk_debuginfo_package(pmdk_path, built_packages)
     libraries = get_libraries_names_from_so_files(pmdk_path, is_pmdk_debuginfo)
     rpm_packages_path = path.join(pmdk_path, 'rpm', SYSTEM_ARCHITECTURE)
     missing_elements = []
-    # looks for the name of library/exception in rpm package name
+    # looks for the name of library/others rpm in rpm package name
     library_name_pattern = r'[\s]*([a-zA-Z+]+)-'
     for elem in listdir(rpm_packages_path):
         library_name = re.search(library_name_pattern, elem).group(1)
         if library_name not in libraries.keys() and library_name not in\
-                exceptions and library_name not in missing_elements:
+                others_rpm and library_name not in missing_elements:
             missing_elements.append(library_name)
     return missing_elements
 
@@ -220,15 +222,16 @@ class TestBuildRpmPackages(unittest.TestCase):
             error_msg += linesep + package
         self.assertFalse(missing_packages, error_msg)
 
-    def test_completeness_of_name_of_libraries_and_exceptions(self):
+    def test_completeness_of_name_of_libraries_and_others_rpm(self):
         """
-        Checks if names of functions from .so files and exceptions are the same
-        as functions/exceptions extracted from the name of built rpm packages.
+        Checks if names of functions from .so files and other elements (tools
+        and "PMDK") are the same as functions/other elements extracted from
+        the name of built rpm packages.
         """
         missing_elements =\
-            find_missing_libraries_and_exceptions(pmdk_path)
+            find_missing_libraries_and_other_elements(pmdk_path)
         error_msg = linesep +\
-            'List of missing libraries and exceptions:'
+            'List of missing libraries and other elements (tools and "PMDK"):'
         for elem in missing_elements:
             error_msg += linesep + elem
         self.assertFalse(missing_elements, error_msg)
