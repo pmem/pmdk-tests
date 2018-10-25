@@ -102,7 +102,8 @@ INSTANTIATE_TEST_CASE_P(
             pobj_alloc_class_desc{512, 0, 1023, POBJ_HEADER_LEGACY,
                                   auto_class_id},
             pobj_alloc_class_desc{512, 0, 1023, POBJ_HEADER_COMPACT,
-                                  auto_class_id}),
+                                  auto_class_id},
+            pobj_alloc_class_desc{128, 0, 4096, POBJ_HEADER_COMPACT, 128}),
         ::testing::Values(ExternalCfg::FROM_ENV_VAR,
                           ExternalCfg::FROM_CFG_FILE)));
 
@@ -145,7 +146,6 @@ INSTANTIATE_TEST_CASE_P(
             pobj_alloc_class_desc{1024, 0, 0, POBJ_HEADER_COMPACT,
                                   auto_class_id},
             pobj_alloc_class_desc{1024, 0, 0, POBJ_HEADER_COMPACT, 128},
-            pobj_alloc_class_desc{128, 0, 4096, POBJ_HEADER_COMPACT, 128},
             pobj_alloc_class_desc{1024, 0, 1024, MAX_POBJ_HEADER_TYPES, 128}),
         ::testing::Values(ExternalCfg::FROM_ENV_VAR,
                           ExternalCfg::FROM_CFG_FILE)));
