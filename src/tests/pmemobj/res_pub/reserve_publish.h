@@ -30,11 +30,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef NVML_VAL_TOOLS_RESERVE_PUBLISH_H
-#define NVML_VAL_TOOLS_RESERVE_PUBLISH_H
+#ifndef PMDK_TESTS_RESERVE_PUBLISH_H
+#define PMDK_TESTS_RESERVE_PUBLISH_H
 
 #include <libpmemobj.h>
 #include <memory>
+#include <future>
 #include "configXML/local_configuration.h"
 #include "gtest/gtest.h"
 
@@ -42,61 +43,73 @@ extern std::unique_ptr<LocalConfiguration> local_config;
 
 #define LAYOUT_NAME "res_pub_layout"
 
-struct reserve_publish_params {
+struct ReservePublishParams {
   size_t data_size;
   size_t nof_threads;
   size_t messages_per_thread;
 
- public:
-  reserve_publish_params(size_t data_size, size_t nof_threads,
-                         size_t messages_per_thread)
+  ReservePublishParams(size_t data_size, size_t nof_threads,
+                       size_t messages_per_thread)
       : data_size(data_size),
         nof_threads(nof_threads),
         messages_per_thread(messages_per_thread) {
   }
 };
 
-class PMemObjReservePublishTest : public ::testing::Test {
+class PmemobjReservePublishTest : public ::testing::Test {
  private:
-  std::string test_dir_ = local_config->GetTestDir();
+  const std::string test_dir_ = local_config->GetTestDir();
 
  protected:
   PMEMobjpool *pop;
   size_t data_size;
   size_t messages_per_thread;
   const int index_to_delete = 4;
-  const char pattern = 0x0A;
+  const std::string pool_path_ = test_dir_ + "pool";
+  const size_t pool_size = 512 * MEBIBYTE;
+  uint64_t flags;
 
  public:
-  struct test_obj {
-    pobj_action *act;
-    pobj_action *act_delete;
+  struct TestObj {
+    std::vector<struct pobj_action> reservations;
+
+    TestObj(std::vector<struct pobj_action> actions) {
+      reservations.insert(
+        reservations.end(),
+        actions.begin(),
+        actions.end());
+    }
   };
 
-  struct test_x_obj {
-    pobj_action *act;
-    uint64_t flags;
+  struct ActionsObj {
+    std::vector<struct pobj_action> publish_acts;
+    std::vector<struct pobj_action> cancel_acts;
+
+    ActionsObj(std::vector<struct pobj_action> publ_acts) : publish_acts(publ_acts) {
+    }
+    ActionsObj(std::vector<struct pobj_action> publ_acts, 
+               std::vector<struct pobj_action> canc_acts)
+      : publish_acts(publ_acts), 
+        cancel_acts(canc_acts) {
+    }
   };
 
-  std::string pool_path_ = test_dir_ + "pool";
-  size_t pool_size = 64 * 1024 * 1024;
   void SetUp();
   void TearDown();
 
-  int makeMaximumAllocations(PMEMobjpool *pop, size_t data_size,
-                             struct pobj_action *actv);
-  int get_nof_stored_messages(PMEMobjpool *pop);
+  std::vector<pobj_action> MakeMaximumReservations();
+  size_t GetNofStoredMessages();
 
-  void ReservePublishInThread(test_obj &obj);
-  void ReservePublishCancelInThread(test_obj &obj);
-  void ReservePublishDeferFreeInThread(test_obj &obj);
-  void ReservePublishWorker(test_obj &obj);
-  void XReservePublish(test_x_obj &obj);
+  void ReserveInThread(std::promise<std::unique_ptr<ActionsObj>> promObj);
+  void ReserveWithCancelInThread(std::promise<std::unique_ptr<ActionsObj>> promObj);
+  void DeferFreeInThread(std::promise<std::unique_ptr<ActionsObj>> promObj);
+  void XReserveInThread(std::promise<std::unique_ptr<ActionsObj>> promObj);
+  void TxPublishInThread(TestObj &obj);
 };
 
-class PMemObjReservePublishParamTest
-    : public PMemObjReservePublishTest,
-      public ::testing::WithParamInterface<reserve_publish_params> {
+class PmemobjReservePublishParamTest
+    : public PmemobjReservePublishTest,
+      public ::testing::WithParamInterface<ReservePublishParams> {
  protected:
   size_t nof_threads;
 
@@ -105,9 +118,9 @@ class PMemObjReservePublishParamTest
 };
 
 struct message {
-  char data[1];
+  char data[1024];
 };
 
 TOID_DECLARE(struct message, 1);
 
-#endif  // NVML_VAL_TOOLS_RESERVE_PUBLISH_H
+#endif  // PMDK_TESTS_RESERVE_PUBLISH_H
