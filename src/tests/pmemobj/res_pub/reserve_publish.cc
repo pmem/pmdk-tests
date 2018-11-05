@@ -117,7 +117,7 @@ void PmemobjReservePublishTest::DeferFreeInThread(std::promise<std::unique_ptr<A
     TOID_ASSIGN(element, OID_NULL);
     ASSERT_EQ(0, pmemobj_alloc(pop, &element.oid, data_size, 0, nullptr, nullptr))
       << pmemobj_errormsg();
-    /* Step 3 */
+
     if (i % 2 == 0) {
       pobj_action action;
       pmemobj_defer_free(pop, element.oid, &action);
@@ -134,7 +134,6 @@ void PmemobjReservePublishTest::XReserveInThread(std::promise<std::unique_ptr<Ac
   std::vector<struct pobj_action> publish_acts(messages_per_thread);
 
   for (int i = 0; i < messages_per_thread; i++) {
-    /* Step 2 */
     PMEMoid oid =
       pmemobj_xreserve(pop, &publish_acts[i], 128, 0, POBJ_CLASS_ID(flags));
     EXPECT_FALSE(OID_IS_NULL(oid));

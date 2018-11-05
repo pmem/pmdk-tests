@@ -42,13 +42,13 @@
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the PMEMobj pool file
+ *          \li \c Step1 Create the pmemobj pool file
  *          \li \c Step2 Make reservations with pmemobj_reserve using n threads
  *          \li \c Step3 Synchronize the threads
  *          \li \c Step4 Publish the objects with pmemobj_publish
- *          \li \c Step5 Close and reopen the PMEMobj pool
- *          \li \c Step6 Verify that the objects were properly allocated
- *          \li \c Step7 Close and remove the PMEMobj pool
+ *          \li \c Step5 Close, check and reopen the pool
+ *          \li \c Step6 Verify that the objects were allocated
+ *          \li \c Step7 Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_PUBLISH) {
   std::vector<std::thread> threads;
@@ -91,6 +91,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_PUBLISH) {
 
   /* Step 5 */
   pmemobj_close(pop);
+  ASSERT_EQ(1, pmemobj_check(pool_path_.c_str(), LAYOUT_NAME));
   pop = pmemobj_open(pool_path_.c_str(), LAYOUT_NAME);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
@@ -105,23 +106,21 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_PUBLISH) {
  *  - the number of threads (n)
  *  - the size of the objects to be reserved
  * \test
- *          \li \c Step1 Create the PMEMobj pool file
- *          \li \c Step2 Make reservations until the entire PMEMobj pool is
- *          filled
+ *          \li \c Step1 Create the pmemobj pool file
+ *          \li \c Step2 Make reservations until the entire pool is filled
  *          \li \c Step3 Cancel all reserved objects
  *          \li \c Step4 Make reservations using n threads
  *          \li \c Step5 Synchronize the threads
- *          \li \c Step6 Make additional reservations until the entire PMEMobj
- *          pool is filled
+ *          \li \c Step6 Make additional reservations until the entire pool is
+ *          filled
  *          \li \c Step7 Verify that the number of reservations made in step 2
  *          is equal to the number of reservations made in steps 4 and 6 together
  *          \li \c Step8 Cancel every 4th object that was reserved in Step 4
- *          \li \c Step9 Close and reopen the PMEMobj pool
- *          \li \c Step10 Make reservations until the entire PMEMobj pool is
- *          filled
+ *          \li \c Step9 Close, check and reopen the pool
+ *          \li \c Step10 Make reservations until the entire pool is filled
  *          \li \c Step11 Verify that the number of reservations made in Step10
  *          equals the number of cancellations in Step8
- *          \li \c Step12 Close and remove the PMEMobj pool
+ *          \li \c Step12 Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
   std::vector<std::thread> threads;
@@ -194,6 +193,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
 
   /* Step 9 */
   pmemobj_close(pop);
+  ASSERT_EQ(1, pmemobj_check(pool_path_.c_str(), LAYOUT_NAME));
   pop = pmemobj_open(pool_path_.c_str(), LAYOUT_NAME);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
@@ -212,16 +212,15 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the PMEMobj pool file
- *          \li \c Step2 Allocate objects with pmemobj_alloc, using n threads
- *          \li \c Step3 Mark every 2nd object to be freed with pmemobj_defer_free
- *          \li \c Step4 Synchronize the threads
- *          \li \c Step5 Make additional reservations until the entire PMEMobj
- *          pool is filled
- *          \li \c Step6 Publish the free actions with pmemobj_publish
- *          \li \c Step7 Close and reopen the PMEMobj pool
- *          \li \c Step8 Verify that the expected number of objects were freed in step 6
- *          \li \c Step9 Close and remove the PMEMobj pool
+ *          \li \c Step1 Create the pmemobj pool file
+ *          \li \c Step2 Allocate objects with pmemobj_alloc and mark every 2nd
+ *          object to be freed with pmemobj_defer_free, using n threads
+ *          \li \c Step3 Synchronize the threads
+ *          \li \c Step4 Make additional reservations until the entire pool is filled
+ *          \li \c Step5 Publish the free actions with pmemobj_publish
+ *          \li \c Step6 Close, check and reopen the pool
+ *          \li \c Step7 Verify that the expected number of objects were freed in step 6
+ *          \li \c Step8 Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_01) {
   std::vector<std::thread> threads;
@@ -250,13 +249,13 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_01) {
       future_object->publish_acts.end());
   }
 
-  /* Step 4 */
+  /* Step 3 */
   for (int th = 0; th < nof_threads; th++) {
     threads[th].join();
   }
   threads.clear();
 
-  /* Step 5 */
+  /* Step 4 */
   std::vector<pobj_action> remaining_messages = MakeMaximumReservations();
 
   if (remaining_messages.size() > 0) {
@@ -264,17 +263,18 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_01) {
     ASSERT_EQ(0, ret) << pmemobj_errormsg();
   }
 
-  /* Step 6 */
+  /* Step 5 */
   size_t nof_frees = defer_frees.size();
   int ret = pmemobj_publish(pop, &defer_frees[0], nof_frees);
   ASSERT_EQ(0, ret);
 
-  /* Step 7 */
+  /* Step 6 */
   pmemobj_close(pop);
+  ASSERT_EQ(1, pmemobj_check(pool_path_.c_str(), LAYOUT_NAME));
   pop = pmemobj_open(pool_path_.c_str(), LAYOUT_NAME);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
-  /* Step 8 */
+  /* Step 7 */
   std::vector<pobj_action> free_space = MakeMaximumReservations();
   ASSERT_EQ(free_space.size(), nof_frees);
 }
@@ -287,16 +287,16 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_01) {
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the PMEMobj pool file
- *          \li \c Step2 Allocate objects with pmemobj_alloc, using n threads
- *          \li \c Step3 Mark every 2nd object to be freed with pmemobj_defer_free
- *          \li \c Step4 Synchronize the threads
- *          \li \c Step5 Make additional reservations until the entire PMEMobj
- *          pool is filled
- *          \li \c Step6 Cancel the free actions with pmemobj_cancel
- *          \li \c Step7 Close and reopen the PMEMobj pool
- *          \li \c Step8 Verify that none of the objects were freed
- *          \li \c Step9 Close and remove the PMEMobj pool
+ *          \li \c Step1 Create the pmemobj pool file
+ *          \li \c Step2 Allocate objects with pmemobj_alloc and mark every 2nd
+ *          object to be freed with pmemobj_defer_free, using n threads
+ *          \li \c Step3 Synchronize the threads
+ *          \li \c Step4 Make additional reservations until the entire pool is
+ *          filled
+ *          \li \c Step5 Cancel the free actions with pmemobj_cancel
+ *          \li \c Step6 Close, check and reopen the pool
+ *          \li \c Step7 Verify that none of the objects were freed
+ *          \li \c Step8 Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_02) {
   std::vector<std::thread> threads;
@@ -325,13 +325,13 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_02) {
       future_object->publish_acts.end());
   }
 
-  /* Step 4 */
+  /* Step 3 */
   for (int th = 0; th < nof_threads; th++) {
     threads[th].join();
   }
   threads.clear();
 
-  /* Step 5 */
+  /* Step 4 */
   std::vector<pobj_action> remaining_messages = MakeMaximumReservations();
 
   if (remaining_messages.size() > 0) {
@@ -339,38 +339,39 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_02) {
     ASSERT_EQ(0, ret) << pmemobj_errormsg();
   }
 
-  /* Step 6 */
+  /* Step 5 */
   size_t nof_frees = defer_frees.size();
   pmemobj_cancel(pop, &defer_frees[0], nof_frees);
 
-  /* Step 7 */
+  /* Step 6 */
   pmemobj_close(pop);
+  ASSERT_EQ(1, pmemobj_check(pool_path_.c_str(), LAYOUT_NAME));
   pop = pmemobj_open(pool_path_.c_str(), LAYOUT_NAME);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
-  /* Step 8 */
+  /* Step 7 */
   std::vector<pobj_action> free_space = MakeMaximumReservations();
   ASSERT_EQ(free_space.size(), 0);
 }
 
 /**
  * RESERVE_PUBLISH_XRESERVE_01
- * Parameterized Test Case: Checks the functionality of prmemobj_xreserve using
+ * Parameterized Test Case: Checks the functionality of pmemobj_xreserve using
  * the POBJ_XALLOC_ZERO flag for the following parameters:
  *  - the number of threads (n)
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the PMEMobj pool file
+ *          \li \c Step1 Create the pmemobj pool file
  *          \li \c Step2 Make reservations with pmemobj_xreserve with the flags 
  *          parameter set to POBJ_XALLOC_ZERO and using n threads
  *          \li \c Step3 Synchronize the threads
  *          \li \c Step4 Publish the reserved objects with pmemobj_xpublish
  *          using n threads
  *          \li \c Step5 Synchronize the threads
- *          \li \c Step6 Close and reopen the PMEMobj pool
- *          \li \c Step7 Verify that the objects were properly allocated
- *          \li \c Step8 Close and remove the PMEMobj pool
+ *          \li \c Step6 Close, check and reopen the pool
+ *          \li \c Step7 Verify that the objects were allocated
+ *          \li \c Step8 Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_01) {
   std::vector<std::thread> threads;
@@ -420,6 +421,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_01) {
 
   /* Step 6 */
   pmemobj_close(pop);
+  ASSERT_EQ(1, pmemobj_check(pool_path_.c_str(), LAYOUT_NAME));
   pop = pmemobj_open(pool_path_.c_str(), LAYOUT_NAME);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
@@ -429,13 +431,13 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_01) {
 
 /**
  * RESERVE_PUBLISH_XRESERVE_02
- * Parameterized Test Case: Checks the functionality of prmemobj_xreserve using
+ * Parameterized Test Case: Checks the functionality of pmemobj_xreserve using
  * the POBJ_CLASS_ID flag for the following parameters:
  *  - the number of threads (n)
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the PMEMobj pool file
+ *          \li \c Step1 Create the pmemobj pool file
  *          \li \c Step2 Register an allocation class and obtain the class ID
  *          \li \c Step3 Make reservations with pmemobj_xreserve with the flags 
  *          parameter set to the obtained class ID and using n threads
@@ -443,9 +445,9 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_01) {
  *          \li \c Step5 Publish the reserved objects with pmemobj_xpublish
  *          using n threads
  *          \li \c Step6 Synchronize the threads
- *          \li \c Step7 Close and reopen the PMEMobj pool
- *          \li \c Step8 Verify that the objects were properly allocated
- *          \li \c Step9 Close and remove the PMEMobj pool
+ *          \li \c Step7 Close, check and reopen the pool
+ *          \li \c Step8 Verify that the objects were allocated
+ *          \li \c Step9 Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_02) {
   std::vector<std::thread> threads;
@@ -505,6 +507,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_02) {
 
   /* Step 7 */
   pmemobj_close(pop);
+  ASSERT_EQ(1, pmemobj_check(pool_path_.c_str(), LAYOUT_NAME));
   pop = pmemobj_open(pool_path_.c_str(), LAYOUT_NAME);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
