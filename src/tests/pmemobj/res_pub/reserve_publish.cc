@@ -34,8 +34,6 @@
 
 void PmemobjReservePublishTest::SetUp() {
   ApiC::RemoveFile(pool_path_);
-  data_size = 1024;
-  errno = 0;
 }
 
 void PmemobjReservePublishTest::TearDown() {
@@ -43,15 +41,14 @@ void PmemobjReservePublishTest::TearDown() {
   ApiC::RemoveFile(pool_path_);
 }
 
-std::vector<pobj_action> PmemobjReservePublishTest::MakeMaximumReservations()
-{
+std::vector<pobj_action> PmemobjReservePublishTest::MakeMaximumReservations() {
   std::vector<pobj_action> reservations;
 
   TOID(struct message) reserved_message;
   do {
     pobj_action reservation;
     reserved_message =
-      POBJ_RESERVE_ALLOC(pop, struct message, data_size, &reservation);
+        POBJ_RESERVE_ALLOC(pop, struct message, data_size, &reservation);
     if (!OID_IS_NULL(reserved_message.oid)) {
       reservations.push_back(std::move(reservation));
     }
@@ -70,31 +67,33 @@ size_t PmemobjReservePublishTest::GetNofStoredMessages() {
   return count;
 }
 
-void PmemobjReservePublishTest::ReserveInThread(std::promise<std::unique_ptr<ActionsObj>> promObj) {
+std::unique_ptr<ActionsObj> PmemobjReservePublishTest::ReserveInThread() {
   std::vector<struct pobj_action> publish_acts(messages_per_thread);
 
   for (int i = 0; i < messages_per_thread; i++) {
-    TOID(struct message) reserved_message =
-      POBJ_RESERVE_ALLOC(pop, struct message, data_size, &publish_acts[i]);
+    TOID(struct message)
+    reserved_message =
+        POBJ_RESERVE_ALLOC(pop, struct message, data_size, &publish_acts[i]);
 
-    ASSERT_FALSE(OID_IS_NULL(reserved_message.oid)) << pmemobj_errormsg();
+    EXPECT_FALSE(OID_IS_NULL(reserved_message.oid)) << pmemobj_errormsg();
   }
 
   std::unique_ptr<ActionsObj> actions =
-    std::unique_ptr<ActionsObj>(new ActionsObj(publish_acts));
-  promObj.set_value(std::move(actions));
+      std::make_unique<ActionsObj>(publish_acts);
+  return std::move(actions);
 }
 
-void PmemobjReservePublishTest::ReserveWithCancelInThread(std::promise<std::unique_ptr<ActionsObj>> promObj) {
+std::unique_ptr<ActionsObj>
+PmemobjReservePublishTest::ReserveWithCancelInThread() {
   std::vector<struct pobj_action> publish_acts;
   std::vector<struct pobj_action> cancel_acts;
 
   for (int i = 0; i < messages_per_thread; i++) {
     pobj_action action;
-    TOID(struct message) message =
-      POBJ_RESERVE_ALLOC(pop, struct message, data_size, &action);
+    TOID(struct message)
+    message = POBJ_RESERVE_ALLOC(pop, struct message, data_size, &action);
 
-    ASSERT_FALSE(OID_IS_NULL(message.oid)) << pmemobj_errormsg();
+    EXPECT_FALSE(OID_IS_NULL(message.oid)) << pmemobj_errormsg();
 
     if (i % index_to_delete == 0) {
       cancel_acts.push_back(std::move(action));
@@ -104,19 +103,20 @@ void PmemobjReservePublishTest::ReserveWithCancelInThread(std::promise<std::uniq
   }
 
   std::unique_ptr<ActionsObj> actions =
-    std::unique_ptr<ActionsObj>(new ActionsObj(publish_acts, cancel_acts));
-  promObj.set_value(std::move(actions));
+      std::make_unique<ActionsObj>(publish_acts, cancel_acts);
+  return std::move(actions);
 }
 
-void PmemobjReservePublishTest::DeferFreeInThread(std::promise<std::unique_ptr<ActionsObj>> promObj) {
+std::unique_ptr<ActionsObj> PmemobjReservePublishTest::DeferFreeInThread() {
   std::vector<struct pobj_action> publish_acts;
 
   TOID(struct message) element;
 
   for (int i = 0; i < messages_per_thread; i++) {
     TOID_ASSIGN(element, OID_NULL);
-    ASSERT_EQ(0, pmemobj_alloc(pop, &element.oid, data_size, 0, nullptr, nullptr))
-      << pmemobj_errormsg();
+    EXPECT_EQ(0,
+              pmemobj_alloc(pop, &element.oid, data_size, 0, nullptr, nullptr))
+        << pmemobj_errormsg();
 
     if (i % 2 == 0) {
       pobj_action action;
@@ -126,36 +126,43 @@ void PmemobjReservePublishTest::DeferFreeInThread(std::promise<std::unique_ptr<A
   }
 
   std::unique_ptr<ActionsObj> actions =
-    std::unique_ptr<ActionsObj>(new ActionsObj(publish_acts));
-  promObj.set_value(std::move(actions));
+      std::make_unique<ActionsObj>(publish_acts);
+  return std::move(actions);
 }
 
-void PmemobjReservePublishTest::XReserveInThread(std::promise<std::unique_ptr<ActionsObj>> promObj) {
+std::unique_ptr<ActionsObj> PmemobjReservePublishTest::XReserveInThread() {
   std::vector<struct pobj_action> publish_acts(messages_per_thread);
 
   for (int i = 0; i < messages_per_thread; i++) {
-    PMEMoid oid =
-      pmemobj_xreserve(pop, &publish_acts[i], 128, 0, POBJ_CLASS_ID(flags));
+    PMEMoid oid = pmemobj_xreserve(pop, &publish_acts[i], data_size, 0,
+                                   POBJ_CLASS_ID(flags));
     EXPECT_FALSE(OID_IS_NULL(oid));
   }
 
   std::unique_ptr<ActionsObj> actions =
-    std::unique_ptr<ActionsObj>(new ActionsObj(publish_acts));
-  promObj.set_value(std::move(actions));
+      std::make_unique<ActionsObj>(publish_acts);
+  return std::move(actions);
 }
 
-void PmemobjReservePublishTest::TxPublishInThread(TestObj &obj) {
+int PmemobjReservePublishTest::TxPublishInThread(TestObj &obj) {
   int ret;
 
   TX_BEGIN(pop) {
-    ret = pmemobj_tx_publish(&obj.reservations[0], obj.reservations.size());
+    ret = pmemobj_tx_publish(obj.reservations.data(), obj.reservations.size());
   }
   TX_END
 
-  EXPECT_EQ(ret, 0);
+  return ret;
 }
 
 void PmemobjReservePublishParamTest::SetUp() {
+  PmemobjReservePublishTest::SetUp();
+  messages_per_thread = GetParam().messages_per_thread;
+  nof_threads = GetParam().nof_threads;
+  data_size = GetParam().data_size;
+}
+
+void PmemobjReserveTxPublishParamTest::SetUp() {
   PmemobjReservePublishTest::SetUp();
   messages_per_thread = GetParam().messages_per_thread;
   nof_threads = GetParam().nof_threads;

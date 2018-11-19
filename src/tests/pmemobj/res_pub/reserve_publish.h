@@ -34,8 +34,8 @@
 #define PMDK_TESTS_RESERVE_PUBLISH_H
 
 #include <libpmemobj.h>
-#include <memory>
 #include <future>
+#include <memory>
 #include "configXML/local_configuration.h"
 #include "gtest/gtest.h"
 
@@ -53,6 +53,19 @@ struct ReservePublishParams {
       : data_size(data_size),
         nof_threads(nof_threads),
         messages_per_thread(messages_per_thread) {
+  }
+};
+
+struct ActionsObj {
+  std::vector<struct pobj_action> publish_acts;
+  std::vector<struct pobj_action> cancel_acts;
+
+  ActionsObj(std::vector<struct pobj_action> publ_acts)
+      : publish_acts(publ_acts) {
+  }
+  ActionsObj(std::vector<struct pobj_action> publ_acts,
+             std::vector<struct pobj_action> canc_acts)
+      : publish_acts(publ_acts), cancel_acts(canc_acts) {
   }
 };
 
@@ -74,37 +87,21 @@ class PmemobjReservePublishTest : public ::testing::Test {
     std::vector<struct pobj_action> reservations;
 
     TestObj(std::vector<struct pobj_action> actions) {
-      reservations.insert(
-        reservations.end(),
-        actions.begin(),
-        actions.end());
+      reservations.insert(reservations.end(), actions.begin(), actions.end());
     }
   };
 
-  struct ActionsObj {
-    std::vector<struct pobj_action> publish_acts;
-    std::vector<struct pobj_action> cancel_acts;
-
-    ActionsObj(std::vector<struct pobj_action> publ_acts) : publish_acts(publ_acts) {
-    }
-    ActionsObj(std::vector<struct pobj_action> publ_acts, 
-               std::vector<struct pobj_action> canc_acts)
-      : publish_acts(publ_acts), 
-        cancel_acts(canc_acts) {
-    }
-  };
-
-  void SetUp();
-  void TearDown();
+  virtual void SetUp();
+  virtual void TearDown();
 
   std::vector<pobj_action> MakeMaximumReservations();
   size_t GetNofStoredMessages();
 
-  void ReserveInThread(std::promise<std::unique_ptr<ActionsObj>> promObj);
-  void ReserveWithCancelInThread(std::promise<std::unique_ptr<ActionsObj>> promObj);
-  void DeferFreeInThread(std::promise<std::unique_ptr<ActionsObj>> promObj);
-  void XReserveInThread(std::promise<std::unique_ptr<ActionsObj>> promObj);
-  void TxPublishInThread(TestObj &obj);
+  std::unique_ptr<ActionsObj> ReserveInThread();
+  std::unique_ptr<ActionsObj> ReserveWithCancelInThread();
+  std::unique_ptr<ActionsObj> DeferFreeInThread();
+  std::unique_ptr<ActionsObj> XReserveInThread();
+  int TxPublishInThread(TestObj &obj);
 };
 
 class PmemobjReservePublishParamTest
@@ -114,7 +111,17 @@ class PmemobjReservePublishParamTest
   size_t nof_threads;
 
  public:
-  void SetUp();
+  void SetUp() override;
+};
+
+class PmemobjReserveTxPublishParamTest
+    : public PmemobjReservePublishTest,
+      public ::testing::WithParamInterface<ReservePublishParams> {
+ protected:
+  size_t nof_threads;
+
+ public:
+  void SetUp() override;
 };
 
 struct message {

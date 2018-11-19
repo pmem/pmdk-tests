@@ -31,8 +31,8 @@
  */
 
 #include "reserve_publish.h"
-#include <thread>
 #include <future>
+#include <thread>
 
 /**
  * RESERVE_PUBLISH_PUBLISH
@@ -42,51 +42,41 @@
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the pmemobj pool file
- *          \li \c Step2 Make reservations with pmemobj_reserve using n threads
- *          \li \c Step3 Synchronize the threads
- *          \li \c Step4 Publish the objects with pmemobj_publish
- *          \li \c Step5 Close, check and reopen the pool
- *          \li \c Step6 Verify that the objects were allocated
- *          \li \c Step7 Close and remove the pool
+ *          \li \c Step1. Create the pmemobj pool file
+ *          \li \c Step2. Make reservations with pmemobj_reserve using n threads
+ *          \li \c Step3. Synchronize the threads and retrieve the reservations
+ *          \li \c Step4. Publish the objects with pmemobj_publish
+ *          \li \c Step5. Close, check and reopen the pool
+ *          \li \c Step6. Verify that the objects were allocated
+ *          \li \c Step7. Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_PUBLISH) {
-  std::vector<std::thread> threads;
-  std::vector<std::promise<std::unique_ptr<ActionsObj>>> promise_objects(nof_threads);
   std::vector<std::future<std::unique_ptr<ActionsObj>>> future_objects;
-
   std::vector<struct pobj_action> reservations;
 
   size_t nof_messages = nof_threads * messages_per_thread;
 
   /* Step 1 */
   pop = pmemobj_create(pool_path_.c_str(), LAYOUT_NAME, pool_size,
-    S_IWRITE | S_IREAD);
+                       S_IWRITE | S_IREAD);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
   /* Step 2 */
   for (int th = 0; th < nof_threads; th++) {
-    future_objects.push_back(std::move(promise_objects[th].get_future()));
-    threads.push_back(std::thread(&PmemobjReservePublishTest::ReserveInThread,
-      this, std::move(promise_objects[th])));
-  }
-
-  for (int th = 0; th < nof_threads; th++) {
-    std::unique_ptr<ActionsObj> future_object = future_objects[th].get();
-    reservations.insert(
-      reservations.end(),
-      future_object->publish_acts.begin(),
-      future_object->publish_acts.end());
+    future_objects.push_back(std::async(
+        std::launch::async, &PmemobjReservePublishTest::ReserveInThread, this));
   }
 
   /* Step 3 */
-  for (int th = 0; th < nof_threads; th++) {
-    threads[th].join();
+  for (auto& future_object : future_objects) {
+    auto unique_actions_ptr = future_object.get();
+    ActionsObj* actions_obj = unique_actions_ptr.get();
+    reservations.insert(reservations.end(), actions_obj->publish_acts.begin(),
+                        actions_obj->publish_acts.end());
   }
-  threads.clear();
 
   /* Step 4 */
-  int ret = pmemobj_publish(pop, &reservations[0], nof_messages);
+  int ret = pmemobj_publish(pop, reservations.data(), nof_messages);
   ASSERT_EQ(0, ret);
 
   /* Step 5 */
@@ -106,27 +96,25 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_PUBLISH) {
  *  - the number of threads (n)
  *  - the size of the objects to be reserved
  * \test
- *          \li \c Step1 Create the pmemobj pool file
- *          \li \c Step2 Make reservations until the entire pool is filled
- *          \li \c Step3 Cancel all reserved objects
- *          \li \c Step4 Make reservations using n threads
- *          \li \c Step5 Synchronize the threads
- *          \li \c Step6 Make additional reservations until the entire pool is
+ *          \li \c Step1. Create the pmemobj pool file
+ *          \li \c Step2. Make reservations until the entire pool is filled
+ *          \li \c Step3. Cancel all reserved objects
+ *          \li \c Step4. Make reservations using n threads
+ *          \li \c Step5. Synchronize the threads and retrieve the reservations
+ *          \li \c Step6. Make additional reservations until the entire pool is
  *          filled
- *          \li \c Step7 Verify that the number of reservations made in step 2
- *          is equal to the number of reservations made in steps 4 and 6 together
- *          \li \c Step8 Cancel every 4th object that was reserved in Step 4
- *          \li \c Step9 Close, check and reopen the pool
- *          \li \c Step10 Make reservations until the entire pool is filled
- *          \li \c Step11 Verify that the number of reservations made in Step10
+ *          \li \c Step7. Verify that the number of reservations made in step 2
+ *          is equal to the number of reservations made in steps 4 and 6
+ *          together
+ *          \li \c Step8. Cancel every 4th object that was reserved in Step 4
+ *          \li \c Step9. Close, check and reopen the pool
+ *          \li \c Step10. Make reservations until the entire pool is filled
+ *          \li \c Step11. Verify that the number of reservations made in Step10
  *          equals the number of cancellations in Step8
- *          \li \c Step12 Close and remove the pool
+ *          \li \c Step12. Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
-  std::vector<std::thread> threads;
-  std::vector<std::promise<std::unique_ptr<ActionsObj>>> promise_objects(nof_threads);
   std::vector<std::future<std::unique_ptr<ActionsObj>>> future_objects;
-
   std::vector<struct pobj_action> reservations;
   std::vector<struct pobj_action> cancellations;
 
@@ -134,7 +122,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
 
   /* Step 1 */
   pop = pmemobj_create(pool_path_.c_str(), LAYOUT_NAME, pool_size,
-    S_IWRITE | S_IREAD);
+                       S_IWRITE | S_IREAD);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
   /* Step 2 */
@@ -142,54 +130,47 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
   size_t actual_nof_messages = actual_messages.size();
 
   /* Step 3 */
-  pmemobj_cancel(pop, &actual_messages[0], actual_nof_messages);
+  pmemobj_cancel(pop, actual_messages.data(), actual_nof_messages);
   actual_messages.clear();
 
   messages_per_thread = actual_nof_messages / nof_threads;
 
   /* Step 4 */
   for (int th = 0; th < nof_threads; th++) {
-    future_objects.push_back(std::move(promise_objects[th].get_future()));
-    threads.push_back(std::thread(&PmemobjReservePublishTest::ReserveWithCancelInThread, 
-      this, std::move(promise_objects[th])));
-  }
-
-  for (int th = 0; th < nof_threads; th++) {
-    std::unique_ptr<ActionsObj> future_object = future_objects[th].get();
-    reservations.insert(
-      reservations.end(),
-      future_object->publish_acts.begin(),
-      future_object->publish_acts.end());
-    cancellations.insert(
-      cancellations.end(),
-      future_object->cancel_acts.begin(),
-      future_object->cancel_acts.end());
+    future_objects.push_back(std::async(
+        std::launch::async,
+        &PmemobjReservePublishTest::ReserveWithCancelInThread, this));
   }
 
   /* Step 5 */
-  for (int th = 0; th < nof_threads; th++) {
-    threads[th].join();
+  for (auto& future_obj : future_objects) {
+    auto unique_actions_ptr = future_obj.get();
+    ActionsObj* actions_obj = unique_actions_ptr.get();
+    reservations.insert(reservations.end(), actions_obj->publish_acts.begin(),
+                        actions_obj->publish_acts.end());
+    cancellations.insert(cancellations.end(), actions_obj->cancel_acts.begin(),
+                         actions_obj->cancel_acts.end());
   }
-  threads.clear();
 
   /* Step 6 */
   std::vector<pobj_action> remaining_messages = MakeMaximumReservations();
   size_t remaining_space = remaining_messages.size();
 
   /* Step 7 */
-  ASSERT_EQ(actual_nof_messages, reservations.size() + cancellations.size() + remaining_space);
+  ASSERT_EQ(actual_nof_messages,
+            reservations.size() + cancellations.size() + remaining_space);
 
-  int ret = pmemobj_publish(pop, &reservations[0], reservations.size());
+  int ret = pmemobj_publish(pop, reservations.data(), reservations.size());
   ASSERT_EQ(0, ret) << pmemobj_errormsg();
 
   if (remaining_space > 0) {
-    ret = pmemobj_publish(pop, &remaining_messages[0], remaining_space);
+    ret = pmemobj_publish(pop, remaining_messages.data(), remaining_space);
     ASSERT_EQ(0, ret) << pmemobj_errormsg();
   }
 
   /* Step 8 */
-  int nof_cancellations = cancellations.size();
-  pmemobj_cancel(pop, &cancellations[0], nof_cancellations);
+  size_t nof_cancellations = cancellations.size();
+  pmemobj_cancel(pop, cancellations.data(), nof_cancellations);
 
   /* Step 9 */
   pmemobj_close(pop);
@@ -212,60 +193,54 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the pmemobj pool file
- *          \li \c Step2 Allocate objects with pmemobj_alloc and mark every 2nd
+ *          \li \c Step1. Create the pmemobj pool file
+ *          \li \c Step2. Allocate objects with pmemobj_alloc and mark every 2nd
  *          object to be freed with pmemobj_defer_free, using n threads
- *          \li \c Step3 Synchronize the threads
- *          \li \c Step4 Make additional reservations until the entire pool is filled
- *          \li \c Step5 Publish the free actions with pmemobj_publish
- *          \li \c Step6 Close, check and reopen the pool
- *          \li \c Step7 Verify that the expected number of objects were freed in step 6
- *          \li \c Step8 Close and remove the pool
+ *          \li \c Step3. Synchronize the threads and retrieve the defer_free's
+ *          \li \c Step4. Make additional reservations until the entire pool is
+ *          filled
+ *          \li \c Step5. Publish the free actions with pmemobj_publish
+ *          \li \c Step6. Close, check and reopen the pool
+ *          \li \c Step7. Verify that the expected number of objects were freed
+ *          in step 6
+ *          \li \c Step8. Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_01) {
-  std::vector<std::thread> threads;
-  std::vector<std::promise<std::unique_ptr<ActionsObj>>> promise_objects(nof_threads);
   std::vector<std::future<std::unique_ptr<ActionsObj>>> future_objects;
-
   std::vector<struct pobj_action> defer_frees;
 
   /* Step 1 */
   pop = pmemobj_create(pool_path_.c_str(), LAYOUT_NAME, pool_size,
-    S_IWRITE | S_IREAD);
+                       S_IWRITE | S_IREAD);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
   /* Step 2 */
   for (int th = 0; th < nof_threads; th++) {
-    future_objects.push_back(std::move(promise_objects[th].get_future()));
-    threads.push_back(std::thread(&PmemobjReservePublishTest::DeferFreeInThread, 
-      this, std::move(promise_objects[th])));
-  }
-
-  for (int th = 0; th < nof_threads; th++) {
-    std::unique_ptr<ActionsObj> future_object = future_objects[th].get();
-    defer_frees.insert(
-      defer_frees.end(),
-      future_object->publish_acts.begin(),
-      future_object->publish_acts.end());
+    future_objects.push_back(
+        std::async(std::launch::async,
+                   &PmemobjReservePublishTest::DeferFreeInThread, this));
   }
 
   /* Step 3 */
-  for (int th = 0; th < nof_threads; th++) {
-    threads[th].join();
+  for (auto& future_object : future_objects) {
+    auto unique_actions_ptr = future_object.get();
+    ActionsObj* actions_obj = unique_actions_ptr.get();
+    defer_frees.insert(defer_frees.end(), actions_obj->publish_acts.begin(),
+                       actions_obj->publish_acts.end());
   }
-  threads.clear();
 
   /* Step 4 */
   std::vector<pobj_action> remaining_messages = MakeMaximumReservations();
 
   if (remaining_messages.size() > 0) {
-    int ret = pmemobj_publish(pop, &remaining_messages[0], remaining_messages.size());
+    int ret = pmemobj_publish(pop, remaining_messages.data(),
+                              remaining_messages.size());
     ASSERT_EQ(0, ret) << pmemobj_errormsg();
   }
 
   /* Step 5 */
   size_t nof_frees = defer_frees.size();
-  int ret = pmemobj_publish(pop, &defer_frees[0], nof_frees);
+  int ret = pmemobj_publish(pop, defer_frees.data(), nof_frees);
   ASSERT_EQ(0, ret);
 
   /* Step 6 */
@@ -287,61 +262,53 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_01) {
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the pmemobj pool file
- *          \li \c Step2 Allocate objects with pmemobj_alloc and mark every 2nd
+ *          \li \c Step1. Create the pmemobj pool file
+ *          \li \c Step2. Allocate objects with pmemobj_alloc and mark every 2nd
  *          object to be freed with pmemobj_defer_free, using n threads
- *          \li \c Step3 Synchronize the threads
- *          \li \c Step4 Make additional reservations until the entire pool is
+ *          \li \c Step3. Synchronize the threads and retrieve the defer_free's
+ *          \li \c Step4. Make additional reservations until the entire pool is
  *          filled
- *          \li \c Step5 Cancel the free actions with pmemobj_cancel
- *          \li \c Step6 Close, check and reopen the pool
- *          \li \c Step7 Verify that none of the objects were freed
- *          \li \c Step8 Close and remove the pool
+ *          \li \c Step5. Cancel the free actions with pmemobj_cancel
+ *          \li \c Step6. Close, check and reopen the pool
+ *          \li \c Step7. Verify that none of the objects were freed
+ *          \li \c Step8. Close and remove the pool
  */
 TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_02) {
-  std::vector<std::thread> threads;
-  std::vector<std::promise<std::unique_ptr<ActionsObj>>> promise_objects(nof_threads);
   std::vector<std::future<std::unique_ptr<ActionsObj>>> future_objects;
-
   std::vector<struct pobj_action> defer_frees;
 
   /* Step 1 */
   pop = pmemobj_create(pool_path_.c_str(), LAYOUT_NAME, pool_size,
-    S_IWRITE | S_IREAD);
+                       S_IWRITE | S_IREAD);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
-
-  for (int th = 0; th < nof_threads; th++) {
-    future_objects.push_back(std::move(promise_objects[th].get_future()));
-    threads.push_back(std::thread(&PmemobjReservePublishTest::DeferFreeInThread, 
-      this, std::move(promise_objects[th])));
-  }
 
   /* Step 2 */
   for (int th = 0; th < nof_threads; th++) {
-    std::unique_ptr<ActionsObj> future_object = future_objects[th].get();
-    defer_frees.insert(
-      defer_frees.end(),
-      future_object->publish_acts.begin(),
-      future_object->publish_acts.end());
+    future_objects.push_back(
+        std::async(std::launch::async,
+                   &PmemobjReservePublishTest::DeferFreeInThread, this));
   }
 
   /* Step 3 */
-  for (int th = 0; th < nof_threads; th++) {
-    threads[th].join();
+  for (auto& future_object : future_objects) {
+    auto unique_actions_ptr = future_object.get();
+    ActionsObj* actions_obj = unique_actions_ptr.get();
+    defer_frees.insert(defer_frees.end(), actions_obj->publish_acts.begin(),
+                       actions_obj->publish_acts.end());
   }
-  threads.clear();
 
   /* Step 4 */
   std::vector<pobj_action> remaining_messages = MakeMaximumReservations();
 
   if (remaining_messages.size() > 0) {
-    int ret = pmemobj_publish(pop, &remaining_messages[0], remaining_messages.size());
+    int ret = pmemobj_publish(pop, remaining_messages.data(),
+                              remaining_messages.size());
     ASSERT_EQ(0, ret) << pmemobj_errormsg();
   }
 
   /* Step 5 */
   size_t nof_frees = defer_frees.size();
-  pmemobj_cancel(pop, &defer_frees[0], nof_frees);
+  pmemobj_cancel(pop, defer_frees.data(), nof_frees);
 
   /* Step 6 */
   pmemobj_close(pop);
@@ -362,62 +329,56 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_02) {
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the pmemobj pool file
- *          \li \c Step2 Make reservations with pmemobj_xreserve with the flags 
+ *          \li \c Step1. Create the pmemobj pool file
+ *          \li \c Step2. Make reservations with pmemobj_xreserve with the flags
  *          parameter set to POBJ_XALLOC_ZERO and using n threads
- *          \li \c Step3 Synchronize the threads
- *          \li \c Step4 Publish the reserved objects with pmemobj_xpublish
+ *          \li \c Step3. Synchronize the threads and retrieve the reservations
+ *          \li \c Step4. Publish the reserved objects with pmemobj_xpublish
  *          using n threads
- *          \li \c Step5 Synchronize the threads
- *          \li \c Step6 Close, check and reopen the pool
- *          \li \c Step7 Verify that the objects were allocated
- *          \li \c Step8 Close and remove the pool
+ *          \li \c Step5. Synchronize the threads
+ *          \li \c Step6. Close, check and reopen the pool
+ *          \li \c Step7. Verify that the objects were allocated
+ *          \li \c Step8. Close and remove the pool
  */
-TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_01) {
-  std::vector<std::thread> threads;
-  std::vector<std::promise<std::unique_ptr<ActionsObj>>> promise_objects(nof_threads);
-  std::vector<std::future<std::unique_ptr<ActionsObj>>> future_objects;
-
+TEST_P(PmemobjReserveTxPublishParamTest, RESERVE_PUBLISH_XRESERVE_01) {
+  std::vector<std::future<std::unique_ptr<ActionsObj>>> future_reserve_objects;
+  std::vector<std::future<int>> future_publish_objects;
   std::vector<struct TestObj> reservations;
 
   flags = POBJ_XALLOC_ZERO;
   size_t nof_messages = nof_threads * messages_per_thread;
-  int ret;
 
   /* Step 1 */
   pop = pmemobj_create(pool_path_.c_str(), LAYOUT_NAME, pool_size,
-    S_IWRITE | S_IREAD);
+                       S_IWRITE | S_IREAD);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
   /* Step 2 */
   for (int th = 0; th < nof_threads; th++) {
-    future_objects.push_back(std::move(promise_objects[th].get_future()));
-    threads.push_back(std::thread(&PmemobjReservePublishTest::XReserveInThread,
-      this, std::move(promise_objects[th])));
-  }
-
-  for (int th = 0; th < nof_threads; th++) {
-    std::unique_ptr<ActionsObj> future_object = future_objects[th].get();
-    reservations.push_back(TestObj(future_object->publish_acts));
+    future_reserve_objects.push_back(
+        std::async(std::launch::async,
+                   &PmemobjReservePublishTest::XReserveInThread, this));
   }
 
   /* Step 3 */
-  for (int th = 0; th < nof_threads; th++) {
-    threads[th].join();
+  for (auto& reserve_object : future_reserve_objects) {
+    auto unique_actions_ptr = reserve_object.get();
+    ActionsObj* actions_obj = unique_actions_ptr.get();
+    reservations.push_back(actions_obj->publish_acts);
   }
-  threads.clear();
 
   /* Step 4 */
   for (int th = 0; th < nof_threads; th++) {
-    threads.push_back(std::thread(&PmemobjReservePublishParamTest::TxPublishInThread,
-      this, reservations[th]));
+    future_publish_objects.push_back(std::async(
+        std::launch::async, &PmemobjReservePublishTest::TxPublishInThread, this,
+        reservations[th]));
   }
 
   /* Step 5 */
-  for (int th = 0; th < nof_threads; th++) {
-    threads[th].join();
+  for (auto& publish_object : future_publish_objects) {
+    int response = publish_object.get();
+    ASSERT_EQ(0, response);
   }
-  threads.clear();
 
   /* Step 6 */
   pmemobj_close(pop);
@@ -437,73 +398,67 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_01) {
  *  - the size of the objects to be reserved
  *  - the number of objects to be reserved by each thread
  * \test
- *          \li \c Step1 Create the pmemobj pool file
- *          \li \c Step2 Register an allocation class and obtain the class ID
- *          \li \c Step3 Make reservations with pmemobj_xreserve with the flags 
+ *          \li \c Step1. Create the pmemobj pool file
+ *          \li \c Step2. Register an allocation class and obtain the class ID
+ *          \li \c Step3. Make reservations with pmemobj_xreserve with the flags
  *          parameter set to the obtained class ID and using n threads
- *          \li \c Step4 Synchronize the threads
- *          \li \c Step5 Publish the reserved objects with pmemobj_xpublish
+ *          \li \c Step4. Synchronize the threads
+ *          \li \c Step5. Publish the reserved objects with pmemobj_xpublish
  *          using n threads
- *          \li \c Step6 Synchronize the threads
- *          \li \c Step7 Close, check and reopen the pool
- *          \li \c Step8 Verify that the objects were allocated
- *          \li \c Step9 Close and remove the pool
+ *          \li \c Step6. Synchronize the threads
+ *          \li \c Step7. Close, check and reopen the pool
+ *          \li \c Step8. Verify that the objects were allocated
+ *          \li \c Step9. Close and remove the pool
  */
-TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_02) {
-  std::vector<std::thread> threads;
-  std::vector<std::promise<std::unique_ptr<ActionsObj>>> promise_objects(nof_threads);
-  std::vector<std::future<std::unique_ptr<ActionsObj>>> future_objects;
-
+TEST_P(PmemobjReserveTxPublishParamTest, RESERVE_PUBLISH_XRESERVE_02) {
+  std::vector<std::future<std::unique_ptr<ActionsObj>>> future_reserve_objects;
+  std::vector<std::future<int>> future_publish_objects;
   std::vector<struct TestObj> reservations;
 
-  struct pobj_alloc_class_desc pacd;
-  pacd.header_type = POBJ_HEADER_NONE;
-  pacd.unit_size = data_size;
-  pacd.units_per_block = 4;
-  pacd.alignment = 0;
+  struct pobj_alloc_class_desc alloc_class;
+  alloc_class.header_type = POBJ_HEADER_NONE;
+  alloc_class.unit_size = data_size;
+  alloc_class.units_per_block = 4;
+  alloc_class.alignment = 0;
 
   /* Step 1 */
   pop = pmemobj_create(pool_path_.c_str(), LAYOUT_NAME, pool_size,
-    S_IWRITE | S_IREAD);
+                       S_IWRITE | S_IREAD);
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
   /* Step 2 */
-  int ret = pmemobj_ctl_set(pop, "heap.alloc_class.128.desc", &pacd);
-  ASSERT_EQ(errno, 0);
+  int ret = pmemobj_ctl_set(pop, "heap.alloc_class.128.desc", &alloc_class);
   ASSERT_EQ(ret, 0) << pmemobj_errormsg();
 
-  flags = pacd.class_id;
+  flags = alloc_class.class_id;
   size_t nof_messages = nof_threads * messages_per_thread;
 
   /* Step 3 */
   for (int th = 0; th < nof_threads; th++) {
-    future_objects.push_back(std::move(promise_objects[th].get_future()));
-    threads.push_back(std::thread(&PmemobjReservePublishTest::XReserveInThread,
-      this, std::move(promise_objects[th])));
-  }
-
-  for (int th = 0; th < nof_threads; th++) {
-    std::unique_ptr<ActionsObj> future_object = future_objects[th].get();
-    reservations.push_back(TestObj(future_object->publish_acts));
+    future_reserve_objects.push_back(
+        std::async(std::launch::async,
+                   &PmemobjReservePublishTest::XReserveInThread, this));
   }
 
   /* Step 4 */
-  for (int th = 0; th < nof_threads; th++) {
-    threads[th].join();
+  for (auto& future_object : future_reserve_objects) {
+    auto unique_actions_ptr = future_object.get();
+    ActionsObj* actions_obj = unique_actions_ptr.get();
+    reservations.push_back(actions_obj->publish_acts);
   }
-  threads.clear();
 
   /* Step 5 */
   for (int th = 0; th < nof_threads; th++) {
-    threads.push_back(std::thread(&PmemobjReservePublishParamTest::TxPublishInThread,
-      this, reservations[th]));
+    future_publish_objects.push_back(std::async(
+        std::launch::async, &PmemobjReservePublishTest::TxPublishInThread, this,
+        reservations[th]));
   }
 
   /* Step 6 */
-  for (int th = 0; th < nof_threads; th++) {
-    threads[th].join();
+  for (auto& publish_object : future_publish_objects) {
+    int response = publish_object.get();
+    ASSERT_EQ(0, response);
   }
-  threads.clear();
 
   /* Step 7 */
   pmemobj_close(pop);
@@ -517,8 +472,14 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_XRESERVE_02) {
 
 INSTANTIATE_TEST_CASE_P(
     ResPubParam, PmemobjReservePublishParamTest,
-    ::testing::Values(
-        ReservePublishParams(2 * MEBIBYTE, 1, 8),
-        ReservePublishParams(2 * MEBIBYTE, 8, 2),
-        ReservePublishParams(2 * MEBIBYTE, 8, 4),
-        ReservePublishParams(2 * MEBIBYTE, 8, 8)));
+    ::testing::Values(ReservePublishParams(2 * MEBIBYTE, 1, 8),
+                      ReservePublishParams(2 * MEBIBYTE, 8, 2),
+                      ReservePublishParams(2 * MEBIBYTE, 8, 4),
+                      ReservePublishParams(2 * MEBIBYTE, 8, 8)));
+
+INSTANTIATE_TEST_CASE_P(
+    ResPubParam, PmemobjReserveTxPublishParamTest,
+    ::testing::Values(ReservePublishParams(5 * KIBIBYTE, 1, 8),
+                      ReservePublishParams(5 * KIBIBYTE, 8, 2),
+                      ReservePublishParams(5 * KIBIBYTE, 8, 4),
+                      ReservePublishParams(5 * KIBIBYTE, 8, 8)));
