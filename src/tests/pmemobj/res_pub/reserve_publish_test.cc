@@ -479,7 +479,7 @@ INSTANTIATE_TEST_CASE_P(
 
 INSTANTIATE_TEST_CASE_P(
     ResPubParam, PmemobjReserveTxPublishParamTest,
-    ::testing::Values(ReservePublishParams(5 * KIBIBYTE, 1, 8),
-                      ReservePublishParams(5 * KIBIBYTE, 8, 2),
-                      ReservePublishParams(5 * KIBIBYTE, 8, 4),
-                      ReservePublishParams(5 * KIBIBYTE, 8, 8)));
+    ::testing::Values(ReservePublishParams(4 * KIBIBYTE, 1, 8),
+                      ReservePublishParams(4 * KIBIBYTE, 8, 2),
+                      ReservePublishParams(4 * KIBIBYTE, 8, 4),
+                      ReservePublishParams(4 * KIBIBYTE, 8, 8)));

@@ -44,15 +44,14 @@ void PmemobjReservePublishTest::TearDown() {
 std::vector<pobj_action> PmemobjReservePublishTest::MakeMaximumReservations() {
   std::vector<pobj_action> reservations;
 
-  TOID(struct message) reserved_message;
-  do {
-    pobj_action reservation;
+  pobj_action reservation;
+  TOID(struct message) reserved_message =
+    POBJ_RESERVE_ALLOC(pop, struct message, data_size, &reservation);
+  while (!OID_IS_NULL(reserved_message.oid)) {
+    reservations.push_back(std::move(reservation));
     reserved_message =
-        POBJ_RESERVE_ALLOC(pop, struct message, data_size, &reservation);
-    if (!OID_IS_NULL(reserved_message.oid)) {
-      reservations.push_back(std::move(reservation));
-    }
-  } while (!OID_IS_NULL(reserved_message.oid));
+      POBJ_RESERVE_ALLOC(pop, struct message, data_size, &reservation);
+  }
 
   return reservations;
 }
