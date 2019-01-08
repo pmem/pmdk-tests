@@ -69,7 +69,7 @@ size_t PmemobjReservePublishTest::GetNofStoredMessages() {
 std::unique_ptr<ActionsObj> PmemobjReservePublishTest::ReserveInThread() {
   std::vector<struct pobj_action> publish_acts(messages_per_thread);
 
-  for (int i = 0; i < messages_per_thread; i++) {
+  for (size_t i = 0; i < messages_per_thread; i++) {
     TOID(struct message)
     reserved_message =
         POBJ_RESERVE_ALLOC(pop, struct message, data_size, &publish_acts[i]);
@@ -87,7 +87,7 @@ PmemobjReservePublishTest::ReserveWithCancelInThread() {
   std::vector<struct pobj_action> publish_acts;
   std::vector<struct pobj_action> cancel_acts;
 
-  for (int i = 0; i < messages_per_thread; i++) {
+  for (size_t i = 0; i < messages_per_thread; i++) {
     pobj_action action;
     TOID(struct message)
     message = POBJ_RESERVE_ALLOC(pop, struct message, data_size, &action);
@@ -111,7 +111,7 @@ std::unique_ptr<ActionsObj> PmemobjReservePublishTest::DeferFreeInThread() {
 
   TOID(struct message) element;
 
-  for (int i = 0; i < messages_per_thread; i++) {
+  for (size_t i = 0; i < messages_per_thread; i++) {
     TOID_ASSIGN(element, OID_NULL);
     EXPECT_EQ(0,
               pmemobj_alloc(pop, &element.oid, data_size, 0, nullptr, nullptr))
@@ -132,7 +132,7 @@ std::unique_ptr<ActionsObj> PmemobjReservePublishTest::DeferFreeInThread() {
 std::unique_ptr<ActionsObj> PmemobjReservePublishTest::XReserveInThread() {
   std::vector<struct pobj_action> publish_acts(messages_per_thread);
 
-  for (int i = 0; i < messages_per_thread; i++) {
+  for (size_t i = 0; i < messages_per_thread; i++) {
     PMEMoid oid = pmemobj_xreserve(pop, &publish_acts[i], data_size, 0,
                                    POBJ_CLASS_ID(flags));
     EXPECT_FALSE(OID_IS_NULL(oid));

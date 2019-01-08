@@ -62,7 +62,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_PUBLISH) {
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
   /* Step 2 */
-  for (int th = 0; th < nof_threads; th++) {
+  for (size_t th = 0; th < nof_threads; th++) {
     future_objects.push_back(std::async(
         std::launch::async, &PmemobjReservePublishTest::ReserveInThread, this));
   }
@@ -118,7 +118,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
   std::vector<struct pobj_action> reservations;
   std::vector<struct pobj_action> cancellations;
 
-  size_t nof_messages = nof_threads * messages_per_thread;
+  //size_t nof_messages = nof_threads * messages_per_thread;
 
   /* Step 1 */
   pop = pmemobj_create(pool_path_.c_str(), LAYOUT_NAME, pool_size,
@@ -136,7 +136,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
   messages_per_thread = actual_nof_messages / nof_threads;
 
   /* Step 4 */
-  for (int th = 0; th < nof_threads; th++) {
+  for (size_t th = 0; th < nof_threads; th++) {
     future_objects.push_back(std::async(
         std::launch::async,
         &PmemobjReservePublishTest::ReserveWithCancelInThread, this));
@@ -215,7 +215,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_01) {
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
   /* Step 2 */
-  for (int th = 0; th < nof_threads; th++) {
+  for (size_t th = 0; th < nof_threads; th++) {
     future_objects.push_back(
         std::async(std::launch::async,
                    &PmemobjReservePublishTest::DeferFreeInThread, this));
@@ -283,7 +283,7 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_DEFER_FREE_02) {
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
   /* Step 2 */
-  for (int th = 0; th < nof_threads; th++) {
+  for (size_t th = 0; th < nof_threads; th++) {
     future_objects.push_back(
         std::async(std::launch::async,
                    &PmemobjReservePublishTest::DeferFreeInThread, this));
@@ -354,7 +354,7 @@ TEST_P(PmemobjReserveTxPublishParamTest, RESERVE_PUBLISH_XRESERVE_01) {
   ASSERT_TRUE(pop != nullptr) << pmemobj_errormsg();
 
   /* Step 2 */
-  for (int th = 0; th < nof_threads; th++) {
+  for (size_t th = 0; th < nof_threads; th++) {
     future_reserve_objects.push_back(
         std::async(std::launch::async,
                    &PmemobjReservePublishTest::XReserveInThread, this));
@@ -368,10 +368,10 @@ TEST_P(PmemobjReserveTxPublishParamTest, RESERVE_PUBLISH_XRESERVE_01) {
   }
 
   /* Step 4 */
-  for (int th = 0; th < nof_threads; th++) {
+  for (size_t th = 0; th < nof_threads; th++) {
     future_publish_objects.push_back(std::async(
         std::launch::async, &PmemobjReservePublishTest::TxPublishInThread, this,
-        reservations[th]));
+        std::ref(reservations[th])));
   }
 
   /* Step 5 */
@@ -434,7 +434,7 @@ TEST_P(PmemobjReserveTxPublishParamTest, RESERVE_PUBLISH_XRESERVE_02) {
   size_t nof_messages = nof_threads * messages_per_thread;
 
   /* Step 3 */
-  for (int th = 0; th < nof_threads; th++) {
+  for (size_t th = 0; th < nof_threads; th++) {
     future_reserve_objects.push_back(
         std::async(std::launch::async,
                    &PmemobjReservePublishTest::XReserveInThread, this));
@@ -448,10 +448,10 @@ TEST_P(PmemobjReserveTxPublishParamTest, RESERVE_PUBLISH_XRESERVE_02) {
   }
 
   /* Step 5 */
-  for (int th = 0; th < nof_threads; th++) {
+  for (size_t th = 0; th < nof_threads; th++) {
     future_publish_objects.push_back(std::async(
         std::launch::async, &PmemobjReservePublishTest::TxPublishInThread, this,
-        reservations[th]));
+        std::ref(reservations[th])));
   }
 
   /* Step 6 */
