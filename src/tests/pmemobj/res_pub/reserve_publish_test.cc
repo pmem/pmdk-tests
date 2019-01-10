@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (c) 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -117,8 +117,6 @@ TEST_P(PmemobjReservePublishParamTest, RESERVE_PUBLISH_CANCEL) {
   std::vector<std::future<std::unique_ptr<ActionsObj>>> future_objects;
   std::vector<struct pobj_action> reservations;
   std::vector<struct pobj_action> cancellations;
-
-  //size_t nof_messages = nof_threads * messages_per_thread;
 
   /* Step 1 */
   pop = pmemobj_create(pool_path_.c_str(), LAYOUT_NAME, pool_size,
