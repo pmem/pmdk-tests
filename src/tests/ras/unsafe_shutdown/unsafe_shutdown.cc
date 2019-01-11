@@ -74,7 +74,8 @@ int UnsafeShutdown::PmempoolRepair(std::string pool_file_path) const {
     switch (status->type) {
       case PMEMPOOL_CHECK_MSG_TYPE_ERROR:
       case PMEMPOOL_CHECK_MSG_TYPE_INFO:
-        status_msg.append(status->str.msg + '\n');
+        status_msg.append(status->str.msg);
+        status_msg.append("\n");
         break;
       default:
         pmempool_check_end(ppc);

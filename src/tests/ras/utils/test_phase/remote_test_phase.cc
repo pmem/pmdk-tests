@@ -175,7 +175,7 @@ const std::vector<std::string> RemoteTestPhase::GetSafeMountpoints(
   std::vector<std::string> ret;
   int i = 0;
   std::copy_if(node.begin(), node.end(), std::back_inserter(ret),
-               [&i, this](std::string) -> bool { return i++ == 1; });
+               [&i](std::string) -> bool { return i++ == 1; });
   return ret;
 }
 
@@ -184,7 +184,7 @@ const std::vector<std::string> RemoteTestPhase::GetUnsafeMountpoints(
   std::vector<std::string> ret;
   int i = 0;
   std::copy_if(node.begin(), node.end(), std::back_inserter(ret),
-               [&i, this](std::string) -> bool { return i++ != 1; });
+               [&i](std::string) -> bool { return i++ != 1; });
   return ret;
 }
 
