@@ -41,8 +41,8 @@
 
 namespace file_utils {
 static inline size_t GetSize(std::string size) {
-  std::array<std::string, 9> suffix = {"KiB", "MiB", "GiB", "KB", "MB",
-                                       "GB",  "K",   "M",   "G"};
+  std::array<std::string, 9> suffix = {{"KiB", "MiB", "GiB", "KB", "MB",
+                                       "GB",  "K",   "M",   "G"}};
   size_t pos;
   for (const auto &suf : suffix) {
     if ((pos = size.find(suf)) != std::string::npos) {
