@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,7 +62,7 @@ int LocalDimmConfiguration::FillConfigFields(pugi::xml_node &&root) {
   }
 
   if (SetTestDir(root, test_dir_) != 0 ||
-      SetDimmCollections(std::move(root.child("dimmConfiguration"))) != 0) {
+      SetDimmNamespaces(root.child("dimmConfiguration")) != 0) {
     return -1;
   }
 
