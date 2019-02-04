@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Intel Corporation
+# Copyright (c) 2018-2019, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # PMEMOBJ
+set(CMAKE_CXX_STANDARD 14)
 set(DIR ${CMAKE_CURRENT_LIST_DIR})
 set(PREFIX_FILTER "")
 
