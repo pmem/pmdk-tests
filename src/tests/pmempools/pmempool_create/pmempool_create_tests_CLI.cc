@@ -74,7 +74,10 @@ TEST_F(PmempoolCreate, PMEMPOOL_CREATE_MAX_SIZE) {
                           pool_path_))
       << GetOutputContent();
   /* Step 2 */
-  EXPECT_EQ(free_space, api_c_.GetFileSize(pool_path_));
+  // Creating a pool for the available size given by the system is not possible.
+  // The size is decreased iteratively by the page size until the creation of
+  // the pool succeeds.
+  EXPECT_GE(api_c_.GetFileSize(pool_path_), 0.99 * free_space);
 }
 
 /**
