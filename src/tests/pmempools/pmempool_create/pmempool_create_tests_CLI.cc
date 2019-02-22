@@ -74,7 +74,8 @@ TEST_F(PmempoolCreate, PMEMPOOL_CREATE_MAX_SIZE) {
                           pool_path_))
       << GetOutputContent();
   /* Step 2 */
-  EXPECT_EQ(free_space, api_c_.GetFileSize(pool_path_));
+  // We need to use some threshold value due to TOCTOU.
+  EXPECT_GE(api_c_.GetFileSize(pool_path_), 0.95 * free_space);
 }
 
 /**
