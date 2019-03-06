@@ -59,3 +59,5 @@ pobj_max_actions
 pobj_action_xreserve_valid_flags
 libpmemobj_types_h
 pmemvlt
+pobj_arena_id
+pobj_xalloc_arena_mask
