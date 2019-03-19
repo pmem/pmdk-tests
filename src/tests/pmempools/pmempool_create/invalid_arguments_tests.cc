@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -83,7 +83,7 @@ INSTANTIATE_TEST_CASE_P(
             "error: invalid option specified for log pool type -- block size"},
         PoolArgs{PoolType::Obj,
                  {{Option::Layout, OptionType::Long, std::string(1025, 'a')}},
-                 "error: Layout name is to long"},
+                 "error: Layout name is too long"},
         PoolArgs{PoolType::Blk, "error: blk pool requires <bsize> argument"},
         PoolArgs{PoolType::Blk,
                  {{Option::BSize, OptionType::Short, "512"},
