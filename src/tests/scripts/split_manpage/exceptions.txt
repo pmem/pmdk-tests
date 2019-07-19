@@ -61,3 +61,4 @@ libpmemobj_types_h
 pmemvlt
 pobj_arena_id
 pobj_xalloc_arena_mask
+pmdk_use_attr_deprec_with_msg
