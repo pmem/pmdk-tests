@@ -62,3 +62,5 @@ pmemvlt
 pobj_arena_id
 pobj_xalloc_arena_mask
 pmdk_use_attr_deprec_with_msg
+pobj_flag_no_snapshot
+pobj_xadd_no_snapshot
