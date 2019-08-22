@@ -41,31 +41,6 @@
 #include <cstring>
 #include "api_c.h"
 
-int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
-  if (static_cast<off_t>(length) < 0) {
-    std::cerr << "length should be >= 0" << std::endl;
-    return -1;
-  }
-
-  int fd = open(path.c_str(), O_CREAT | O_RDWR);
-
-  if (fd == -1) {
-    std::cerr << "Unable to create file: " << strerror(errno) << std::endl;
-    return -1;
-  }
-
-  int ret = posix_fallocate(fd, 0, static_cast<off_t>(length));
-
-  if (ret != 0) {
-    std::cerr << "Unable to allocate disk space: " << strerror(ret)
-              << std::endl;
-    close(fd);
-    RemoveFile(path);
-  }
-
-  return ret;
-}
-
 int ApiC::GetExecutableDirectory(std::string &path) {
   char file_path[FILENAME_MAX + 1] = {0};
   ssize_t count = readlink("/proc/self/exe", file_path, FILENAME_MAX);
@@ -117,6 +92,10 @@ int ApiC::CleanDirectory(const std::string &dir) {
   f_sent = fts_children(fts, 0);
 
   if (f_sent == nullptr) {
+    if (fts_close(fts) != 0) {
+      std::cerr << "fts_close failed: " << strerror(errno) << std::endl;
+      return -1;
+    }
     return 0;
   }
 
