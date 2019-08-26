@@ -62,13 +62,6 @@ class ApiC final : NonCopyable {
                          const std::vector<std::string> &content);
 
   /*
-   * AllocateFileSpace -- allocates disk space in specified path. Size of
-   * allocation is equal to given length(specified in bytes). Returns 0 on
-   * success, prints error message and returns -1 otherwise.
-   */
-  static int AllocateFileSpace(const std::string &path, size_t length);
-
-  /*
    * ReadFile -- opens given file and reads its content. Returns 0 on success,
    * prints error message and returns -1 otherwise.
    */

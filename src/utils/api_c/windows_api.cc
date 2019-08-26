@@ -39,68 +39,6 @@
 #include <sstream>
 #include "api_c.h"
 
-int ApiC::AllocateFileSpace(const std::string &path, size_t length) {
-  if (length < 0) {
-    std::cerr << "length should be >= 0" << std::endl;
-    return -1;
-  }
-
-  HANDLE h = CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_NEW,
-                        FILE_ATTRIBUTE_NORMAL, nullptr);
-
-  if (h == INVALID_HANDLE_VALUE) {
-    std::cerr << "INVALID_HANDLE_VALUE occurs\nError message: "
-              << GetLastError() << std::endl;
-    return -1;
-  }
-
-  /* check if sparse files are supported */
-  DWORD flags = 0;
-  BOOL ret = GetVolumeInformationByHandleW(h, nullptr, 0, nullptr, nullptr,
-                                           &flags, nullptr, 0);
-  if (!ret) {
-    std::cerr << "GetVolumeInformationByHandleW: ";
-    goto err;
-  } else if ((flags & FILE_SUPPORTS_SPARSE_FILES) == 0) {
-    std::cerr << "Filesystem does not support sparse files" << std::endl;
-    goto err;
-  }
-
-  /* mark file as sparse */
-  DWORD nbytes;
-  ret = DeviceIoControl(h, FSCTL_SET_SPARSE, nullptr, 0, nullptr, 0, &nbytes,
-                        nullptr);
-  if (!ret) {
-    std::cerr << "DeviceIoControl: ";
-    goto err;
-  }
-
-  /* set file length */
-  LARGE_INTEGER llen;
-  llen.QuadPart = length;
-
-  DWORD ptr = SetFilePointerEx(h, llen, nullptr, FILE_BEGIN);
-  if (ptr == INVALID_SET_FILE_POINTER) {
-    std::cerr << "SetFilePointerEx: ";
-    goto err;
-  }
-
-  ret = SetEndOfFile(h);
-  if (!ret) {
-    std::cerr << "SetEndOfFile: ";
-    goto err;
-  }
-
-  return 0;
-
-err:
-  std::cerr << GetLastError() << std::endl;
-  CloseHandle(h);
-  std::remove(path.c_str());
-  return -1;
-}
-
 int ApiC::GetExecutableDirectory(std::string &path) {
   char file_path[MAX_PATH + 1] = {0};
   auto count = GetModuleFileName(nullptr, file_path, MAX_PATH);
