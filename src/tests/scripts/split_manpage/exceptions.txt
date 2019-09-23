@@ -64,3 +64,5 @@ pobj_xalloc_arena_mask
 pmdk_use_attr_deprec_with_msg
 pobj_flag_no_snapshot
 pobj_xadd_no_snapshot
+pobj_flag_assume_initialized
+pobj_xadd_assume_initialized
