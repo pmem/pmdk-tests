@@ -1,5 +1,5 @@
 #
-# Copyright 2018, Intel Corporation
+# Copyright 2018-2019, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -45,7 +45,7 @@ execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/etc/scripts/che
 		ERROR_QUIET)
 
 if ("${PREREQUISITES_CHECK_ERROR}" GREATER "0")
-	message(WARNING "code-format.py prerequisites check failed - code style and formatting is disabled\nclang-format 3.9 is required")
+	message(WARNING "code-format.py prerequisites check failed - code style and formatting is disabled. clang-format 8 is required")
 	return()
 endif ()
 

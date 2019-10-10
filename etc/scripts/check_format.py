@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2018, Intel Corporation
+# Copyright 2018-2019, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
 Check involves applying clang-format and checking format of test designs
 documentation comments located above test fixture macros.
 
-Requires clang-format in version 3.9 installed on the system.
+Requires clang-format in version 8 installed in the system.
 """
 
 import sys
@@ -49,6 +49,7 @@ DESIGN_END = '*/'
 DESIGN_EXTENSIONS = ('.cc',)
 CPP_EXTENSIONS = ('.c', '.cc', '.cpp', '.h', '.tpp', '.hpp')
 CLANG_FORMAT_BIN = ''
+REQUIRED_VERSION = str(8)
 
 
 def format_file(filepath):
@@ -129,19 +130,20 @@ def check_prerequisites():
 
     CLANG_FORMAT_BIN = find_clang_format()
     if not CLANG_FORMAT_BIN:
-        sys.exit('No clang-format in version 3.9 found.')
+        sys.exit('No clang-format in version ' + REQUIRED_VERSION + ' found.')
 
 
 def find_clang_format():
     """Find clang-format binary with appropriate version on system."""
 
     returncode, out = check_utils.run('clang-format --version', shell=True)
-    if returncode == 0 and b'version 3.9' in out:
+    if returncode == 0 and 'version ' + REQUIRED_VERSION in str(out):
         return 'clang-format'
 
-    returncode, _ = check_utils.run('clang-format-3.9 --version', shell=True)
+    alternative_binary = 'clang-format-' + REQUIRED_VERSION
+    returncode, _ = check_utils.run(alternative_binary + ' --version', shell=True)
     if returncode == 0:
-        return 'clang-format-3.9'
+        return alternative_binary
 
     return ''
 
