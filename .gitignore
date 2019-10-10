@@ -1,3 +1,8 @@
+.*
+!.gitignore
+!.gitattributes
+!.clang-format
+
 # Prerequisites
 *.d
 
@@ -35,9 +40,6 @@
 googletest-*.zip
 pugixml-*.tar.gz
 
-# Build folder
-build/
-
-# Python specific
+# Build and cache folders
 __pycache__/
-.idea/
+build/
