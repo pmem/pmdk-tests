@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2020, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -153,39 +153,6 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
   const auto& loc_unsafe_dn = loc_tp.GetUnsafeDimmNamespaces();
   const auto& loc_safe_dn = loc_tp.GetSafeDimmNamespaces();
 
-  {
-    RemotePoolsetTC tc{
-        "master: unsafe DIMM 0, local: unsafe DIMM 1, remote: safe DIMM 0"};
-    if (loc_unsafe_dn.size() >= 2 && loc_safe_dn.size() >= 1 &&
-        rem_safe_mnts.size() >= 1) {
-      tc.enough_dimms_ = true;
-      tc.is_syncable_ = true;
-
-      std::string local_master_part_path =
-          loc_unsafe_dn[0].GetTestDir() + SEPARATOR + "master7";
-      std::string local_replica_part_path =
-          loc_unsafe_dn[1].GetTestDir() + SEPARATOR + "replica7";
-      std::string rp_part_path = rem_safe_mnts[0] + SEPARATOR + "remote1";
-
-      RemotePoolset rp = tc.AddRemotePoolset(
-          node.GetAddress(),
-          Poolset{rps_dir,
-                  "remote_pool1.set",
-                  {{"PMEMPOOLSET", "18MB " + rp_part_path + ".part0",
-                    "9MB " + rp_part_path + ".part1"}}});
-
-      tc.poolset_ =
-          Poolset{loc_unsafe_dn[0].GetTestDir(),
-                  "pool7.set",
-                  {{"PMEMPOOLSET", "9MB " + local_master_part_path + ".part0",
-                    "9MB " + local_master_part_path + ".part1",
-                    "9MB " + local_master_part_path + ".part2"},
-                   {"REPLICA", "9MB " + local_replica_part_path + ".part0",
-                    "18MB " + local_replica_part_path + ".part1"},
-                   {rp.GetReplicaLine()}}};
-    }
-    ret.emplace_back(tc);
-  }
 
   {
     RemotePoolsetTC tc{
@@ -254,42 +221,6 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
     ret.emplace_back(tc);
   }
 
-  {
-    RemotePoolsetTC tc{
-        "Master: unsafe DIMM 0, remote1: unsafe DIMM 0, remote2: non-DIMM"};
-    if (rem_unsafe_mnts.size() >= 1 && loc_unsafe_dn.size() >= 1) {
-      tc.enough_dimms_ = true;
-      tc.is_syncable_ = true;
-
-      std::string local_master_path =
-          loc_unsafe_dn[0].GetTestDir() + SEPARATOR + "master10";
-      std::string rp1_part_path = rem_unsafe_mnts[0] + SEPARATOR + "remote4";
-      std::string rp2_part_path = node.GetTestDir() + SEPARATOR + "remote5";
-
-      RemotePoolset rp1 = tc.AddRemotePoolset(
-          node.GetAddress(),
-          Poolset{rps_dir,
-                  "remote_pool4.set",
-                  {{"PMEMPOOLSET", "18MB " + rp1_part_path + ".part0",
-                    "9MB " + rp1_part_path + ".part1"}}});
-
-      RemotePoolset rp2 = tc.AddRemotePoolset(
-          node.GetAddress(),
-          Poolset{rps_dir,
-                  "remote_pool5.set",
-                  {{"PMEMPOOLSET", "18MB " + rp2_part_path + ".part0",
-                    "9MB " + rp2_part_path + ".part1"}}});
-      tc.poolset_ =
-          Poolset{loc_unsafe_dn[0].GetTestDir(),
-                  "pool_10.set",
-                  {{"PMEMPOOLSET", "9MB " + local_master_path + ".part0",
-                    "9MB " + local_master_path + ".part1",
-                    "9MB " + local_master_path + ".part2"},
-                   {rp1.GetReplicaLine()},
-                   {rp2.GetReplicaLine()}}};
-    }
-    ret.emplace_back(tc);
-  }
 
   {
     RemotePoolsetTC tc{
@@ -353,7 +284,115 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
 
       tc.poolset_ =
           Poolset{loc_unsafe_dn[0].GetTestDir(),
-                  "pool_11.set",
+                  "pool_12.set",
+                  {{"PMEMPOOLSET", "9MB " + local_master_part_path + ".part0",
+                    "9MB " + local_master_part_path + ".part1",
+                    "9MB " + local_master_part_path + ".part2"},
+                   {"REPLICA", "9MB " + local_replica_part_path + ".part0",
+                    "18MB " + local_replica_part_path + ".part1"},
+                   {rp.GetReplicaLine()}}};
+    }
+    ret.emplace_back(tc);
+  }
+
+  {
+    RemotePoolsetTC tc{
+        "Master: unsafe DIMM 0, remote1: unsafe DIMM 0, remote2: non-DIMM"};
+    if (rem_unsafe_mnts.size() >= 1 && loc_unsafe_dn.size() >= 1) {
+      tc.enough_dimms_ = true;
+      tc.is_syncable_ = true;
+
+      std::string local_master_path =
+          loc_unsafe_dn[0].GetTestDir() + SEPARATOR + "master10";
+      std::string rp1_part_path = rem_unsafe_mnts[0] + SEPARATOR + "remote4";
+      std::string rp2_part_path = node.GetTestDir() + SEPARATOR + "remote5";
+
+      RemotePoolset rp1 = tc.AddRemotePoolset(
+          node.GetAddress(),
+          Poolset{rps_dir,
+                  "remote_pool4.set",
+                  {{"PMEMPOOLSET", "18MB " + rp1_part_path + ".part0",
+                    "9MB " + rp1_part_path + ".part1"}}});
+
+      RemotePoolset rp2 = tc.AddRemotePoolset(
+          node.GetAddress(),
+          Poolset{rps_dir,
+                  "remote_pool5.set",
+                  {{"PMEMPOOLSET", "18MB " + rp2_part_path + ".part0",
+                    "9MB " + rp2_part_path + ".part1"}}});
+      tc.poolset_ =
+          Poolset{loc_unsafe_dn[0].GetTestDir(),
+                  "pool_10.set",
+                  {{"PMEMPOOLSET", "9MB " + local_master_path + ".part0",
+                    "9MB " + local_master_path + ".part1",
+                    "9MB " + local_master_path + ".part2"},
+                   {rp1.GetReplicaLine()},
+                   {rp2.GetReplicaLine()}}};
+    }
+    ret.emplace_back(tc);
+  }
+
+  {
+    RemotePoolsetTC tc{
+        "Master: unsafe DIMM 0, remote1: unsafe DIMM 0, remote2: non-DIMM"};
+    if (rem_unsafe_mnts.size() >= 1 && loc_unsafe_dn.size() >= 1) {
+      tc.enough_dimms_ = true;
+      tc.is_syncable_ = true;
+
+      std::string local_master_path =
+          loc_unsafe_dn[0].GetTestDir() + SEPARATOR + "master15";
+      std::string rp1_part_path = rem_unsafe_mnts[0] + SEPARATOR + "remote14";
+      std::string rp2_part_path = node.GetTestDir() + SEPARATOR + "remote17";
+
+      RemotePoolset rp1 = tc.AddRemotePoolset(
+          node.GetAddress(),
+          Poolset{rps_dir,
+                  "remote_pool20.set",
+                  {{"PMEMPOOLSET", "18MB " + rp1_part_path + ".part0",
+                    "9MB " + rp1_part_path + ".part1"}}});
+
+      RemotePoolset rp2 = tc.AddRemotePoolset(
+          node.GetAddress(),
+          Poolset{rps_dir,
+                  "remote_pool21.set",
+                  {{"PMEMPOOLSET", "18MB " + rp2_part_path + ".part0",
+                    "9MB " + rp2_part_path + ".part1"}}});
+      tc.poolset_ =
+          Poolset{loc_unsafe_dn[0].GetTestDir(),
+                  "pool_28.set",
+                  {{"PMEMPOOLSET", "9MB " + local_master_path + ".part0",
+                    "9MB " + local_master_path + ".part1",
+                    "9MB " + local_master_path + ".part2"},
+                   {rp1.GetReplicaLine()},
+                   {rp2.GetReplicaLine()}}};
+    }
+    ret.emplace_back(tc);
+  }
+
+  {
+    RemotePoolsetTC tc{
+        "master: unsafe DIMM 0, local: unsafe DIMM 1, remote: safe DIMM 0"};
+    if (loc_unsafe_dn.size() >= 2 && loc_safe_dn.size() >= 1 &&
+        rem_safe_mnts.size() >= 1) {
+      tc.enough_dimms_ = true;
+      tc.is_syncable_ = true;
+
+      std::string local_master_part_path =
+          loc_unsafe_dn[0].GetTestDir() + SEPARATOR + "master7";
+      std::string local_replica_part_path =
+          loc_unsafe_dn[1].GetTestDir() + SEPARATOR + "replica7";
+      std::string rp_part_path = rem_safe_mnts[0] + SEPARATOR + "remote1";
+
+      RemotePoolset rp = tc.AddRemotePoolset(
+          node.GetAddress(),
+          Poolset{rps_dir,
+                  "remote_pool1.set",
+                  {{"PMEMPOOLSET", "18MB " + rp_part_path + ".part0",
+                    "9MB " + rp_part_path + ".part1"}}});
+
+      tc.poolset_ =
+          Poolset{loc_unsafe_dn[0].GetTestDir(),
+                  "pool7.set",
                   {{"PMEMPOOLSET", "9MB " + local_master_part_path + ".part0",
                     "9MB " + local_master_part_path + ".part1",
                     "9MB " + local_master_part_path + ".part2"},
