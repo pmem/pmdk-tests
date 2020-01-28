@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2020, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -353,7 +353,7 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
 
       tc.poolset_ =
           Poolset{loc_unsafe_dn[0].GetTestDir(),
-                  "pool_11.set",
+                  "pool_12.set",
                   {{"PMEMPOOLSET", "9MB " + local_master_part_path + ".part0",
                     "9MB " + local_master_part_path + ".part1",
                     "9MB " + local_master_part_path + ".part2"},
