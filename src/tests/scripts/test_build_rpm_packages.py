@@ -43,7 +43,8 @@ Required arguments:
 -r <PMDK_path>    the PMDK library root path.
 
 Optional arguments:
---without_rpmem    the flag if rpmem and rpmemd packages should not be built.
+--without-rpmem    the flag if rpmem and rpmemd packages should not be built.
+--without-pmem2    the flag if pmem2 package should not be built.
 """
 
 from os import listdir, path, linesep
@@ -84,7 +85,7 @@ def get_built_packages(pmdk_path):
     return packages
 
 
-def get_libraries_names_from_so_files(pmdk_path, is_pmdk_debuginfo):
+def get_libraries_names_from_so_files(pmdk_path, is_pmdk_debuginfo, without_pmem2):
     """
     Returns names of libraries from .so files, and information which packages
     should be built for individual libraries.
@@ -93,6 +94,8 @@ def get_libraries_names_from_so_files(pmdk_path, is_pmdk_debuginfo):
     path_to_so_files = path.join(pmdk_path, 'src', 'nondebug')
 
     for elem in listdir(path_to_so_files):
+        if without_pmem2 and elem.startswith('libpmem2'):
+            continue
         if elem.endswith('.so') and elem.startswith('lib'):
             library_name = elem.split('.')[0]
             if is_pmdk_debuginfo:
@@ -139,7 +142,7 @@ def check_existence_of_pmdk_debuginfo_package(pmdk_path, built_packages):
     return is_pmdk_debuginfo_package
 
 
-def find_missing_packages(pmdk_path, without_rpmem):
+def find_missing_packages(pmdk_path, without_rpmem, without_pmem2):
     """
     Checks if names of built rpm packages are the same as names of packages,
     which should be built and returns missing packages. Tools are taken
@@ -161,7 +164,7 @@ def find_missing_packages(pmdk_path, without_rpmem):
     tools_packages = get_names_of_packages(tools, without_rpmem)
     missing_tools_packages = [
         elem for elem in tools_packages if elem not in built_packages]
-    libraries = get_libraries_names_from_so_files(pmdk_path, is_pmdk_debuginfo)
+    libraries = get_libraries_names_from_so_files(pmdk_path, is_pmdk_debuginfo, without_pmem2)
     library_packages = get_names_of_packages(libraries, without_rpmem)
     missing_library_packages = [
         elem for elem in library_packages if elem not in built_packages]
@@ -169,7 +172,7 @@ def find_missing_packages(pmdk_path, without_rpmem):
     return missing_packages
 
 
-def find_missing_libraries_and_other_elements(pmdk_path):
+def find_missing_libraries_and_other_elements(pmdk_path, without_pmem2):
     """
     Checks if names of functions from .so files are the same as names of
     functions extracted from built rpm packages and returns missing functions.
@@ -179,7 +182,7 @@ def find_missing_libraries_and_other_elements(pmdk_path):
     built_packages = get_built_packages(pmdk_path)
     is_pmdk_debuginfo =\
         check_existence_of_pmdk_debuginfo_package(pmdk_path, built_packages)
-    libraries = get_libraries_names_from_so_files(pmdk_path, is_pmdk_debuginfo)
+    libraries = get_libraries_names_from_so_files(pmdk_path, is_pmdk_debuginfo, without_pmem2)
     rpm_packages_path = path.join(pmdk_path, 'rpm', SYSTEM_ARCHITECTURE)
     missing_elements = []
     # looks for the name of library/others rpm in rpm package name
@@ -216,7 +219,7 @@ class TestBuildRpmPackages(unittest.TestCase):
         Checks if all rpm packages are built.
         """
         missing_packages =\
-            find_missing_packages(pmdk_path, without_rpmem)
+            find_missing_packages(pmdk_path, without_rpmem, without_pmem2)
         error_msg = linesep + 'List of missing packages:'
         for package in missing_packages:
             error_msg += linesep + package
@@ -229,7 +232,7 @@ class TestBuildRpmPackages(unittest.TestCase):
         the name of built rpm packages.
         """
         missing_elements =\
-            find_missing_libraries_and_other_elements(pmdk_path)
+            find_missing_libraries_and_other_elements(pmdk_path, without_pmem2)
         error_msg = linesep +\
             'List of missing libraries and other elements (tools and "PMDK"):'
         for elem in missing_elements:
@@ -239,16 +242,22 @@ class TestBuildRpmPackages(unittest.TestCase):
 
 if __name__ == '__main__':
     path_argument = '-r'
-    rpm_build_argument = '--without_rpmem'
+    rpmem_build_argument = '--without-rpmem'
     without_rpmem = False
+    pmem2_build_argument = '--without-pmem2'
+    without_pmem2 = False
     if '-h' in sys.argv or '--help' in sys.argv:
         print(__doc__)
         unittest.main()
     elif path_argument in sys.argv:
         pmdk_path = parse_argument(path_argument)
-        if rpm_build_argument in sys.argv:
+        if rpmem_build_argument in sys.argv:
             without_rpmem = True
-            index = sys.argv.index(rpm_build_argument)
+            index = sys.argv.index(rpmem_build_argument)
+            sys.argv.pop(index)
+        if pmem2_build_argument in sys.argv:
+            without_pmem2 = True
+            index = sys.argv.index(pmem2_build_argument)
             sys.argv.pop(index)
         if pmdk_path:
             PMDK_VERSION, SYSTEM_ARCHITECTURE =\
