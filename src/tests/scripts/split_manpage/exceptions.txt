@@ -66,3 +66,14 @@ pobj_flag_no_snapshot
 pobj_xadd_no_snapshot
 pobj_flag_assume_initialized
 pobj_xadd_assume_initialized
+pobj_flag_tx_no_abort
+pobj_xalloc_no_abort
+pobj_xadd_no_abort
+pobj_xlock_no_abort
+pobj_xlock_valid_flags
+pobj_xfree_no_abort
+pobj_xfree_valid_flags
+pobj_xpublish_no_abort
+pobj_xpublish_valid_flags
+pobj_xlog_append_buffer_no_abort
+pobj_xlog_append_buffer_valid_flags
