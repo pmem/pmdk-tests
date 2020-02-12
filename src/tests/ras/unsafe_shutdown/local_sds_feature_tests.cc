@@ -30,13 +30,24 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "local_basic_tests.h"
+#include "local_sds_feature_tests.h"
 
-void UnsafeShutdownBasic::SetUp() {
-  ASSERT_LE(1, test_phase_.GetUnsafeDimmNamespaces().size())
-      << "Insufficient number of dimms to run this test";
+void PmempoolSDSFeature::SetUp() {
   us_dimm_pool_path_ = test_phase_.GetUnsafeDimmNamespaces()[0].GetTestDir() +
                        GetNormalizedTestName() + "_pool";
+
+  int disabled = 0;
+  ASSERT_EQ(0, pmemobj_ctl_set(nullptr, "sds.at_create", &disabled))
+      << "disabling SDS failed:  " << pmemobj_errormsg()
+      << "; errno: " << errno;
+
+  ASSERT_EQ(0, pmemlog_ctl_set(nullptr, "sds.at_create", &disabled))
+      << "disabling SDS failed:  " << pmemlog_errormsg()
+      << "; errno: " << errno;
+
+  ASSERT_EQ(0, pmemblk_ctl_set(nullptr, "sds.at_create", &disabled))
+      << "disabling SDS failed:  " << pmemblk_errormsg()
+      << "; errno: " << errno;
 }
 
 /**
@@ -52,17 +63,21 @@ void UnsafeShutdownBasic::SetUp() {
  *          \li \c Step7. Verify written pattern / SUCCESS
  *          \li \c Step8. Close the pool / SUCCESS
  */
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_OBJ_phase_1) {
+TEST_F(PmempoolSDSFeature, TRY_OPEN_OBJ_phase_1) {
   /* Step1 */
   ASSERT_EQ(0, ObjCreateHelper(us_dimm_pool_path_, PMEMOBJ_MIN_POOL));
+
   /* Step2 */
+  ASSERT_EQ(0, ObjEnableShutdownState(us_dimm_pool_path_));
+
+  /* Step3 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
 }
 
 /* Step3. outside of test macros */
 
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_OBJ_phase_2) {
+TEST_F(PmempoolSDSFeature, TRY_OPEN_OBJ_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
 
   /* Step4 */
@@ -81,26 +96,16 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_OBJ_phase_2) {
   ASSERT_EQ(obj_data_, pd.Read()) << "Data read from pool differs from written";
 }
 
-/**
- * TRY_OPEN_BLK
- * Create blk pool on DIMM, trigger unsafe shutdown, try opening the pool
- * \test
- *          \li \c Step1. Create a blk pool on DIMM / SUCCESS
- *          \li \c Step2. Enable SDS feature on pool / SUCCESS
- *          \li \c Step3. Write pattern to pool / SUCCESS
- *          \li \c Step4. Trigger US, run power cycle, check USC values / SUCCESS
- *          \li \c Step5. Open the pool / FAIL: pbp = NULL, errno = EINVAL
- *          \li \c Step6. Repair and open the pool / SUCCESS
- *          \li \c Step7. Verify written pattern / SUCCESS
- *          \li \c Step8. Close the pool / SUCCESS
- */
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_BLK_phase_1) {
+TEST_F(PmempoolSDSFeature, TRY_OPEN_BLK_SDS_FEATURE_phase_1) {
   /* Step1 */
   pbp_ = pmemblk_create(us_dimm_pool_path_.c_str(), blk_size_, PMEMBLK_MIN_POOL,
                         0644 & PERMISSION_MASK);
   ASSERT_TRUE(pbp_ != nullptr) << "Pool creating failed. Errno: " << errno
                                << std::endl
                                << pmemblk_errormsg();
+  /* Step2 */
+  ASSERT_EQ(0, BlkEnableShutdownState(us_dimm_pool_path_));
+
   /* Step3 */
   BlkData<int> pd{pbp_};
   ASSERT_EQ(0, pd.Write(blk_data_)) << "Writing to pool failed";
@@ -108,7 +113,7 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_BLK_phase_1) {
 
 /* Step4. outside of test macros */
 
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_BLK_phase_2) {
+TEST_F(PmempoolSDSFeature, TRY_OPEN_BLK_SDS_FEATURE_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase());
 
   /* Step5 */
@@ -132,7 +137,7 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_BLK_phase_2) {
 }
 
 /**
- * TRY_OPEN_LOG
+ * TRY_OPEN_LOG_SDS_FEATURE
  * Create log pool on DIMM, trigger unsafe shutdown, try opening the pool
  * \test
  *          \li \c Step1. Create a log pool on DIMM / SUCCESS
@@ -144,13 +149,15 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_BLK_phase_2) {
  *          \li \c Step7. Verify written pattern / SUCCESS
  *          \li \c Step8. Close the pool / SUCCESS
  */
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_LOG_phase_1) {
+TEST_F(PmempoolSDSFeature, TRY_OPEN_LOG_SDS_FEATURE_phase_1) {
   /* Step1 */
   plp_ = pmemlog_create(us_dimm_pool_path_.c_str(), PMEMLOG_MIN_POOL,
                         0644 & PERMISSION_MASK);
   ASSERT_TRUE(plp_ != nullptr) << "Pool creating failed. Errno: " << errno
                                << std::endl
                                << pmemlog_errormsg();
+  /* Step2 */
+  ASSERT_EQ(0, LogEnableShutdownState(us_dimm_pool_path_));
 
   /* Step3 */
   LogData pd{plp_};
@@ -159,7 +166,7 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_LOG_phase_1) {
 
 /* Step4. outside of test macros */
 
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_LOG_phase_2) {
+TEST_F(PmempoolSDSFeature, TRY_OPEN_LOG_SDS_FEATURE_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
 
   /* Step5 */
@@ -182,48 +189,39 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_LOG_phase_2) {
 }
 
 /**
- * TC_TRY_OPEN_AFTER_DOUBLE_US
- * Create pool on DIMM, trigger unsafe shutdown twice, try opening the
- * pool
+ * SDS_DISABLED
+ * Create obj pool on DIMM with SDS disabled, trigger unsafe shutdown,
+ * open the pool
  * \test
- *          \li \c Step1. Create a pool on DIMM / SUCCESS
- *          \li \c Step2. Enable SDS / SUCCESS
- *          \li \c Step3. Write pattern to pool / SUCCESS
- *          \li \c Step4. Trigger US, power cycle, confirm USC is incremented -
- * repeat twice / SUCCESS
- *          \li \c Step5. Open the pool / FAIL: pop = NULL, errno = EINVAL
- *          \li \c Step6. Repair and open the pool / SUCCESS
- *          \li \c Step7. Verify pattern / SUCCESS
+ *          \li \c Step1. Create an obj pool on DIMM / SUCCESS
+ *          \li \c Step2. Disable SDS on pool / SUCCESS
+ *          \li \c Step3. Check that SDS feature is disabled / SUCCESS
+ *          \li \c Step4. Write pattern to pool / SUCCESS
+ *          \li \c Step5. Trigger US, run power cycle, check USC values / SUCCESS
+ *          \li \c Step6. Open the pool / SUCCESS
+ *          \li \c Step7. Verify written pattern / SUCCESS
  *          \li \c Step8. Close the pool / SUCCESS
  */
-TEST_F(UnsafeShutdownBasic, TC_TRY_OPEN_AFTER_DOUBLE_US_phase_1) {
+TEST_F(PmempoolSDSFeature, SDS_DISABLED_phase_1) {
   /* Step1 */
-  ASSERT_EQ(ObjCreateHelper(us_dimm_pool_path_, PMEMOBJ_MIN_POOL), 0);
+  ASSERT_EQ(0, ObjCreateHelper(us_dimm_pool_path_, PMEMOBJ_MIN_POOL));
+  ;
+  /* Step2 */
+  ASSERT_EQ(0, ObjDisableShutdownState(us_dimm_pool_path_));
 
-  /* Step3 */
+  /* Step4 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
 }
 
-TEST_F(UnsafeShutdownBasic, TC_TRY_OPEN_AFTER_DOUBLE_US_phase_2) {
+/* Step5. outside of test macros */
+
+TEST_F(PmempoolSDSFeature, SDS_DISABLED_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
-}
-
-/* Step4. - outside of test macros */
-
-TEST_F(UnsafeShutdownBasic, TC_TRY_OPEN_AFTER_DOUBLE_US_phase_3) {
-  ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
-
-  /* step5 */
-  ASSERT_EQ(0, ObjOpenFailureHelper(us_dimm_pool_path_, EINVAL))
-      << "Pool after USC unexpectedly opened";
 
   /* Step6 */
-  ASSERT_EQ(PMEMPOOL_CHECK_RESULT_REPAIRED,
-            PmempoolRepair(us_dimm_pool_path_.c_str()))
-      << "Pool was not repaired";
   ASSERT_EQ(0, ObjOpenSuccessHelper(us_dimm_pool_path_))
-      << "Pool not opened after succesful repair";
+      << "Pool with SDS disabled was not opened after unsafe shutdown";
 
   /* Step7 */
   ObjData<int> pd{pop_};
@@ -231,76 +229,198 @@ TEST_F(UnsafeShutdownBasic, TC_TRY_OPEN_AFTER_DOUBLE_US_phase_3) {
 }
 
 /**
- * TC_OPEN_CLEAN
- * Create pool on DIMM, close, trigger unsafe shutdown, open the pool
+ * SDS_DISABLE_AFTER_US
+ * Create obj pool on DIMM, enable SDS, trigger unsafe shutdown, disable SDS,
+ * open the pool
  * \test
- *          \li \c Step1. Create a pool on DIMM. \ SUCCESS
+ *          \li \c Step1. Create an obj pool on DIMM / SUCCESS
  *          \li \c Step2. Enable SDS / SUCCESS
- *          \li \c Step3. Write data to pool. \ SUCCESS
- *          \li \c Step4. Close pool. \ SUCCESS
- *          \li \c Step5. Increment USC, power cycle, confirm USC is incremented /
- *          SUCCESS
- *          \li \c Step6. Open the pool. / SUCCESS
+ *          \li \c Step3. Write pattern to pool / SUCCESS
+ *          \li \c Step4. Trigger US, run power cycle, check USC values / SUCCESS
+ *          \li \c Step5. Disable SDS on pool / SUCCESS
+ *          \li \c Step6. Open the pool / SUCCESS
  *          \li \c Step7. Verify written pattern / SUCCESS
  *          \li \c Step8. Close the pool / SUCCESS
  */
-TEST_F(UnsafeShutdownBasicClean, TC_OPEN_CLEAN_phase_1) {
+TEST_F(PmempoolSDSFeature, SDS_DISABLE_AFTER_US_phase_1) {
   /* Step1 */
   ASSERT_EQ(0, ObjCreateHelper(us_dimm_pool_path_, PMEMOBJ_MIN_POOL));
+
+  /* Step2 */
+  ASSERT_EQ(0, ObjEnableShutdownState(us_dimm_pool_path_));
 
   /* Step3 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
 }
 
-/* Step4, 5 outside of test macros */
+/* Step4. outside of test macros */
 
-TEST_F(UnsafeShutdownBasicClean, TC_OPEN_CLEAN_phase_2) {
+TEST_F(PmempoolSDSFeature, SDS_DISABLE_AFTER_US_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
 
+  /* Step5 */
+  ASSERT_EQ(0, pmempool_feature_disable(us_dimm_pool_path_.c_str(),
+                                        PMEMPOOL_FEAT_SHUTDOWN_STATE, 0))
+      << "Could not disable SDS. Errno: " << errno;
+
   /* Step6 */
-  ASSERT_EQ(0, ObjOpenSuccessHelper(us_dimm_pool_path_));
+  ASSERT_EQ(0, ObjOpenSuccessHelper(us_dimm_pool_path_))
+      << "Pool with SDS disabled was not opened after unsafe shutdown";
 
   /* Step7 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(obj_data_, pd.Read()) << "Data read from pool differs from written";
 }
 
-void UnsafeShutdownBasicWithoutUS::SetUp() {
-  ASSERT_LE(1, test_phase_.GetSafeDimmNamespaces().size())
-      << "Insufficient number of dimms to run this test";
-  non_us_dimm_pool_path_ = test_phase_.GetSafeDimmNamespaces()[0].GetTestDir() +
-                           GetNormalizedTestName() + "_pool";
-}
-
-/*
-* TC_OPEN_DIRTY_NO_US
-* Create pool on DIMM, write data, end process without closing the pool, open
-* the pool, confirm data.
-* \test
-*          \li \c Step1. Create a pool on DIMM / SUCCESS
-*          \li \c Step2. Enable SDS / SUCCESS
-*          \li \c Step3. Write pattern to pool / SUCCESS
-*          \li \c Step4. Open the pool / SUCCESS
-*          \li \c Step5. Verify pattern / SUCCESS
-*/
-TEST_F(UnsafeShutdownBasicWithoutUS, TC_OPEN_DIRTY_NO_US_phase_1) {
+/**
+ * SDS_REENABLE_AFTER_US
+ * Create obj pool on DIMM, enable SDS, trigger unsafe shutdown, disable SDS,
+ * enable SDS, open the pool
+ * \test
+ *          \li \c Step1. Create an obj pool on DIMM / SUCCESS
+ *          \li \c Step2. Enable SDS / SUCCESS
+ *          \li \c Step3. Write pattern to pool / SUCCESS
+ *          \li \c Step4. Trigger US, run power cycle, check USC values / SUCCESS
+ *          \li \c Step5. Disable SDS on pool / SUCCESS
+ *          \li \c Step6. Enable SDS on pool / SUCCESS
+ *          \li \c Step7. Open the pool / SUCCESS
+ *          \li \c Step8. Verify written pattern / SUCCESS
+ *          \li \c Step9. Close the pool / SUCCESS
+ */
+TEST_F(PmempoolSDSFeature, SDS_REENABLE_AFTER_US_phase_1) {
   /* Step1 */
-  ASSERT_EQ(0, ObjCreateHelper(non_us_dimm_pool_path_, PMEMOBJ_MIN_POOL));
+  ASSERT_EQ(0, ObjCreateHelper(us_dimm_pool_path_, PMEMOBJ_MIN_POOL));
+
+  /* Step2 */
+  ASSERT_EQ(0, ObjEnableShutdownState(us_dimm_pool_path_));
 
   /* Step3 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
 }
 
-TEST_F(UnsafeShutdownBasicWithoutUS, TC_OPEN_DIRTY_NO_US_phase_2) {
+/* Step4. outside of test macros */
+
+TEST_F(PmempoolSDSFeature, SDS_REENABLE_AFTER_US_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
 
-  /* Step3 */
-  ASSERT_EQ(0, ObjOpenSuccessHelper(non_us_dimm_pool_path_))
-      << "Opening pool after safe shutdown failed";
+  /* Step5 */
+  ASSERT_EQ(0, pmempool_feature_disable(us_dimm_pool_path_.c_str(),
+                                        PMEMPOOL_FEAT_SHUTDOWN_STATE, 0))
+      << "Could not disable SDS. Errno: " << errno;
 
-  /* Step4 */
+  /* Step6 */
+  ASSERT_EQ(0, pmempool_feature_enable(us_dimm_pool_path_.c_str(),
+                                       PMEMPOOL_FEAT_SHUTDOWN_STATE, 0))
+      << "Could not reenable SDS. Errno: " << errno;
+
+  /* Step7 */
+  ASSERT_EQ(0, ObjOpenSuccessHelper(us_dimm_pool_path_));
+
+  /* Step8 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(obj_data_, pd.Read()) << "Data read from pool differs from written";
+}
+
+void PmempoolSDSFeature::TearDown() {
+  int enabled = 1;
+  ASSERT_EQ(0, pmemobj_ctl_set(nullptr, "sds.at_create", &enabled))
+      << "enabling SDS failed:  " << pmemobj_errormsg() << "; errno: " << errno;
+
+  ASSERT_EQ(0, pmemlog_ctl_set(nullptr, "sds.at_create", &enabled))
+      << "enabling SDS failed:  " << pmemlog_errormsg() << "; errno: " << errno;
+
+  ASSERT_EQ(0, pmemblk_ctl_set(nullptr, "sds.at_create", &enabled))
+      << "enabling SDS failed:  " << pmemblk_errormsg() << "; errno: " << errno;
+}
+
+int PmempoolSDSFeature::EnableAndQuerySDS(const std::string &path) {
+  if (pmempool_feature_enable(path.c_str(), PMEMPOOL_FEAT_SHUTDOWN_STATE, 0) !=
+      0) {
+    std::cerr << "Enabling shutdown state failed" << std::endl;
+    return -1;
+  }
+
+  if (pmempool_feature_query(path.c_str(), PMEMPOOL_FEAT_SHUTDOWN_STATE, 0) !=
+      1) {
+    std::cerr << "SDS is not enabled according to pmempool_feature_query"
+              << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+int PmempoolSDSFeature::DisableAndQuerySDS(const std::string &path) {
+  if (pmempool_feature_disable(path.c_str(), PMEMPOOL_FEAT_SHUTDOWN_STATE, 0) !=
+      0) {
+    std::cerr << "Disabling shutdown state failed" << std::endl;
+    return -1;
+  }
+
+  if (pmempool_feature_query(path.c_str(), PMEMPOOL_FEAT_SHUTDOWN_STATE, 0) !=
+      0) {
+    std::cerr << "SDS is not disabled according to pmempool_feature_query"
+              << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+int PmempoolSDSFeature::ObjEnableShutdownState(const std::string &path) {
+  pmemobj_close(pop_);
+  if (EnableAndQuerySDS(path) != 0) {
+    return -1;
+  }
+  pop_ = pmemobj_open(path.c_str(), nullptr);
+  if (pop_ == nullptr) {
+    std::cerr << "Opening the pool after enabling SDS failed. Errno: " << errno
+              << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+int PmempoolSDSFeature::ObjDisableShutdownState(const std::string &path) {
+  pmemobj_close(pop_);
+  if (DisableAndQuerySDS(path) != 0) {
+    return -1;
+  }
+  pop_ = pmemobj_open(path.c_str(), nullptr);
+  if (pop_ == nullptr) {
+    std::cerr << "Opening the pool after disabling SDS failed. Errno: " << errno
+              << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+int PmempoolSDSFeature::BlkEnableShutdownState(const std::string &path) {
+  pmemblk_close(pbp_);
+  if (EnableAndQuerySDS(path) != 0) {
+    return -1;
+  }
+  pbp_ = pmemblk_open(path.c_str(), blk_size_);
+  if (pbp_ == nullptr) {
+    std::cerr << "Opening the pool after enabling SDS failed. Errno: " << errno
+              << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+int PmempoolSDSFeature::LogEnableShutdownState(const std::string &path) {
+  pmemlog_close(plp_);
+  if (EnableAndQuerySDS(path) != 0) {
+    return -1;
+  }
+
+  plp_ = pmemlog_open(path.c_str());
+  if (plp_ == nullptr) {
+    std::cerr << "Opening the pool after enabling SDS failed. Errno: " << errno
+              << std::endl
+              << pmemlog_errormsg();
+    return -1;
+  }
+  return 0;
 }

@@ -156,12 +156,8 @@ void MovePoolClean::SetUp() {
  */
 TEST_P(MovePoolClean, TC_MOVE_POOL_CLEAN_phase_1) {
   /* Step1 */
-  pop_ = pmemobj_create(src_pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL,
-                        0644 & PERMISSION_MASK);
-  ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed. Errno: " << errno
-                               << std::endl
-                               << pmemobj_errormsg();
-  /* Step2 */
+  ASSERT_EQ(0, ObjCreateHelper(src_pool_path_, PMEMOBJ_MIN_POOL));
+  /* Step3 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
 }
@@ -170,18 +166,12 @@ TEST_P(MovePoolClean, TC_MOVE_POOL_CLEAN_phase_1) {
 
 TEST_P(MovePoolClean, TC_MOVE_POOL_CLEAN_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
-
   /* Step4 */
   auto out =
       shell_.ExecuteCommand("mv " + src_pool_path_ + " " + dest_pool_path_);
   ASSERT_EQ(0, out.GetExitCode()) << out.GetContent() << std::endl;
-
   /* Step5 */
-  pop_ = pmemobj_open(dest_pool_path_.c_str(), nullptr);
-  ASSERT_TRUE(pop_ != nullptr) << "Pool opening failed. Errno:" << errno
-                               << std::endl
-                               << pmemobj_errormsg();
-
+  ASSERT_EQ(0, ObjOpenSuccessHelper(dest_pool_path_));
   /* Step6 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(obj_data_, pd.Read()) << "Reading data from pool failed";
@@ -216,10 +206,7 @@ void MovePoolDirty::SetUp() {
  */
 TEST_P(MovePoolDirty, TC_MOVE_POOL_DIRTY_phase_1) {
   /* Step1 */
-  pop_ = pmemobj_create(src_pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL,
-                        0644 & PERMISSION_MASK);
-  ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed" << std::endl
-                               << pmemobj_errormsg();
+  ASSERT_EQ(0, ObjCreateHelper(src_pool_path_, PMEMOBJ_MIN_POOL));
 
   /* Step2 */
   ObjData<int> pd{pop_};
@@ -238,18 +225,12 @@ TEST_P(MovePoolDirty, TC_MOVE_POOL_DIRTY_phase_2) {
                                   << out.GetContent() << std::endl;
 
   /* Step5 */
-  pop_ = pmemobj_open(dest_pool_path_.c_str(), nullptr);
-  ASSERT_EQ(nullptr, pop_)
-      << "Dirty pool after moving was opened but should be not";
-  ASSERT_EQ(EINVAL, errno);
+  ASSERT_EQ(0, ObjOpenFailureHelper(dest_pool_path_, EINVAL));
 
   /* Step6 */
   ASSERT_EQ(PMEMPOOL_CHECK_RESULT_REPAIRED, PmempoolRepair(dest_pool_path_))
       << "Pool was not repaired";
-  pop_ = pmemobj_open(dest_pool_path_.c_str(), nullptr);
-  ASSERT_TRUE(pop_ != nullptr)
-      << "Pool after repair was not opened. Errno: " << errno << std::endl
-      << pmemobj_errormsg();
+  ASSERT_EQ(0, ObjOpenSuccessHelper(dest_pool_path_));
 
   /* Step7 */
   ObjData<int> pd{pop_};

@@ -30,65 +30,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef US_REMOTE_REPLICAS_TESTS_H
-#define US_REMOTE_REPLICAS_TESTS_H
+#ifndef SDS_FEATURE_TESTS_H
+#define SDS_FEATURE_TESTS_H
 
-#include "configXML/remote_dimm_configuration.h"
-#include "test_phase/remote_test_phase.h"
 #include "unsafe_shutdown.h"
 
-class RemotePoolset {
-  friend class RemotePoolsetTC;
-
+class PmempoolSDSFeature : public UnsafeShutdown {
  public:
-  std::string GetReplicaLine() const;
-  int CreateRemotePoolsetFile() const;
+  std::string us_dimm_pool_path_;
 
- private:
-  RemotePoolset(const std::string& h, const Poolset& p)
-      : host_{h}, poolset_{p} {
-  }
-  std::string host_;
-  Poolset poolset_;
-};
-
-class RemotePoolsetTC {
- public:
-  bool enough_dimms_ = false;
-  bool is_syncable_;
-  std::string description_;
-  std::vector<RemotePoolset> remote_poolsets_;
-
-  Poolset local_poolset_;
-
-  RemotePoolsetTC(const std::string& d) : description_{d} {
-  }
-  RemotePoolset& AddRemotePoolset(const std::string& host, const Poolset& p) {
-    remote_poolsets_.emplace_back(RemotePoolset{host, p});
-    return remote_poolsets_.back();
-  }
-  const std::string GetPathTransformed() const {
-    return local_poolset_.GetFullPath() + "_after";
-  }
-  const std::string& GetPath() const {
-    return local_poolset_.GetFullPath();
-  }
-  PMEMobjpool* CreatePoolWithSDS();
-  int CreatePoolsetFiles() const;
-};
-
-class SyncRemoteReplica
-    : public UnsafeShutdown,
-      public ::testing::WithParamInterface<RemotePoolsetTC> {
- public:
   void SetUp() override;
+  void TearDown() override;
+
+  int ObjEnableShutdownState(const std::string& path);
+  int BlkEnableShutdownState(const std::string& path);
+  int LogEnableShutdownState(const std::string& path);
+
+  int ObjDisableShutdownState(const std::string& path);
 
  private:
-  std::unique_ptr<RemoteDimmNode> remote_node_;
+  int EnableAndQuerySDS(const std::string& path);
+  int DisableAndQuerySDS(const std::string& path);
 };
 
-std::ostream& operator<<(std::ostream& stream, RemotePoolsetTC const& p);
-
-std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams();
-
-#endif  // US_REMOTE_REPLICAS_TESTS_H
+#endif  // SDS_FEATURE_TESTS_H

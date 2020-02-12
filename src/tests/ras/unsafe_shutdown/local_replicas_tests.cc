@@ -52,14 +52,15 @@ void SyncLocalReplica::SetUp() {
  * \test
  *          \li \c Step1. Create a pool from poolset with primary pool on unsafely shutdown DIMM
  * and replicas according to given parameter. / SUCCESS
- *          \li \c Step2. Write pattern to pool persistently.
- *          \li \c Step3. Trigger unsafely shutdown on specified dimms, power cycle,
+ *          \li \c Step2. Enable SDS on poolset
+ *          \li \c Step3. Write pattern to pool persistently.
+ *          \li \c Step4. Trigger unsafely shutdown on specified dimms, power cycle,
  *          confirm USC is incremented / SUCCESS
- *          \li \c Step4. Open the pool / FAIL: pop = NULL, errno = EINVAL
- *          \li \c Step5. If pool syncable: sync, else: try sync, repair, sync / SUCCESS
- *          \li \c Step6. Open the pool / SUCCESS
- *          \li \c Step7. Read and confirm data from pool / SUCCESS
- *          \li \c Step8. Close the pool / SUCCESS
+ *          \li \c Step5. Open the pool / FAIL: pop = NULL, errno = EINVAL
+ *          \li \c Step6. If pool syncable: sync, else: try sync, repair, sync / SUCCESS
+ *          \li \c Step7. Open the pool / SUCCESS
+ *          \li \c Step8. Read and confirm data from pool / SUCCESS
+ *          \li \c Step9. Close the pool / SUCCESS
  */
 TEST_P(SyncLocalReplica, TC_SYNC_LOCAL_REPLICA_phase_1) {
   Poolset ps = GetParam().poolset;
@@ -71,53 +72,41 @@ TEST_P(SyncLocalReplica, TC_SYNC_LOCAL_REPLICA_phase_1) {
   ASSERT_TRUE(p_mgmt.PoolsetFileExists(ps))
       << "Poolset file " << ps.GetFullPath() << " does not exist";
 
-  pop_ = pmemobj_create(ps.GetFullPath().c_str(), nullptr, 0,
-                        0644 & PERMISSION_MASK);
-  ASSERT_TRUE(pop_ != nullptr)
-      << "Error while creating the pool. Errno:" << errno << std::endl
-      << pmemobj_errormsg();
+  ASSERT_EQ(0, ObjCreateHelper(ps.GetFullPath(), 0));
 
-  /* Step2 */
+  /* Step3 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
 }
 
-/* Step3 - outside of test macros */
+/* Step4 - outside of test macros */
 
 TEST_P(SyncLocalReplica, TC_SYNC_LOCAL_REPLICA_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
 
   sync_local_replica_tc param = GetParam();
 
-  /* Step4 */
-  pop_ = pmemobj_open(param.poolset.GetFullPath().c_str(), nullptr);
-  ASSERT_EQ(nullptr, pop_)
-      << "Pool after unsafely shutdown was opened but should be not";
-  ASSERT_EQ(EINVAL, errno);
-
   /* Step5 */
-  int expected_sync_exit = (param.is_syncable ? 0 : -1);
-  ASSERT_EQ(pmempool_sync(param.poolset.GetFullPath().c_str(), 0),
-            expected_sync_exit);
-  pop_ = pmemobj_open(param.poolset.GetFullPath().c_str(), nullptr);
+  ASSERT_EQ(0, ObjOpenFailureHelper(param.poolset.GetFullPath(), EINVAL))
+      << "Pool after unexpectedly opened after US";
 
-  if (!param.is_syncable) {
-    ASSERT_EQ(nullptr, pop_)
-        << "Pool was unexpectedly opened after failed sync";
-    ASSERT_EQ(EINVAL, errno);
-    ASSERT_EQ(PMEMPOOL_CHECK_RESULT_REPAIRED,
+  /* Step6 */
+  int expected_sync_exit = (param.is_syncable ? 0 : -1);
+  ASSERT_EQ(expected_sync_exit,
+            pmempool_sync(param.poolset.GetFullPath().c_str(), 0));
+
+  if (param.is_syncable) {
+    ASSERT_EQ(0, ObjOpenSuccessHelper(param.poolset.GetFullPath()));
+  } else {
+    ASSERT_EQ(0, ObjOpenFailureHelper(param.poolset.GetFullPath(), EINVAL));
+    ASSERT_EQ(PMEMPOOL_CHECK_RESULT_SYNC_REQ,
               PmempoolRepair(param.poolset.GetFullPath()))
         << "Pool was not repaired";
     ASSERT_EQ(pmempool_sync(param.poolset.GetFullPath().c_str(), 0), 0);
-
-    pop_ = pmemobj_open(param.poolset.GetFullPath().c_str(), nullptr);
+    ASSERT_EQ(0, ObjOpenSuccessHelper(param.poolset.GetFullPath()));
   }
 
-  /* Step6 */
-  ASSERT_TRUE(pop_ != nullptr)
-      << "Syncable pool could not be opened after sync";
-
-  /* Step7 */
+  /* Step8 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(obj_data_, pd.Read()) << "Reading data from pool failed";
 }
@@ -406,16 +395,17 @@ void UnsafeShutdownTransform::SetUp() {
  * \test
  *          \li \c Step1. Create pool from poolset with primary pool on
  * unsafely shutdown DIMM and healthy replica, open pool. / SUCCESS
- *          \li \c Step2. Write data to pool / SUCCESS
- *          \li \c Step3. Increment USC on DIMM with primary pool, power cycle,
+ *          \li \c Step2. Enable SDS on pool / SUCCESS
+ *          \li \c Step3. Write data to pool / SUCCESS
+ *          \li \c Step4. Increment USC on DIMM with primary pool, power cycle,
  * confirm USC is incremented. / SUCCESS
- *          \li \c Step4. Create poolset files to be transformed to / SUCCESS
- *          \li \c Step5. Try transforming the pool / FAIL: ret != 0, errno = EINVAL
- *          \li \c Step6. Sync pool / SUCCESS
- *          \li \c Step7. Transform healthy replica to unsafely shutdown DIMM. / SUCCESS
- *          \li \c Step8. Open the pool. / SUCCESS
- *          \li \c Step9. Read and confirm data from pool / SUCCESS
- *          \li \c Step10. Close the pool / SUCCESS
+ *          \li \c Step5. Create poolset files to be transformed to / SUCCESS
+ *          \li \c Step6. Try transforming the pool / FAIL: ret != 0, errno = EINVAL
+ *          \li \c Step7. Sync pool / SUCCESS
+ *          \li \c Step8. Transform healthy replica to unsafely shutdown DIMM. / SUCCESS
+ *          \li \c Step9. Open the pool. / SUCCESS
+ *          \li \c Step10. Read and confirm data from pool / SUCCESS
+ *          \li \c Step11. Close the pool / SUCCESS
  */
 TEST_F(UnsafeShutdownTransform, TC_TRANSFORM_POOLSET_TO_US_DIMM_phase_1) {
   PoolsetManagement p_mgmt;
@@ -423,38 +413,36 @@ TEST_F(UnsafeShutdownTransform, TC_TRANSFORM_POOLSET_TO_US_DIMM_phase_1) {
   /* Step1 */
   ASSERT_EQ(0, p_mgmt.CreatePoolsetFile(origin_))
       << "Creating poolset file " + origin_.GetFullPath() + " failed";
-  pop_ = pmemobj_create(origin_.GetFullPath().c_str(), nullptr, 0,
-                        0644 & PERMISSION_MASK);
-  ASSERT_TRUE(pop_ != nullptr)
-      << "Error while creating the pool. Errno: " << errno << std::endl
-      << pmemobj_errormsg();
 
-  /* Step2 */
+  ASSERT_EQ(0, ObjCreateHelper(origin_.GetFullPath(), 0));
+
+  /* Step3 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
 }
 
-/* Step3 - oustide test macros */
+/* Step4 - oustide test macros */
 
 TEST_F(UnsafeShutdownTransform, TC_TRANSFORM_POOLSET_TO_US_DIMM_phase_2) {
   ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
 
-  /* Step4 */
+  /* Step5 */
   PoolsetManagement p_mgmt;
   ASSERT_EQ(0, p_mgmt.CreatePoolsetFile(added_))
       << "Creating poolset file " + origin_.GetFullPath() + " failed";
   ASSERT_EQ(0, p_mgmt.CreatePoolsetFile(final_))
       << "Creating poolset file " + final_.GetFullPath() + " failed";
 
-  /* Step5 */
+  /* Step6 */
   ASSERT_NE(pmempool_transform(origin_.GetFullPath().c_str(),
                                added_.GetFullPath().c_str(), 0),
             0);
   ASSERT_EQ(EINVAL, errno);
-  /* Step6 */
-  ASSERT_EQ(pmempool_sync(origin_.GetFullPath().c_str(), 0), 0);
 
   /* Step7 */
+  ASSERT_EQ(pmempool_sync(origin_.GetFullPath().c_str(), 0), 0);
+
+  /* Step8 */
   ASSERT_EQ(pmempool_transform(origin_.GetFullPath().c_str(),
                                added_.GetFullPath().c_str(), 0),
             0);
@@ -462,13 +450,10 @@ TEST_F(UnsafeShutdownTransform, TC_TRANSFORM_POOLSET_TO_US_DIMM_phase_2) {
                                final_.GetFullPath().c_str(), 0),
             0);
 
-  /* Step8 */
-  pop_ = pmemobj_open(final_.GetFullPath().c_str(), nullptr);
-  ASSERT_TRUE(pop_ != nullptr) << "Pool opening failed. Errno: " << errno
-                               << std::endl
-                               << pmemobj_errormsg();
-
   /* Step9 */
+  ASSERT_EQ(0, ObjOpenSuccessHelper(final_.GetFullPath()));
+
+  /* Step10 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
 }

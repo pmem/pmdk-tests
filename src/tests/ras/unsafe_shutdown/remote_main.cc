@@ -30,6 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <libpmemobj.h>
 #include "configXML/local_dimm_configuration.h"
 #include "configXML/remote_dimm_configuration.h"
 #include "exit_codes.h"
@@ -44,9 +45,24 @@ bool PartiallyPassed() {
   return ut->successful_test_count() > 0 && ut->failed_test_count() > 0;
 }
 
+int EnableSDS() {
+  int enabled = 1;
+  int ret = pmemobj_ctl_set(nullptr, "sds.at_create", &enabled);
+  if (ret != 0) {
+    std::cerr << "Could not enable SDS: " << pmemobj_errormsg()
+              << "errno: " << errno << std::endl;
+    return ret;
+  }
+  return 0;
+}
+
 int main(int argc, char **argv) {
   int ret = 0;
   try {
+    if (EnableSDS() != 0) {
+      return 1;
+    }
+
     ::testing::InitGoogleTest(&argc, argv);
     LocalTestPhase &local_test_phase = LocalTestPhase::GetInstance();
     RemoteTestPhase &remote_test_phase = RemoteTestPhase::GetInstance();
@@ -55,7 +71,9 @@ int main(int argc, char **argv) {
 
     /* Modify --gtest_filter flag to run only tests from specific phase" */
     ::testing::GTEST_FLAG(filter) = "*" + remote_test_phase.GetPhaseName() +
-                                    "*" + ::testing::GTEST_FLAG(filter);
+                                    "*" + ::testing::GTEST_FLAG(filter) + ":" +
+                                    ::testing::GTEST_FLAG(filter) + "*" +
+                                    remote_test_phase.GetPhaseName() + "*";
 
     if (local_test_phase.RunPreTestAction() == 0 ||
         remote_test_phase.RunPreTestAction() == 0) {

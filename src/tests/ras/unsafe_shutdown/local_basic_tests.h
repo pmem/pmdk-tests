@@ -38,7 +38,6 @@
 class UnsafeShutdownBasic : public UnsafeShutdown {
  public:
   std::string us_dimm_pool_path_;
-  size_t blk_size_ = PMEMBLK_MIN_BLK;
 
   void SetUp() override;
 };
