@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2020, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -105,7 +105,7 @@ TEST_P(SyncLocalReplica, TC_SYNC_LOCAL_REPLICA_phase_2) {
     ASSERT_EQ(nullptr, pop_)
         << "Pool was unexpectedly opened after failed sync";
     ASSERT_EQ(EINVAL, errno);
-    ASSERT_EQ(PMEMPOOL_CHECK_RESULT_REPAIRED,
+    ASSERT_EQ(PMEMPOOL_CHECK_RESULT_SYNC_REQ,
               PmempoolRepair(param.poolset.GetFullPath()))
         << "Pool was not repaired";
     ASSERT_EQ(pmempool_sync(param.poolset.GetFullPath().c_str(), 0), 0);
