@@ -332,11 +332,11 @@ std::vector<RemotePoolsetTC> GetPoolsetsWithRemoteReplicaParams() {
 
   {
     RemotePoolsetTC tc{
-        "Master: unsafe DIMM 0, local: unsafe DIMM 0, remote: unsafe DIMM "
+        "Master: unsafe DIMM 0, local: safe DIMM 0, remote: unsafe DIMM "
         "0"};
     if (rem_unsafe_mnts.size() >= 1 && loc_unsafe_dn.size() >= 1) {
       tc.enough_dimms_ = true;
-      tc.is_syncable_ = false;
+      tc.is_syncable_ = true;
 
       std::string local_master_part_path =
           loc_unsafe_dn[0].GetTestDir() + SEPARATOR + "master12";
