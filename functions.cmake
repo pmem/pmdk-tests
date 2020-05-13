@@ -61,7 +61,7 @@ function(download_gtest)
 	# On Linux we need to pass build type to CMake
 	if (WIN32)
 		set(FORCE_SHARED_CRT_WINDOWS "-Dgtest_force_shared_crt=ON")
-		set(BUILD_FLAGS_WINDOWS "-DCMAKE_CXX_FLAGS=/MP -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING")
+		set(BUILD_FLAGS_WINDOWS "-DCMAKE_CXX_FLAGS=/MP /D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING")
 		download_file("https://github.com/google/googletest/archive/release-${GTEST_VERSION}.zip"
 			"${CMAKE_SOURCE_DIR}\\ext\\gtest\\googletest-${GTEST_VERSION}.zip"
 			"${GTEST_SHA256HASH}")
