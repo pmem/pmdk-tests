@@ -188,9 +188,11 @@ def check_completeness_of_extracted_functions_and_macros(pmdk_path, lib_path):
     functions_from_doc = get_functions_and_macros_from_doc(pmdk_path)
     macros = get_macros(pmdk_path)
     functions_from_so_files = get_functions_from_so_files(lib_path)
+    # function pmem2_source_from_handle is Windows specific
     missing_functions_and_macros_in_doc = [
         item for item in functions_from_doc
-        if not (item in macros or item in functions_from_so_files)]
+        if item != 'pmem2_source_from_handle' and
+        not (item in macros or item in functions_from_so_files)]
     return missing_functions_and_macros_in_doc
 
 
