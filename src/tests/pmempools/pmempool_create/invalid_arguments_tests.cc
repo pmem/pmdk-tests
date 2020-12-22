@@ -210,12 +210,12 @@ INSTANTIATE_TEST_CASE_P(
              "error: -s|--size cannot be used with poolset file"},
             Poolset{local_config->GetTestDir(), {{"PMEMPOOLSET", "20M"}}}},
         PoolsetArgs{
-            {PoolType::Obj, "reservation pool size 7340032 smaller than " +
+            {PoolType::Obj, "size 7340032 smaller than " +
                                 std::to_string(PMEMOBJ_MIN_POOL) +
                                 "\nerror: creating pool file failed"},
             Poolset{local_config->GetTestDir(), {{"PMEMPOOLSET", "7M"}}}},
         PoolsetArgs{
-            {PoolType::Obj, "reservation pool size 7340032 smaller than " +
+            {PoolType::Obj, "size 7340032 smaller than " +
                                 std::to_string(PMEMOBJ_MIN_POOL) +
                                 "\nerror: creating pool file failed"},
             Poolset{local_config->GetTestDir(),
@@ -231,3 +231,5 @@ INSTANTIATE_TEST_CASE_P(
              " -- replication not supported\nerror: creating pool file failed"},
             Poolset{local_config->GetTestDir(),
                     {{"PMEMPOOLSET", "20M"}, {"REPLICA", "20M"}}}}));
+
+			
