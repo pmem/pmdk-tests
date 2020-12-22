@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, Intel Corporation
+ * Copyright 2018-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,25 +30,45 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "invalid_arguments.h"
+#ifndef PMDK_TESTS_SRC_UTILS_PMDK_STRUCTURES_OBJ_H_
+#define PMDK_TESTS_SRC_UTILS_PMDK_STRUCTURES_OBJ_H_
 
-namespace create {
-void InvalidArgumentsTests::SetUp() { pool_args = GetParam(); }
+#include "constants.h"
+#include <iostream>
+#include <libpmemobj.h>
+#include <string>
 
-void InvalidInheritTests::SetUp() {
-  pool_inherit = GetParam();
+class ObjPool {
+public:
+  std::string path;
+  size_t size = 0;
+  int mode = 0664 & PERMISSION_MASK;
+  std::string layout;
 
-  ASSERT_EQ(0, CreatePool(pool_inherit.pool_base, pool_path_))
-      << GetOutputContent();
-  ASSERT_EQ(0,
-            file_utils::ValidateFile(
-                pool_path_, struct_utils::GetPoolSize(pool_inherit.pool_base),
-                struct_utils::GetPoolMode(pool_inherit.pool_base)));
-}
+  ObjPool() {}
 
-void InvalidArgumentsPoolsetTests::SetUp() {
-  poolset_args = GetParam();
+  ObjPool(std::string path_) : path(path_) {}
 
-  ASSERT_EQ(0, p_mgmt_.CreatePoolsetFile(poolset_args.poolset));
-}
-} // namespace create
+  ObjPool(std::string path_, std::string layout_)
+      : path(path_), layout(layout_) {}
+
+  ObjPool(std::string path_, size_t size_) : path(path_), size(size_) {}
+
+  ObjPool(std::string path_, int mode_) : path(path_), mode(mode_) {}
+
+  ObjPool(std::string path_, size_t size_, int mode_)
+      : path(path_), size(size_), mode(mode_) {}
+
+  ObjPool(std::string path_, size_t size_, int mode_, std::string layout_)
+      : path(path_), size(size_), mode(mode_), layout(layout_) {}
+};
+
+class ObjManagement {
+public:
+  int CreatePool(const ObjPool &obj_pool);
+  PMEMobjpool *OpenPool(const ObjPool &obj_pool);
+  int CheckPool(const ObjPool &obj_pool);
+  void ClosePool(PMEMobjpool *pop) { pmemobj_close(pop); }
+};
+
+#endif // !PMDK_TESTS_SRC_UTILS_PMDK_STRUCTURES_OBJ_H_
