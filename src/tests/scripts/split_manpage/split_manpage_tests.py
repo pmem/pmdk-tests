@@ -61,7 +61,7 @@ EXPRESSION_AT_THE_LINE_START = r'[\s]*([a-zA-Z_]+)[\\(\s]+'
 EXPRESSION_AFTER_DEFINE_PHRASE = r'[\s]*#define[\s]*([a-zA-Z_]+)[\\(\s]+'
 
 PMDK_LIBRARIES = ['libpmem', 'libpmemblk', 'libpmemlog', 'libpmemobj',
-                  'libpmempool', 'librpmem']
+                  'libpmempool', 'librpmem', 'libpmemset']
 
 
 def get_exceptions(pmdk_path):
@@ -134,6 +134,13 @@ def get_functions_from_so_files(lib_path):
     return functions_from_so_files
 
 
+def get_functions_windows_only():
+    """
+    Returns list of PMDK functions that are specific to Windows OS
+    """
+    return ['pmem2_source_from_handle', 'pmem2_source_get_handle']
+
+
 def get_functions_and_macros_from_doc(pmdk_path):
     """
     Returns names of functions and macros in a list based on names of files
@@ -188,11 +195,11 @@ def check_completeness_of_extracted_functions_and_macros(pmdk_path, lib_path):
     functions_from_doc = get_functions_and_macros_from_doc(pmdk_path)
     macros = get_macros(pmdk_path)
     functions_from_so_files = get_functions_from_so_files(lib_path)
-    # function pmem2_source_from_handle is Windows specific
+    functions_windows_specific = get_functions_windows_only()
     missing_functions_and_macros_in_doc = [
         item for item in functions_from_doc
-        if item != 'pmem2_source_from_handle' and
-        not (item in macros or item in functions_from_so_files)]
+        if (item not in macros and item not in functions_from_so_files and
+            item not in functions_windows_specific)]
     return missing_functions_and_macros_in_doc
 
 
