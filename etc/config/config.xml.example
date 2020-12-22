@@ -1,13 +1,4 @@
 <configuration>
-	<rasConfiguration>
-                <phasesCount>2</phasesCount>
-                <DUT>
-                        <address>[<user>@]<hostname>[:<port>]</address>
-                        <powerCycleCommand>script</powerCycleCommand>
-                        <binDir>example\path</binDir>
-                        <injectPolicy>all</injectPolicy>
-                </DUT>
-        </rasConfiguration>
 	<localConfiguration>
 		<testDir>example\path</testDir>
 		<dimmConfiguration>
@@ -15,6 +6,15 @@
 			<mountPoint>example\path2</mountPoint>
 		</dimmConfiguration>
 	</localConfiguration>
+	<rasConfiguration>
+		<phasesCount>2</phasesCount>
+		<DUT>
+			<address>[<user>@]<hostname>[:<port>]</address>
+			<powerCycleCommand>script</powerCycleCommand>
+			<binDir>example\path</binDir>
+			<injectPolicy>all</injectPolicy>
+		</DUT>
+	</rasConfiguration>
 	<remoteConfiguration>
 		<testDir>example\path</testDir>
 		<address>[<user>@]<hostname>[:<port>]</address>

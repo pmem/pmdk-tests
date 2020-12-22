@@ -11,9 +11,9 @@ Config file consists of multiple main sections (xml tags):
 
 ### localConfiguration structure ###
 * `testDir`: path to test execution directory. If `dimmConfiguration` section
-* is defined, it should represent a mountpoint of non-NVDIMM device.
+is defined, it should represent a mountpoint of non-NVDIMM device.
 * `dimmConfiguration`: NVDIMM devices configuration section
-    * `mountPoint`: path to mountpoint associated with single bus connected with
+	* `mountPoint`: path to mountpoint associated with single bus connected with
 one or more NVDIMMS
 
 ### remoteConfiguration structure ###
@@ -29,9 +29,8 @@ authenticate without further quering.
 
 ### rasConfiguration structure ###
 * `DUT` - node representing single testing machine managed by controller
-    * `address`: DUT address
-    * `powerCycleCommand`: command triggering DUT power cycle
-    * `binDir`: DUT test binaries directory
-
+	* `address`: DUT address
+	* `powerCycleCommand`: command triggering DUT power cycle
+	* `binDir`: DUT test binaries directory
 
 See also: config.xml [example file](config.xml.example).
