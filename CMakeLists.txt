@@ -48,6 +48,8 @@ endif ()
 find_package(PkgConfig QUIET)
 include(FindThreads)
 include(functions.cmake) # Function definitions
+#include code to find and install boost libraries
+include(FindBoost.cmake)
 
 option(DEVELOPER_MODE "enable developer checks" OFF)
 option(PMDK_SYSTEM_HEADERS "always treat PMDK headers as system headers" ON)
