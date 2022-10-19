@@ -1,6 +1,6 @@
 #!usr/bin/env python3
 #
-# Copyright 2018-2020, Intel Corporation
+# Copyright 2018-2022, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -196,10 +196,11 @@ def check_completeness_of_extracted_functions_and_macros(pmdk_path, lib_path):
     macros = get_macros(pmdk_path)
     functions_from_so_files = get_functions_from_so_files(lib_path)
     functions_windows_specific = get_functions_windows_only()
+    pmem2_async_group_name = 'pmem2_async'
     missing_functions_and_macros_in_doc = [
         item for item in functions_from_doc
         if (item not in macros and item not in functions_from_so_files and
-            item not in functions_windows_specific)]
+            item not in functions_windows_specific and item not in pmem2_async_group_name)]
     return missing_functions_and_macros_in_doc
 
 
