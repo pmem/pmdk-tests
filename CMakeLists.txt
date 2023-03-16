@@ -162,7 +162,7 @@ else ()
 	# Disable RPATH so LD_LIBRARY_PATH can be used
 	set(CMAKE_SKIP_RPATH ON)
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Drestrict=__restrict__ -Werror -Wall -Wextra -pedantic-errors -Wpedantic -std=c++11 ${WORKAROUND_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Drestrict=__restrict__ -Werror -Wall -Wextra -pedantic-errors -Wpedantic -Wno-deprecated-declarations -std=c++11 ${WORKAROUND_FLAGS}")
 endif ()
 
 include(src/CMakeLists.txt)
