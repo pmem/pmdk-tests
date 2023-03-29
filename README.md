@@ -1,6 +1,11 @@
 pmdk-tests: Tests for [Persistent Memory Development Kit](https://github.com/pmem/pmdk)
 =================================
 
+> NOTICE:
+This repository is not actively developed. Some tests are deprecated,
+and test cases may be removed or moved. If you are looking for tests
+for the PMDK repository, go to [this page](https://github.com/pmem/pmdk).
+
 This repository utilizes [Google Test](https://github.com/google/googletest) C++ test framework and [pugiXML](https://github.com/zeux/pugixml).
 
 ### Building The Source ###
