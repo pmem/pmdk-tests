@@ -18,5 +18,13 @@ to test binaries on DUTs.
 $ ./US_TEST_CONTROLLER [--gtest_filter=filter]
 ```
 
+Example of running US tests:
+```
+$ ./UNSAFE_SHUTDOWN_LOCAL 1 inject all --gtest_output=xml:{{ logs_dir_path }}/phase1.xml
+```
+After reboot:
+```
+$ ./UNSAFE_SHUTDOWN_LOCAL 2 cleanup all --gtest_output=xml:{{ logs_dir_path }}/phase2.xml
+```
 ### Dependencies ###
 * [ndctl](https://github.com/pmem/ndctl) - version 60.0 or greater

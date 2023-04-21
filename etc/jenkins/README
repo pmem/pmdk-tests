@@ -1,9 +1,0 @@
-Persistent Memory Development Kit Tests
-
-Jenkinsfiles in this directory let you run a Jenkins pipeline jobs which
-contain different kinds of https://github.com/pmem/pmdk tests configurations.
-
-Following tests are excluded because of bugs in kernel:
-	vmmalloc_fork/TEST1
-	vmmalloc_fork/TEST3
-	pmempool_transform/TEST20
