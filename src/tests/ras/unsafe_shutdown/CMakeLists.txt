@@ -49,25 +49,3 @@ target_link_libraries(UNSAFE_SHUTDOWN_LOCAL Utils RasUtils libgtest
     ${Libpmemblk_LIBRARIES}
 ${Libpmemlog_LIBRARIES} ${Libpmemobj_LIBRARIES} ${Libpmempool_LIBRARIES})
 add_dependencies(UNSAFE_SHUTDOWN_LOCAL Utils RasUtils libgtest)
-
-
-if (NOT WIN32)
-
-# UNSAFE_SHUTDOWN_REMOTE
-file(GLOB_RECURSE us_remote_SRC
-    "${DIR}/remote*.h"
-    "${DIR}/remote*.cc"
-    "${DIR}/unsafe_shutdown.cc"
-    "${DIR}/unsafe_shutdown.h")
-
-add_executable(UNSAFE_SHUTDOWN_REMOTE
-    ${us_remote_SRC})
-
-set_source_groups("${PREFIX_FILTER}" ${us_remote_SRC})
-
-target_link_libraries(UNSAFE_SHUTDOWN_REMOTE Utils RasUtils libgtest
-    ${Libpmemblk_LIBRARIES} ${Libpmemlog_LIBRARIES} ${Libpmemobj_LIBRARIES}
-    ${Libpmempool_LIBRARIES})
-add_dependencies(UNSAFE_SHUTDOWN_REMOTE Utils RasUtils libgtest)
-
-endif()
