@@ -15,13 +15,4 @@
 			<injectPolicy>all</injectPolicy>
 		</DUT>
 	</rasConfiguration>
-	<remoteConfiguration>
-		<testDir>example\path</testDir>
-		<address>[<user>@]<hostname>[:<port>]</address>
-		<binsDir>example\path</binsDir>
-		<dimmConfiguration>
-			<mountPoint>example\path1</mountPoint>
-			<mountPoint>example\path2</mountPoint>
-		</dimmConfiguration>
-	</remoteConfiguration>
 </configuration>
