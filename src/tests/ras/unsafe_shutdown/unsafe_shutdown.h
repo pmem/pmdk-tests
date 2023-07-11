@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,8 +50,6 @@ class UnsafeShutdown : public ::testing::Test {
   IShell shell_;
   LocalTestPhase& test_phase_ = LocalTestPhase::GetInstance();
   PMEMobjpool* pop_ = nullptr;
-  PMEMblkpool* pbp_ = nullptr;
-  PMEMlogpool* plp_ = nullptr;
 
   /* Test values used for checking data consistency on obj/log/blk pools. */
   std::vector<int> obj_data_ = {-2, 0, 12345, 1412, 1231, 23, 432, 34, 3};
@@ -74,12 +72,6 @@ class UnsafeShutdown : public ::testing::Test {
     if (close_pools_at_end_) {
       if (pop_) {
         pmemobj_close(pop_);
-      }
-      if (plp_) {
-        pmemlog_close(plp_);
-      }
-      if (pbp_) {
-        pmemblk_close(pbp_);
       }
     }
   }
