@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,105 +86,6 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_OBJ_phase_2) {
   /* Step6 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(obj_data_, pd.Read()) << "Data read from pool differs from written";
-}
-
-/**
- * TRY_OPEN_BLK
- * Create blk pool on DIMM, trigger unsafe shutdown, try opening the pool
- * \test
- *          \li \c Step1. Create a blk pool on DIMM / SUCCESS
- *          \li \c Step2. Write pattern to pool / SUCCESS
- *          \li \c Step3. Trigger US, run power cycle, check USC values / SUCCESS
- *          \li \c Step4. Open the pool / FAIL: pbp = NULL, errno = EINVAL
- *          \li \c Step5. Repair and open the pool / SUCCESS
- *          \li \c Step6. Verify written pattern / SUCCESS
- *          \li \c Step7. Close the pool / SUCCESS
- */
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_BLK_phase_1) {
-  /* Step1 */
-  pbp_ = pmemblk_create(us_dimm_pool_path_.c_str(), blk_size_, PMEMBLK_MIN_POOL,
-                        0644 & PERMISSION_MASK);
-  ASSERT_TRUE(pbp_ != nullptr) << "Pool creating failed. Errno: " << errno
-                               << std::endl
-                               << pmemblk_errormsg();
-
-  /* Step2 */
-  BlkData<int> pd{pbp_};
-  ASSERT_EQ(0, pd.Write(blk_data_)) << "Writing to pool failed";
-}
-
-/* Step3. outside of test macros */
-
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_BLK_phase_2) {
-  ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
-
-  /* Step4 */
-  pbp_ = pmemblk_open(us_dimm_pool_path_.c_str(), blk_size_);
-  ASSERT_EQ(nullptr, pbp_)
-      << "Pool was opened after unsafe shutdown but should be not";
-  ASSERT_EQ(EINVAL, errno);
-
-  /* Step5 */
-  ASSERT_EQ(PMEMPOOL_CHECK_RESULT_REPAIRED, PmempoolRepair(us_dimm_pool_path_))
-      << "Pool was not repaired";
-  pbp_ = pmemblk_open(us_dimm_pool_path_.c_str(), blk_size_);
-  ASSERT_TRUE(pbp_ != nullptr) << "Pool opening failed. Errno: " << errno
-                               << std::endl
-                               << pmemobj_errormsg();
-
-  /* Step6 */
-  BlkData<int> pd{pbp_};
-  ASSERT_EQ(blk_data_, pd.Read(blk_data_.size()))
-      << "Data read from pool differs from written";
-}
-
-/**
- * TRY_OPEN_LOG
- * Create log pool on DIMM, trigger unsafe shutdown, try opening the pool
- * \test
- *          \li \c Step1. Create a log pool on DIMM / SUCCESS
- *          \li \c Step2. Write pattern to pool / SUCCESS
- *          \li \c Step3. Trigger US, run power cycle, check USC values / SUCCESS
- *          \li \c Step4. Open the pool / FAIL: plp = NULL, errno = EINVAL
- *          \li \c Step5. Repair and open the pool / SUCCESS
- *          \li \c Step6. Verify written pattern / SUCCESS
- *          \li \c Step7. Close the pool / SUCCESS
- */
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_LOG_phase_1) {
-  /* Step1 */
-  plp_ = pmemlog_create(us_dimm_pool_path_.c_str(), PMEMLOG_MIN_POOL,
-                        0644 & PERMISSION_MASK);
-  ASSERT_TRUE(plp_ != nullptr) << "Pool creating failed. Errno: " << errno
-                               << std::endl
-                               << pmemlog_errormsg();
-
-  /* Step2 */
-  LogData pd{plp_};
-  ASSERT_EQ(0, pd.Write(log_data_)) << "Writing to pool failed";
-}
-
-/* Step3. outside of test macros */
-
-TEST_F(UnsafeShutdownBasic, TRY_OPEN_LOG_phase_2) {
-  ASSERT_TRUE(PassedOnPreviousPhase()) << "Part of test before shutdown failed";
-
-  /* Step4 */
-  plp_ = pmemlog_open(us_dimm_pool_path_.c_str());
-  ASSERT_EQ(nullptr, plp_)
-      << "Pool was opened after unsafe shutdown but should be not";
-  ASSERT_EQ(EINVAL, errno);
-
-  /* Step5 */
-  ASSERT_EQ(PMEMPOOL_CHECK_RESULT_REPAIRED, PmempoolRepair(us_dimm_pool_path_))
-      << "Pool was not repaired";
-  plp_ = pmemlog_open(us_dimm_pool_path_.c_str());
-  ASSERT_TRUE(plp_ != nullptr) << "Pool opening failed. Errno: " << errno
-                               << std::endl
-                               << pmemobj_errormsg();
-
-  /* Step6 */
-  LogData pd{plp_};
-  ASSERT_EQ(log_data_, pd.Read()) << "Data read from pool differs from written";
 }
 
 /**

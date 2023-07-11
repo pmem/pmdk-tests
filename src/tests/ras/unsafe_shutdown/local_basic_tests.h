@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,6 @@
 class UnsafeShutdownBasic : public UnsafeShutdown {
  public:
   std::string us_dimm_pool_path_;
-  size_t blk_size_ = PMEMBLK_MIN_BLK;
 
   void SetUp() override;
 };
