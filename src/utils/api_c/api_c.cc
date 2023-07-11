@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,18 +30,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _WIN32
-#include <io.h>
-#define chmod _chmod
-#define stat64 _stat64
-#else
 #include <cstring>
-#endif  // _WIN32
 
 #include "api_c.h"
 
+#include <errno.h>
+#include <fcntl.h>
 #include <fstream>
+#include <fts.h>
+#include <libgen.h>
 #include <sstream>
+#include <sys/statvfs.h>
+#include <unistd.h>
+#include <cstring>
 
 int ApiC::CreateFileT(const std::string &path, const std::string &content) {
   std::ofstream file{path, std::ios::binary};
@@ -174,4 +175,110 @@ bool ApiC::DirectoryExists(const std::string &path) {
   }
 
   return (file_stats.st_mode & S_IFDIR) != 0;
+}
+
+int ApiC::GetExecutableDirectory(std::string &path) {
+  char file_path[FILENAME_MAX + 1] = {0};
+  ssize_t count = readlink("/proc/self/exe", file_path, FILENAME_MAX);
+
+  if (count == -1) {
+    return -1;
+  }
+
+  file_path[count] = '\0';
+  path = std::string(dirname(file_path)) + "/";
+
+  return 0;
+}
+
+long long ApiC::GetFreeSpaceT(const std::string &path) {
+  struct statvfs fs;
+  if (statvfs(path.c_str(), &fs) != 0) {
+    std::cerr << "Unable to get file system statistics: " << strerror(errno)
+              << std::endl;
+    return -1;
+  }
+
+  return fs.f_bsize * fs.f_bavail;
+}
+
+int ApiC::CreateDirectoryT(const std::string &path) {
+  if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
+    std::cerr << "mkdir failed: " << strerror(errno) << std::endl;
+    return -1;
+  }
+
+  return 0;
+}
+
+int ApiC::CleanDirectory(const std::string &dir) {
+  FTS *fts;
+  FTSENT *f_sent;
+  int options = FTS_COMFOLLOW | FTS_LOGICAL | FTS_NOCHDIR;
+  int ret = 0;
+  char *d[] = {(char *)dir.c_str(), nullptr};
+
+  fts = fts_open(d, options, nullptr);
+
+  if (fts == nullptr) {
+    std::cerr << "fts_open failed: " << strerror(errno) << std::endl;
+    return -1;
+  }
+
+  f_sent = fts_children(fts, 0);
+
+  if (f_sent == nullptr) {
+    if (fts_close(fts) != 0) {
+      std::cerr << "fts_close failed: " << strerror(errno) << std::endl;
+      return -1;
+    }
+    return 0;
+  }
+
+  while ((f_sent = fts_read(fts)) != nullptr) {
+    switch (f_sent->fts_info) {
+      case FTS_D:
+        if (f_sent->fts_path != dir &&
+            RemoveDirectoryT(f_sent->fts_path) != 0) {
+          std::cerr << "Unable to remove directory " << f_sent->fts_path << ": "
+                    << strerror(errno) << std::endl;
+          ret = -1;
+        }
+        break;
+      case FTS_F:
+        if (RemoveFile(f_sent->fts_path) != 0) {
+          std::cerr << "Unable to remove file: " << f_sent->fts_path
+                    << std::endl;
+          ret = -1;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  if (fts_close(fts) != 0) {
+    std::cerr << "fts_close failed: " << strerror(errno) << std::endl;
+    ret = -1;
+  }
+
+  return ret;
+}
+
+int ApiC::RemoveDirectoryT(const std::string &path) {
+  int ret = rmdir(path.c_str());
+
+  if (ret != 0) {
+    std::cerr << "Unable to remove directory: " << strerror(errno) << std::endl;
+    return ret;
+  }
+
+  return 0;
+}
+
+int ApiC::SetEnv(const std::string &name, const std::string &value) {
+  return setenv(name.c_str(), value.c_str(), 1);
+}
+int ApiC::UnsetEnv(const std::string &name) {
+  return unsetenv(name.c_str());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,11 +33,62 @@
 #ifndef PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
 #define PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
 
-#ifdef __linux__
-#include "dimm_linux.h"
-#endif
-#ifdef _WIN32
-#include "dimm_windows.h"
-#endif
+#include <ndctl/libdaxctl.h>
+#include <ndctl/libndctl.h>
+#include <sys/stat.h>
+#include "api_c/api_c.h"
+
+class Dimm final {
+ private:
+  struct ndctl_dimm *dimm_ = nullptr;
+  std::string uid_;
+
+ public:
+  Dimm(struct ndctl_dimm *dimm, const char *uid) : dimm_(dimm), uid_(uid) {
+  }
+
+  int GetShutdownCount() const;
+  int InjectUnsafeShutdown() const;
+
+  const std::string &GetUid() const {
+    return this->uid_;
+  }
+};
+
+class DimmNamespace final {
+ private:
+  bool is_dax_ = false;
+  std::string test_dir_;
+  std::vector<Dimm> dimms_;
+  ndctl_ctx *ctx_ = nullptr;
+
+  ndctl_interleave_set *GetInterleaveSet(ndctl_ctx *ctx,
+                                         const struct stat64 &st);
+
+ public:
+  DimmNamespace(const std::string &mountpoint);
+
+  std::string GetTestDir() const {
+    return this->test_dir_;
+  }
+
+  Dimm &operator[](std::size_t idx) {
+    return this->dimms_.at(idx);
+  }
+
+  const std::vector<Dimm>::const_iterator begin() const noexcept {
+    return dimms_.cbegin();
+  }
+
+  const std::vector<Dimm>::const_iterator end() const noexcept {
+    return dimms_.cend();
+  }
+
+  size_t GetSize() const {
+    return dimms_.size();
+  }
+
+  ~DimmNamespace();
+};
 
 #endif  // !PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_

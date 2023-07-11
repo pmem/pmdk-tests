@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,11 +63,9 @@ class InjectManager {
 
   int ReadRecordedUSC(const std::string &usc_file_path) const;
 
-#ifdef __linux__
   int RecordDimmUSC(const Dimm &dimm) const;
   const std::vector<Dimm> GetDimmsToInject(
       const DimmNamespace &us_dimm_coll) const;
-#endif
 };
 
 #endif  // INJECT_MANAGER_H
