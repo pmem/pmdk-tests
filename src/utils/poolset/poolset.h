@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2017-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,7 +47,7 @@ class Poolset final {
   int replica_counter_ = 0;
   std::string dir_;
   std::string name_ = "pool.set";
-  std::string path_ = SEPARATOR + name_;
+  std::string path_ = "/" + name_;
   std::vector<Replica> replicas_;
   void InitializeReplicas(std::initializer_list<replica> &&content);
 
@@ -61,7 +61,7 @@ class Poolset final {
   Poolset(const std::string &dir, const std::string &name,
           std::initializer_list<replica> content)
       : dir_(dir), name_(name) {
-    path_ = dir_ + SEPARATOR + name_;
+    path_ = dir_ + "/" + name_;
     InitializeReplicas(std::move(content));
   }
 

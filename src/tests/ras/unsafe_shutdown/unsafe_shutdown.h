@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,20 +50,9 @@ class UnsafeShutdown : public ::testing::Test {
   IShell shell_;
   LocalTestPhase& test_phase_ = LocalTestPhase::GetInstance();
   PMEMobjpool* pop_ = nullptr;
-  PMEMblkpool* pbp_ = nullptr;
-  PMEMlogpool* plp_ = nullptr;
 
-  /* Test values used for checking data consistency on obj/log/blk pools. */
+  /* Test values used for checking data consistency on obj pools. */
   std::vector<int> obj_data_ = {-2, 0, 12345, 1412, 1231, 23, 432, 34, 3};
-  std::vector<int> blk_data_ = {-2, 0, 12345, 1412, 1231, 23, 432, 34, 3};
-  std::string log_data_ =
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
-      "tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim "
-      "veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea "
-      "commodo consequat. Duis aute irure dolor in reprehenderit in voluptate "
-      "velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint "
-      "occaecat cupidatat non proident, sunt in culpa qui officia deserunt "
-      "mollit anim id est laborum.";
 
   bool PassedOnPreviousPhase() const;
   std::string GetNormalizedTestName() const;
@@ -74,12 +63,6 @@ class UnsafeShutdown : public ::testing::Test {
     if (close_pools_at_end_) {
       if (pop_) {
         pmemobj_close(pop_);
-      }
-      if (plp_) {
-        pmemlog_close(plp_);
-      }
-      if (pbp_) {
-        pmemblk_close(pbp_);
       }
     }
   }
