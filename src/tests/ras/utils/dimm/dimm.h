@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,11 +33,6 @@
 #ifndef PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
 #define PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_
 
-#ifdef __linux__
 #include "dimm_linux.h"
-#endif
-#ifdef _WIN32
-#include "dimm_windows.h"
-#endif
 
 #endif  // !PMDK_TESTS_SRC_RAS_UTILS_DIMM_H_

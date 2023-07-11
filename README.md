@@ -8,18 +8,11 @@ for the PMDK repository, go to [this page](https://github.com/pmem/pmdk).
 This repository utilizes [Google Test](https://github.com/google/googletest) C++ test framework and [pugiXML](https://github.com/zeux/pugixml).
 
 ### Building The Source ###
-To build pmdk-tests on Linux, the following packages are required:
+To build pmdk-tests, the following packages are required:
 * **[PMDK](https://github.com/pmem/pmdk)**
 * **CMake - version 2.8.12 or greater**
 
-On Windows, the following packages are required:
-* **[PMDK](https://github.com/pmem/pmdk)**
-* **CMake - version 3.1 or greater**
-* **MS Visual Studio 2015**
-* [Windows SDK 10.0.14393](https://developer.microsoft.com/pl-pl/windows/downloads/sdk-archive) (or later)
-* **PowerShell 5**
-
-#### Building pmdk-tests on Linux ####
+#### Building pmdk-tests ####
 In the pmdk-tests root directory:
 ```
 	$ mkdir build
@@ -40,25 +33,6 @@ PMDK_INSTALL_PATH must be an absolute path.
 ```
 	$ cmake .. -DPMDK_INSTALL_PATH=<PMDK_INSTALL_PATH>
 ```
-
-#### Building pmdk-tests on Windows ####
-Environment variables should be set according to [PMDK Windows installation guide](https://github.com/pmem/pmdk/tree/master/src/windows/setup#pmdk-for-windows-installation).
-
-In the pmdk-tests root directory:
-```
-	$ mkdir build
-	$ cd build
-	$ cmake -G "Visual Studio 14 2015 Win64" ..
-```
-CMake sets 32-bit build as default, however pmdk-tests works only in 64-bit environment.
-PMDK supports only Visual Studio 2015 on Windows, hence `-G "Visual Studio 14 2015 Win64"`.
-To build binaries use either generated `pmdk_tests.sln` solution file with Visual Studio or:
-```
-	$ cmake --build . --config <config> [--target <target>]
-```
-* `<config>` - `Debug` or `Release`
-
-* `<target>` - specified group of tests to build, e.g. `UNSAFE_SHUTDOWN_LOCAL`
 
 ### Running Tests ###
 > NOTICE:
