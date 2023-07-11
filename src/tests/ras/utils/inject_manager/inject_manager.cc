@@ -57,7 +57,7 @@ int InjectManager::RecordDimmUSC(const Dimm &dimm) const {
     return -1;
   }
 
-  if (ApiC::CreateFileT(test_dir_ + SEPARATOR + dimm.GetUid(),
+  if (ApiC::CreateFileT(test_dir_ + "/" + dimm.GetUid(),
                         std::to_string(usc)) == -1) {
     return -1;
   }

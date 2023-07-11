@@ -152,7 +152,7 @@ unsigned short ApiC::GetFilePermission(const std::string &path) {
     return 0;
   }
 
-  return file_stats.st_mode & PERMISSION_MASK;
+  return file_stats.st_mode;
 }
 
 int ApiC::RemoveFile(const std::string &path) {

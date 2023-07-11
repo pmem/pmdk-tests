@@ -31,11 +31,7 @@
 
 # pmdk_tests - main CMakeLists.txt
 
-if (WIN32)
-	cmake_minimum_required(VERSION 3.1)
-else ()
-	cmake_minimum_required(VERSION 2.8.12)
-endif()
+cmake_minimum_required(VERSION 2.8.12)
 
 project(pmdk_tests)
 
@@ -57,96 +53,40 @@ include(style-format.cmake)
 download_gtest()
 download_pugixml()
 
-if (WIN32)
-	set(VARS_TO_SET "")
+option(PMDK_INSTALL_PATH "PMDK installation path" "")
+if (PKG_CONFIG_FOUND)
+	pkg_check_modules(Libpmem REQUIRED libpmem)
+	pkg_check_modules(Libpmemobj REQUIRED libpmemobj)
+	pkg_check_modules(Libpmempool REQUIRED libpmempool)
+	include_directories(${Libpmem_INCLUDE_DIRS}
+			${Libpmemobj_INCLUDE_DIRS}
+			${Libpmempool_INCLUDE_DIRS})
 
-	if (NOT DEFINED ENV{PMDK_ExecutablePath})
-		set(VARS_TO_SET "${VARS_TO_SET} PMDK_ExecutablePath")
-	endif ()
-	if (NOT DEFINED ENV{PMDK_ExecutablePath_Dbg})
-		set(VARS_TO_SET "${VARS_TO_SET} PMDK_ExecutablePath_Dbg")
-	endif ()
-	if (NOT DEFINED ENV{PMDK_IncludePath})
-		set(VARS_TO_SET "${VARS_TO_SET} PMDK_IncludePath")
-	endif ()
-	if (NOT DEFINED ENV{PMDK_LibraryPath})
-		set(VARS_TO_SET "${VARS_TO_SET} PMDK_LibraryPath")
-	endif ()
-	if (NOT DEFINED ENV{PMDK_LibraryPath_Dbg})
-		set(VARS_TO_SET "${VARS_TO_SET} PMDK_LibraryPath_Dbg")
-	endif ()
-
-	if (NOT VARS_TO_SET STREQUAL "")
-		message(FATAL_ERROR "Following environment variables need to be set to valid directories: ${VARS_TO_SET}")
+	if (PMDK_SYSTEM_HEADERS)
+		set(CMAKE_CXX_FLAGS
+			"${CMAKE_CXX_FLAGS} -isystem ${Libpmem_INCLUDE_DIRS}")
+		set(CMAKE_CXX_FLAGS
+			"${CMAKE_CXX_FLAGS} -isystem ${Libpmemobj_INCLUDE_DIRS}")
+		set(CMAKE_CXX_FLAGS
+			"${CMAKE_CXX_FLAGS} -isystem ${Libpmempool_INCLUDE_DIRS}")
 	endif ()
 
-	set(Libpmem_LIBRARIES
-			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmem.lib"
-			optimized "$ENV{PMDK_LibraryPath}\\libpmem.lib")
-
-	set(Libpmemblk_LIBRARIES
-			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmemblk.lib"
-			optimized "$ENV{PMDK_LibraryPath}\\libpmemblk.lib")
-
-	set(Libpmemlog_LIBRARIES
-			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmemlog.lib"
-			optimized "$ENV{PMDK_LibraryPath}\\libpmemlog.lib")
-
-	set(Libpmemobj_LIBRARIES
-			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmemobj.lib"
-			optimized "$ENV{PMDK_LibraryPath}\\libpmemobj.lib")
-
-	set(Libpmempool_LIBRARIES
-			debug "$ENV{PMDK_LibraryPath_Dbg}\\libpmempool.lib"
-			optimized "$ENV{PMDK_LibraryPath}\\libpmempool.lib")
+	link_directories(${Libpmem_LIBRARY_DIRS}
+			${Libpmemobj_LIBRARY_DIRS}
+			${Libpmempool_LIBRARY_DIRS})
 else ()
-	option(PMDK_INSTALL_PATH "PMDK installation path" "")
-	if (PKG_CONFIG_FOUND)
-		pkg_check_modules(Libpmem REQUIRED libpmem)
-		pkg_check_modules(Libpmemblk REQUIRED libpmemblk)
-		pkg_check_modules(Libpmemlog REQUIRED libpmemlog)
-		pkg_check_modules(Libpmemobj REQUIRED libpmemobj)
-		pkg_check_modules(Libpmempool REQUIRED libpmempool)
-		include_directories(${Libpmem_INCLUDE_DIRS}
-				${Libpmemblk_INCLUDE_DIRS}
-				${Libpmemlog_INCLUDE_DIRS}
-				${Libpmemobj_INCLUDE_DIRS}
-				${Libpmempool_INCLUDE_DIRS})
+	set(CMAKE_PREFIX_PATH "${PMDK_INSTALL_PATH}")
+	find_library(Libpmem_LIBRARIES "pmem")
+	find_library(Libpmemobj_LIBRARIES "pmemobj")
+	find_library(Libpmempool_LIBRARIES "pmempool")
 
-		if (PMDK_SYSTEM_HEADERS)
-			set(CMAKE_CXX_FLAGS
-				"${CMAKE_CXX_FLAGS} -isystem ${Libpmem_INCLUDE_DIRS}")
-			set(CMAKE_CXX_FLAGS
-				"${CMAKE_CXX_FLAGS} -isystem ${Libpmemblk_INCLUDE_DIRS}")
-			set(CMAKE_CXX_FLAGS
-				"${CMAKE_CXX_FLAGS} -isystem ${Libpmemlog_INCLUDE_DIRS}")
-			set(CMAKE_CXX_FLAGS
-				"${CMAKE_CXX_FLAGS} -isystem ${Libpmemobj_INCLUDE_DIRS}")
-			set(CMAKE_CXX_FLAGS
-				"${CMAKE_CXX_FLAGS} -isystem ${Libpmempool_INCLUDE_DIRS}")
-		endif ()
-
-		link_directories(${Libpmem_LIBRARY_DIRS}
-				${Libpmemblk_LIBRARY_DIRS}
-				${Libpmemlog_LIBRARY_DIRS}
-				${Libpmemobj_LIBRARY_DIRS}
-				${Libpmempool_LIBRARY_DIRS})
-	else ()
-		set(CMAKE_PREFIX_PATH "${PMDK_INSTALL_PATH}")
-		find_library(Libpmem_LIBRARIES "pmem")
-		find_library(Libpmemblk_LIBRARIES "pmemblk")
-		find_library(Libpmemlog_LIBRARIES "pmemlog")
-		find_library(Libpmemobj_LIBRARIES "pmemobj")
-		find_library(Libpmempool_LIBRARIES "pmempool")
-
-		find_path(PMDK_INCLUDE_DIR NAMES "libpmem.h" "libpmemblk.h" "libpmemlog.h" "libpmemobj.h" "libpmempool.h")
-		include_directories(${PMDK_INCLUDE_DIR})
-		if (PMDK_SYSTEM_HEADERS)
-			set(CMAKE_CXX_FLAGS
-				"${CMAKE_CXX_FLAGS} -isystem ${PMDK_INCLUDE_DIR}")
-		endif ()
-
+	find_path(PMDK_INCLUDE_DIR NAMES "libpmem.h" "libpmemobj.h" "libpmempool.h")
+	include_directories(${PMDK_INCLUDE_DIR})
+	if (PMDK_SYSTEM_HEADERS)
+		set(CMAKE_CXX_FLAGS
+			"${CMAKE_CXX_FLAGS} -isystem ${PMDK_INCLUDE_DIR}")
 	endif ()
+
 endif ()
 
 include_directories(src/utils)

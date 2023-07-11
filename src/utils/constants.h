@@ -36,10 +36,6 @@
 #include <map>
 #include <string>
 
-const int PERMISSION_MASK = 0777;
-
-const std::string SEPARATOR = "/";
-
 static const size_t KIBIBYTE = 1 << 10;
 static const size_t MEBIBYTE = KIBIBYTE << 10;
 static const size_t GIGIBYTE = MEBIBYTE << 10;

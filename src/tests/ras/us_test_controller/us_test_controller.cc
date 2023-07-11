@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +40,7 @@ int USTestController::PhaseExecute(const std::string& phase_number,
                                    const std::string& arg) const {
   auto& primary_dut = (*ras_config)[0];
 
-  std::string cmd = primary_dut.GetBinDir() + SEPARATOR + "UNSAFE_SHUTDOWN " +
+  std::string cmd = primary_dut.GetBinDir() + "/UNSAFE_SHUTDOWN " +
                     phase_number + " " + arg + " " +
                     primary_dut.GetInjectPolicy() + " --gtest_filter=" +
                     *gtest_filter;

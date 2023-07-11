@@ -168,14 +168,14 @@ DimmNamespace::DimmNamespace(const std::string &mountpoint) {
   }
 
   if (!is_dax_) {
-    test_dir_ = mountpoint + SEPARATOR + "pmdk_tests" + SEPARATOR;
+    test_dir_ = mountpoint + "/pmdk_tests/";
     if (!ApiC::DirectoryExists(test_dir_) &&
         ApiC::CreateDirectoryT(test_dir_) != 0) {
       throw std::invalid_argument("Could not create: " + test_dir_);
     }
 
   } else {
-    test_dir_ = mountpoint + SEPARATOR;
+    test_dir_ = mountpoint + "/";
   }
 }
 

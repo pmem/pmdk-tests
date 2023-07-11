@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,8 +71,7 @@ TEST_P(SyncLocalReplica, TC_SYNC_LOCAL_REPLICA_phase_1) {
   ASSERT_TRUE(p_mgmt.PoolsetFileExists(ps))
       << "Poolset file " << ps.GetFullPath() << " does not exist";
 
-  pop_ = pmemobj_create(ps.GetFullPath().c_str(), nullptr, 0,
-                        0644 & PERMISSION_MASK);
+  pop_ = pmemobj_create(ps.GetFullPath().c_str(), nullptr, 0, 0644);
   ASSERT_TRUE(pop_ != nullptr)
       << "Error while creating the pool. Errno:" << errno << std::endl
       << pmemobj_errormsg();
@@ -423,8 +422,7 @@ TEST_F(UnsafeShutdownTransform, TC_TRANSFORM_POOLSET_TO_US_DIMM_phase_1) {
   /* Step1 */
   ASSERT_EQ(0, p_mgmt.CreatePoolsetFile(origin_))
       << "Creating poolset file " + origin_.GetFullPath() + " failed";
-  pop_ = pmemobj_create(origin_.GetFullPath().c_str(), nullptr, 0,
-                        0644 & PERMISSION_MASK);
+  pop_ = pmemobj_create(origin_.GetFullPath().c_str(), nullptr, 0,  0644);
   ASSERT_TRUE(pop_ != nullptr)
       << "Error while creating the pool. Errno: " << errno << std::endl
       << pmemobj_errormsg();
