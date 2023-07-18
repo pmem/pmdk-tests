@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -156,8 +156,7 @@ void MovePoolClean::SetUp() {
  */
 TEST_P(MovePoolClean, TC_MOVE_POOL_CLEAN_phase_1) {
   /* Step1 */
-  pop_ = pmemobj_create(src_pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL,
-                        0644 & PERMISSION_MASK);
+  pop_ = pmemobj_create(src_pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL, 0644);
   ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed. Errno: " << errno
                                << std::endl
                                << pmemobj_errormsg();
@@ -216,8 +215,7 @@ void MovePoolDirty::SetUp() {
  */
 TEST_P(MovePoolDirty, TC_MOVE_POOL_DIRTY_phase_1) {
   /* Step1 */
-  pop_ = pmemobj_create(src_pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL,
-                        0644 & PERMISSION_MASK);
+  pop_ = pmemobj_create(src_pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL, 0644);
   ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed" << std::endl
                                << pmemobj_errormsg();
 

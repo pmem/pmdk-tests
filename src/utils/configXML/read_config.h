@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018, Intel Corporation
+ * Copyright 2017-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -79,12 +79,12 @@ inline int ReadConfig<DerivedConfig>::SetTestDir(const pugi::xml_node &root,
     return -1;
   }
 
-  if (!ApiC::DirectoryExists((test_dir + SEPARATOR + "pmdk_tests")) &&
-      ApiC::CreateDirectoryT((test_dir + SEPARATOR + "pmdk_tests")) != 0) {
+  if (!ApiC::DirectoryExists((test_dir + "/pmdk_tests")) &&
+      ApiC::CreateDirectoryT((test_dir + "/pmdk_tests")) != 0) {
     return -1;
   }
 
-  test_dir += SEPARATOR + "pmdk_tests" + SEPARATOR;
+  test_dir += "/pmdk_tests/";
 
   return 0;
 }

@@ -46,6 +46,5 @@ add_executable(UNSAFE_SHUTDOWN_LOCAL
 set_source_groups("${PREFIX_FILTER}" ${us_local_SRC})
 
 target_link_libraries(UNSAFE_SHUTDOWN_LOCAL Utils RasUtils libgtest
-    ${Libpmemblk_LIBRARIES}
-${Libpmemlog_LIBRARIES} ${Libpmemobj_LIBRARIES} ${Libpmempool_LIBRARIES})
+    ${Libpmemobj_LIBRARIES} ${Libpmempool_LIBRARIES})
 add_dependencies(UNSAFE_SHUTDOWN_LOCAL Utils RasUtils libgtest)

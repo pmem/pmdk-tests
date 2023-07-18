@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +33,6 @@
 #ifndef POOL_DATA_H
 #define POOL_DATA_H
 
-#include <libpmemblk.h>
-#include <libpmemlog.h>
 #include <libpmemobj.h>
 #include <iostream>
 #include <vector>
@@ -85,64 +83,6 @@ class ObjData {
   }
   PMEMobjpool *pop_;
   int type_num_ = 0;
-};
-
-template <typename T>
-class BlkData {
- public:
-  BlkData(PMEMblkpool *pbp) : pbp_(pbp) {
-  }
-
-  int Write(const std::vector<T> &data) {
-    size_t i = 0;
-    for (const T &c : data) {
-      if (pmemblk_write(pbp_, &c, i) != 0) {
-        std::cerr << "Writing element on block " << i
-                  << "failed. Errno : " << errno << std::endl;
-        return -1;
-      }
-      ++i;
-    }
-    return 0;
-  }
-
-  std::vector<T> Read(size_t elem_count) {
-    std::vector<T> data;
-    size_t bsize = pmemblk_bsize(pbp_);
-    for (size_t i = 0; i < elem_count; ++i) {
-      std::vector<char> buf;
-      buf.reserve(bsize);
-
-      int ret = pmemblk_read(pbp_, buf.data(), i);
-      if (ret != 0) {
-        std::cerr << "read on element with index " << i
-                  << " failed. Errno: " << errno << std::endl;
-        break;
-      }
-
-      T elem;
-      memcpy(&elem, buf.data(), sizeof(elem));
-      data.emplace_back(elem);
-    }
-    return data;
-  }
-
- private:
-  PMEMblkpool *pbp_;
-};
-
-class LogData {
- public:
-  LogData(PMEMlogpool *plp) : plp_(plp) {
-  }
-  int Write(std::string log_text);
-  std::string Read();
-
- private:
-  static int ReadLog(const void *buf, size_t len, void *arg);
-
-  const size_t chunk_size_ = 10;
-  PMEMlogpool *plp_;
 };
 
 #endif  // POOL_DATA_H

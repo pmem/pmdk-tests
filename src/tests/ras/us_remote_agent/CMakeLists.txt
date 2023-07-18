@@ -28,8 +28,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-if (NOT WIN32)
-
 # US_REMOTE_AGENT
 set(DIR ${CMAKE_CURRENT_LIST_DIR})
 set(PREFIX_FILTER "")
@@ -50,5 +48,3 @@ include_directories(src/tests/RAS/ras_utils "${DIR}/../inject_utils")
 
 target_link_libraries(US_REMOTE_AGENT RasUtils Utils)
 add_dependencies(US_REMOTE_AGENT RasUtils Utils)
-
-endif()

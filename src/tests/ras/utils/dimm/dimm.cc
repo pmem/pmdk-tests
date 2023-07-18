@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,8 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifdef __linux__
 
 #include <linux/limits.h>
 #include <cstring>
@@ -170,14 +168,14 @@ DimmNamespace::DimmNamespace(const std::string &mountpoint) {
   }
 
   if (!is_dax_) {
-    test_dir_ = mountpoint + SEPARATOR + "pmdk_tests" + SEPARATOR;
+    test_dir_ = mountpoint + "/pmdk_tests/";
     if (!ApiC::DirectoryExists(test_dir_) &&
         ApiC::CreateDirectoryT(test_dir_) != 0) {
       throw std::invalid_argument("Could not create: " + test_dir_);
     }
 
   } else {
-    test_dir_ = mountpoint + SEPARATOR;
+    test_dir_ = mountpoint + "/";
   }
 }
 
@@ -188,5 +186,3 @@ DimmNamespace::~DimmNamespace() {
 
   ctx_ = nullptr;
 }
-
-#endif  // __linux__

@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2018, Intel Corporation
+# Copyright 2017-2023, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -53,21 +53,10 @@ function(download_gtest)
 	set(GTEST_VERSION 1.8.0)
 	set(GTEST_SHA256HASH f3ed3b58511efd272eb074a3a6d6fb79d7c2e6a0e374323d1e6bcbcc1ef141bf)
 
-	# CMake uses curl to download files, however on Windows systems HTTP_PROXY and similar environment variables
-	# are not set, which means that it will fail when we are behind a proxy
-	# issue link : https://gitlab.kitware.com/cmake/cmake/issues/17592
-	# Enable Multiprocess build with Visual Studio
+	# CMake uses curl to download files
 	# Also we need to set gtest's CMake variable, so it will use /MD flag to build the library
 	# On Linux we need to pass build type to CMake
-	if (WIN32)
-		set(FORCE_SHARED_CRT_WINDOWS "-Dgtest_force_shared_crt=ON")
-		set(BUILD_FLAGS_WINDOWS "-DCMAKE_CXX_FLAGS=/MP /D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING")
-		download_file("https://github.com/google/googletest/archive/release-${GTEST_VERSION}.zip"
-			"${CMAKE_SOURCE_DIR}\\ext\\gtest\\googletest-${GTEST_VERSION}.zip"
-			"${GTEST_SHA256HASH}")
-	else ()
-		set(BUILD_TYPE_LINUX "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
-	endif ()
+	set(BUILD_TYPE_LINUX "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
 	if (EXISTS ${CMAKE_SOURCE_DIR}/ext/gtest/googletest-${GTEST_VERSION}.zip)
 		set(GTEST_URL ${CMAKE_SOURCE_DIR}/ext/gtest/googletest-${GTEST_VERSION}.zip)
@@ -83,23 +72,15 @@ function(download_gtest)
 		DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/ext/gtest
 		PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext/gtest
 		INSTALL_COMMAND ""
-		CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${FORCE_SHARED_CRT_WINDOWS} ${BUILD_FLAGS_WINDOWS} ${BUILD_TYPE_LINUX}
+		CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${BUILD_TYPE_LINUX}
 	)
 	ExternalProject_Get_Property(gtest source_dir binary_dir)
 	add_library(libgtest IMPORTED STATIC GLOBAL)
 	add_dependencies(libgtest gtest)
-	if (WIN32)
-		set_target_properties(libgtest PROPERTIES
-			"IMPORTED_LOCATION_DEBUG" "${CMAKE_CURRENT_BINARY_DIR}/ext/gtest/src/gtest-build/googlemock/gtest/Debug/gtest.lib"
-			"IMPORTED_LOCATION_RELEASE" "${CMAKE_CURRENT_BINARY_DIR}/ext/gtest/src/gtest-build/googlemock/gtest/Release/gtest.lib"
-			"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-		)
-	else ()
-		set_target_properties(libgtest PROPERTIES
-			"IMPORTED_LOCATION" "${CMAKE_CURRENT_BINARY_DIR}/ext/gtest/src/gtest-build/googlemock/gtest/libgtest.a"
-			"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-		)
-	endif ()
+	set_target_properties(libgtest PROPERTIES
+		"IMPORTED_LOCATION" "${CMAKE_CURRENT_BINARY_DIR}/ext/gtest/src/gtest-build/googlemock/gtest/libgtest.a"
+		"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
+	)
 
 	include_directories(SYSTEM "${CMAKE_CURRENT_BINARY_DIR}/ext/gtest/src/gtest/googletest/include")
 endfunction()
@@ -109,20 +90,10 @@ function(download_pugixml)
 	set(PUGIXML_VERSION 1.8.1)
 	set(PUGIXML_SHA256HASH 00d974a1308e85ca0677a981adc1b2855cb060923181053fb0abf4e2f37b8f39)
 
-	# CMake uses curl to download files, however on Windows systems HTTP_PROXY and similar environment variables
-	# are not set, which means that it will fail when we are behind a proxy
-	# issue link : https://gitlab.kitware.com/cmake/cmake/issues/17592
-	# Enable Multiprocess build with Visual Studio
+	# CMake uses curl to download files
 	# Enable exception-handling in pugiXML
 	# On Linux we need to pass build type to CMake
-	if (WIN32)
-		set(BUILD_FLAGS_WINDOWS "-DCMAKE_CXX_FLAGS=/MP /EHsc")
-		download_file("https://github.com/zeux/pugixml/releases/download/v1.8.1/pugixml-${PUGIXML_VERSION}.tar.gz"
-			"${CMAKE_SOURCE_DIR}\\ext\\pugixml\\pugixml-${PUGIXML_VERSION}.tar.gz"
-			"${PUGIXML_SHA256HASH}")
-	else ()
-		set(BUILD_TYPE_LINUX "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
-	endif ()
+	set(BUILD_TYPE_LINUX "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
 	if (EXISTS ${CMAKE_SOURCE_DIR}/ext/pugixml/pugixml-${PUGIXML_VERSION}.tar.gz)
 		set(PUGIXML_URL ${CMAKE_SOURCE_DIR}/ext/pugixml/pugixml-${PUGIXML_VERSION}.tar.gz)
@@ -138,23 +109,15 @@ function(download_pugixml)
 		DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/ext/pugixml
 		PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext/pugixml
 		INSTALL_COMMAND ""
-		CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${BUILD_FLAGS_WINDOWS} ${BUILD_TYPE_LINUX}
+		CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${BUILD_TYPE_LINUX}
 	)
 	ExternalProject_Get_Property(pugixml source_dir binary_dir)
 	add_library(libpugixml IMPORTED STATIC GLOBAL)
 	add_dependencies(libpugixml pugixml)
-	if (WIN32)
-		set_target_properties(libpugixml PROPERTIES
-			"IMPORTED_LOCATION_DEBUG" "${CMAKE_CURRENT_BINARY_DIR}/ext/pugixml/src/pugixml-build/Debug/pugixml.lib"
-			"IMPORTED_LOCATION_RELEASE" "${CMAKE_CURRENT_BINARY_DIR}/ext/pugixml/src/pugixml-build/Release/pugixml.lib"
-			"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-		)
-	else ()
-		set_target_properties(libpugixml PROPERTIES
-			"IMPORTED_LOCATION" "${CMAKE_CURRENT_BINARY_DIR}/ext/pugixml/src/pugixml-build/libpugixml.a"
-			"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-		)
-	endif ()
+	set_target_properties(libpugixml PROPERTIES
+		"IMPORTED_LOCATION" "${CMAKE_CURRENT_BINARY_DIR}/ext/pugixml/src/pugixml-build/libpugixml.a"
+		"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
+	)
 
 	include_directories(SYSTEM "${CMAKE_CURRENT_BINARY_DIR}/ext/pugixml/src/pugixml/src")
 endfunction()

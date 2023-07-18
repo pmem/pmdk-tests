@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Intel Corporation
+ * Copyright 2017-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,9 +33,6 @@
 #include "i_shell.h"
 
 Output<char> IShell::ExecuteCommand(const std::string &cmd) {
-#ifdef _WIN32
-  std::string command = "PowerShell -Command " + cmd + " 2>&1";
-#else
 
   std::string command;
   if (!address_.empty()) {
@@ -45,7 +42,6 @@ Output<char> IShell::ExecuteCommand(const std::string &cmd) {
     command = "{ " + cmd + "; } 2>&1";
   }
 
-#endif  // _WIN32
   std::unique_ptr<FILE, PipeDeleter> pipe(popen(command.c_str(), "r"));
 
   if (!pipe) {
@@ -61,11 +57,7 @@ Output<char> IShell::ExecuteCommand(const std::string &cmd) {
 
   auto s_pipe = pipe.release();
   int exit_code = pclose(s_pipe);
-#ifdef _WIN32
-  output_ = Output<char>(exit_code, out_buffer);
-#else
   output_ = Output<char>(WEXITSTATUS(exit_code), out_buffer);
-#endif  // _WIN32
 
   if (print_log_) {
     std::cout << out_buffer << std::endl;

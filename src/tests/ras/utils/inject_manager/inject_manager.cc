@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2023, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef __linux__
-
 #include "inject_manager.h"
 
 int InjectManager::ReadRecordedUSC(const std::string &usc_file_path) const {
@@ -59,7 +57,7 @@ int InjectManager::RecordDimmUSC(const Dimm &dimm) const {
     return -1;
   }
 
-  if (ApiC::CreateFileT(test_dir_ + SEPARATOR + dimm.GetUid(),
+  if (ApiC::CreateFileT(test_dir_ + "/" + dimm.GetUid(),
                         std::to_string(usc)) == -1) {
     return -1;
   }
@@ -172,5 +170,3 @@ bool InjectManager::IsLastShutdownSafe(
   }
   return true;
 }
-
-#endif  // __LINUX__

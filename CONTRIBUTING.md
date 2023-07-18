@@ -56,18 +56,10 @@ from those described in `"Before submitting changes"` paragraph. Before making
 pull request to `pmdk-tests` please make sure to successfully execute the
 following steps locally:
 
-On Linux:
 ```
 # in build directory:
 $ cmake .. -DDEVELOPER_MODE=ON
 $ make
-```
-
-On Windows:
-```
-# in build directory:
-$ cmake -G "Visual Studio 14 2015 Win64" -DDEVELOPER_MODE=ON ..
-$ cmake --build .
 ```
 
 ### Bug reports, questions and feature requests
