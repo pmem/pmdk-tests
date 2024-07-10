@@ -50,8 +50,8 @@ endfunction()
 
 function(download_gtest)
 	include(ExternalProject)
-	set(GTEST_VERSION 1.8.0)
-	set(GTEST_SHA256HASH f3ed3b58511efd272eb074a3a6d6fb79d7c2e6a0e374323d1e6bcbcc1ef141bf)
+	set(GTEST_VERSION 1.14.0)
+	set(GTEST_SHA256HASH 1f357c27ca988c3f7c6b4bf68a9395005ac6761f034046e9dde0896e3aba00e4)
 
 	# CMake uses curl to download files
 	# Also we need to set gtest's CMake variable, so it will use /MD flag to build the library
@@ -61,7 +61,7 @@ function(download_gtest)
 	if (EXISTS ${CMAKE_SOURCE_DIR}/ext/gtest/googletest-${GTEST_VERSION}.zip)
 		set(GTEST_URL ${CMAKE_SOURCE_DIR}/ext/gtest/googletest-${GTEST_VERSION}.zip)
 	else ()
-		set(GTEST_URL https://github.com/google/googletest/archive/release-${GTEST_VERSION}.zip)
+		set(GTEST_URL https://github.com/google/googletest/archive/v${GTEST_VERSION}.zip)
 	endif ()
 
 	ExternalProject_Add(
