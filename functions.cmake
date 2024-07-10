@@ -50,8 +50,8 @@ endfunction()
 
 function(download_gtest)
 	include(ExternalProject)
-	set(GTEST_VERSION 1.8.0)
-	set(GTEST_SHA256HASH f3ed3b58511efd272eb074a3a6d6fb79d7c2e6a0e374323d1e6bcbcc1ef141bf)
+	set(GTEST_VERSION 1.12.0)
+	set(GTEST_SHA256HASH ce7366fe57eb49928311189cb0e40e0a8bf3d3682fca89af30d884c25e983786)
 
 	# CMake uses curl to download files
 	# Also we need to set gtest's CMake variable, so it will use /MD flag to build the library
