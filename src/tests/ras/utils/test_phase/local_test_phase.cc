@@ -30,6 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "local_test_phase.h"
+#include <boost/algorithm/cxx11/copy_if.hpp>
 
 LocalTestPhase::LocalTestPhase() {
   if (config_.ReadConfigFile() != 0) {
@@ -42,12 +43,12 @@ LocalTestPhase::LocalTestPhase() {
    * the biggest number of tests with limited number of available NVDIMMS. */
 
   int i = 0;
-  std::copy_if(config_.begin(), config_.end(),
+  boost::algorithm::copy_if(config_.begin(), config_.end(),
                std::back_inserter(unsafe_namespaces),
                [&i](DimmNamespace) -> bool { return i++ != 1; });
 
   i = 0;
-  std::copy_if(config_.begin(), config_.end(),
+  boost::algorithm::copy_if(config_.begin(), config_.end(),
                std::back_inserter(safe_namespaces),
                [&i](DimmNamespace) -> bool { return i++ == 1; });
 }
