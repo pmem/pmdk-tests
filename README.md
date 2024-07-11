@@ -10,7 +10,7 @@ This repository utilizes [Google Test](https://github.com/google/googletest) C++
 ### Building The Source ###
 To build pmdk-tests, the following packages are required:
 * **[PMDK](https://github.com/pmem/pmdk)**
-* **CMake - version 2.8.12 or greater**
+* **CMake - version 3.0 or greater**
 
 #### Building pmdk-tests ####
 In the pmdk-tests root directory:
@@ -70,6 +70,7 @@ For more information about running tests see [Google Test documentation](https:/
 
 ### Other Requirements ###
 Python scripts in pmdk-tests are compatible with Python 3.4.
+Install libboost-filesystem library.
 
 ### See also ###
 Detailed documentation for specific test groups:
