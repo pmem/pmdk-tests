@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2023, Intel Corporation
+# Copyright 2017-2024, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,6 +34,9 @@
 cmake_minimum_required(VERSION 2.8.12)
 
 project(pmdk_tests)
+
+# ignore all the warnings
+add_definitions(-w)
 
 # check if 32-bit architecture
 if (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
