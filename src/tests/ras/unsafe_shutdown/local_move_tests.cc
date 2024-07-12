@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,15 @@
 std::ostream& operator<<(std::ostream& stream, move_param const& m) {
   stream << m.description;
   return stream;
+}
+
+/* Change status of shutdown state */
+void set_sds_func(bool state) {
+	int ret = pmemobj_ctl_set(NULL, "sds.at_create", &state);
+	if (ret) {
+		std::cerr << "Failed to set sds: " << pmemobj_errormsg() << std::endl;
+		exit(1);
+	}
 }
 
 std::vector<move_param> GetMoveParams() {
@@ -144,18 +153,19 @@ void MovePoolClean::SetUp() {
  * and closed properly can be reopened.
  * Trigger unsafe shutdown after closing the pool.
  * \test
- *          \li \c Step1. Create pool on device. / SUCCESS
+ *          \li \c Step1. Disable SDS. Create pool on device. / SUCCESS
  *          \li \c Step2. Write pattern persistently to pool, close the pool
  *          / SUCCESS
  *          \li \c Step3. Increment USC on DIMM specified by parameter, power cycle
  *          \li \c Step4. Confirm USC incremented / SUCCESS
  *          \li \c Step4. Move the pool to different device. / SUCCESS
- *          \li \c Step5. Open the pool. / SUCCESS
+ *          \li \c Step5. Enable SDS. Open the pool. / SUCCESS
  *          \li \c Step6. Verify written pattern. / SUCCESS
  *          \li \c Step7. Close the pool / SUCCESS
  */
 TEST_P(MovePoolClean, TC_MOVE_POOL_CLEAN_phase_1) {
   /* Step1 */
+  set_sds_func(false);
   pop_ = pmemobj_create(src_pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL, 0644);
   ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed. Errno: " << errno
                                << std::endl
@@ -176,6 +186,7 @@ TEST_P(MovePoolClean, TC_MOVE_POOL_CLEAN_phase_2) {
   ASSERT_EQ(0, out.GetExitCode()) << out.GetContent() << std::endl;
 
   /* Step5 */
+  set_sds_func(true);
   pop_ = pmemobj_open(dest_pool_path_.c_str(), nullptr);
   ASSERT_TRUE(pop_ != nullptr) << "Pool opening failed. Errno:" << errno
                                << std::endl
