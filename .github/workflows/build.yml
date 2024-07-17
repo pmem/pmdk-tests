@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/pmem/pmdk:2.1-rockylinux-8-x86_64
+      options: --user root
+    steps:
+      - name: Clone the pmdk-test repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          sudo dnf install --assumeyes cmake libpmem-devel libpmemobj-devel libpmempool-devel ndctl-devel
+
+      - name: Create the build directory
+        run: mkdir build
+
+      - name: Build sources
+        working-directory: build
+        run: |
+          cmake .. && make -j
