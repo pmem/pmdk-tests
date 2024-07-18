@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    container:
+      # The pmdk-tests repository struggles to build on any modern distro.
+      # Rocky 8 was hand-picked to meet the repository requirements.
+      # On Rocky 9 the libdaxctl.h header is placed in daxctl/ instead of ndctl/.
+      image: ghcr.io/pmem/pmdk:2.1-rockylinux-8-x86_64
+      options: --user root # WA the messed-up access rights inside the container
+    steps:
+      - name: Clone the pmdk-test repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1 # WA actions/checkout#664
+
+      - name: Install dependencies
+        run: >
+          sudo dnf install --assumeyes
+          cmake libpmem-devel libpmemobj-devel libpmempool-devel ndctl-devel
+
+      - name: Create the build directory
+        run: mkdir build
+
+      - name: Build sources
+        working-directory: build
+        run: cmake .. && make -j
