@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,10 +37,13 @@ std::ostream& operator<<(std::ostream& stream, sync_local_replica_tc const& p) {
   return stream;
 }
 
+bool is_pmem;
+
 void SyncLocalReplica::SetUp() {
   sync_local_replica_tc param = GetParam();
   ASSERT_TRUE(param.enough_dimms)
       << "Insufficient number of DIMMs to run this test";
+  is_pmem = param.pmem;
 }
 
 /**
@@ -71,10 +74,14 @@ TEST_P(SyncLocalReplica, TC_SYNC_LOCAL_REPLICA_phase_1) {
   ASSERT_TRUE(p_mgmt.PoolsetFileExists(ps))
       << "Poolset file " << ps.GetFullPath() << " does not exist";
 
+  if (is_pmem == false)
+    set_sds_at_create_func(true);
   pop_ = pmemobj_create(ps.GetFullPath().c_str(), nullptr, 0, 0644);
   ASSERT_TRUE(pop_ != nullptr)
       << "Error while creating the pool. Errno:" << errno << std::endl
       << pmemobj_errormsg();
+  if (is_pmem == false)
+    set_sds_at_create_func(false);
 
   /* Step2 */
   ObjData<int> pd{pop_};
@@ -149,32 +156,14 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = true;
     ret_vec.emplace_back(tc);
   }
 
   /* Master replica on unsafely shutdown DIMM, healthy secondary replica on
-   * non-pmem device. */
-  {
-    sync_local_replica_tc tc;
-    tc.description =
-        "Master replica on unsafely shutdown DIMM, healthy secondary replica "
-        "on non-pmem device.";
-    if (unsafe_dn.size() > 0) {
-      tc.enough_dimms = true;
-      tc.poolset = Poolset{
-          unsafe_dn[0].GetTestDir(),
-          "pool_tc2.set",
-          {{"PMEMPOOLSET",
-            "9MB " + unsafe_dn[0].GetTestDir() + "tc2_master.part0",
-            "9MB " + unsafe_dn[0].GetTestDir() + "tc2_master.part1"},
-           {"REPLICA", "9MB " + test_phase.GetTestDir() + "tc2_replica.part0",
-            "9MB " + test_phase.GetTestDir() + "tc2_replica.part1"}}};
-      tc.is_syncable = true;
-    } else {
-      tc.enough_dimms = false;
-    }
-    ret_vec.emplace_back(tc);
-  }
+   * non-pmem device.
+   * XXX - Because of the change about always-on SDS,
+   * this test case does not make sense anymore. */
 
   /* Two local secodary replicas, one partially on unsafely shutdown DIMM, other
    * on safely shutdown DIMM.
@@ -201,6 +190,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = true;
     ret_vec.emplace_back(tc);
   }
 
@@ -223,6 +213,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = false;
     ret_vec.emplace_back(tc);
   }
 
@@ -246,6 +237,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = false;
     ret_vec.emplace_back(tc);
   }
 
@@ -269,6 +261,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = false;
     ret_vec.emplace_back(tc);
   }
 
@@ -294,32 +287,14 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = false;
     ret_vec.emplace_back(tc);
   }
 
   /* Master replica and secondary replica partially on non-pmem,
-   * partially on two us-dimms. */
-  {
-    sync_local_replica_tc tc;
-    tc.description =
-        "Master and secondary replica partially on non-pmem, partially on two "
-        "unsafely shutdown dimms.";
-    if (unsafe_dn.size() >= 2) {
-      tc.enough_dimms = true;
-      tc.poolset = Poolset{
-          unsafe_dn[0].GetTestDir(),
-          "pool5.set",
-          {{"PMEMPOOLSET", "9MB " + unsafe_dn[0].GetTestDir() + "master5.part0",
-            "9MB " + test_phase.GetTestDir() + "master5.part1",
-            "9MB " + unsafe_dn[0].GetTestDir() + "master5.part2"},
-           {"REPLICA", "9MB " + unsafe_dn[1].GetTestDir() + "replica5.part0",
-            "18MB " + test_phase.GetTestDir() + "replica5.part1"}}};
-      tc.is_syncable = false;
-    } else {
-      tc.enough_dimms = false;
-    }
-    ret_vec.emplace_back(tc);
-  }
+   * partially on two us-dimms.
+   * XXX - Because of the change about always-on SDS,
+   * this test case does not make sense anymore. */
 
   /* Master and two secondary replicas on unsafely shutdown DIMMs */
   {
@@ -344,6 +319,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = false;
     ret_vec.emplace_back(tc);
   }
   return ret_vec;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,4 +85,13 @@ int UnsafeShutdown::PmempoolRepair(std::string pool_file_path) const {
   }
 
   return pmempool_check_end(ppc);
+}
+
+/* Change the status of the shutdown state */
+void set_sds_at_create_func(bool state) {
+	int ret = pmemobj_ctl_set(NULL, "sds.at_create", &state);
+	if (ret) {
+		std::cerr << "Failed to set sds.at_create: " << pmemobj_errormsg() << std::endl;
+		exit(1);
+	}
 }

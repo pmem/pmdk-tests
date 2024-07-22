@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,8 @@ std::ostream& operator<<(std::ostream& stream, move_param const& m) {
   return stream;
 }
 
+bool pmem;
+
 std::vector<move_param> GetMoveParams() {
   std::vector<move_param> ret_vec;
   LocalTestPhase& test_phase = LocalTestPhase::GetInstance();
@@ -54,6 +56,7 @@ std::vector<move_param> GetMoveParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = true;
     ret_vec.emplace_back(tc);
   }
 
@@ -68,6 +71,7 @@ std::vector<move_param> GetMoveParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = false;
     ret_vec.emplace_back(tc);
   }
 
@@ -82,6 +86,7 @@ std::vector<move_param> GetMoveParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = true;
     ret_vec.emplace_back(tc);
   }
 
@@ -96,6 +101,7 @@ std::vector<move_param> GetMoveParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = true;
     ret_vec.emplace_back(tc);
   }
 
@@ -110,6 +116,7 @@ std::vector<move_param> GetMoveParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = true;
     ret_vec.emplace_back(tc);
   }
 
@@ -124,6 +131,7 @@ std::vector<move_param> GetMoveParams() {
     } else {
       tc.enough_dimms = false;
     }
+    tc.pmem = false;
     ret_vec.emplace_back(tc);
   }
   return ret_vec;
@@ -136,6 +144,7 @@ void MovePoolClean::SetUp() {
       << "Insufficient number of DIMMs to run this test";
   src_pool_path_ = param.src_pool_dir + GetNormalizedTestName() + "_pool";
   dest_pool_path_ = param.dest_pool_dir + GetNormalizedTestName() + "_pool";
+  pmem = param.pmem;
 }
 
 /**
@@ -144,7 +153,7 @@ void MovePoolClean::SetUp() {
  * and closed properly can be reopened.
  * Trigger unsafe shutdown after closing the pool.
  * \test
- *          \li \c Step1. Create pool on device. / SUCCESS
+ *          \li \c Step1. Disable SDS. Create pool on device. Enable SDS. / SUCCESS
  *          \li \c Step2. Write pattern persistently to pool, close the pool
  *          / SUCCESS
  *          \li \c Step3. Increment USC on DIMM specified by parameter, power cycle
@@ -156,10 +165,15 @@ void MovePoolClean::SetUp() {
  */
 TEST_P(MovePoolClean, TC_MOVE_POOL_CLEAN_phase_1) {
   /* Step1 */
+  if (pmem == false)
+    set_sds_at_create_func(false);
   pop_ = pmemobj_create(src_pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL, 0644);
   ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed. Errno: " << errno
                                << std::endl
                                << pmemobj_errormsg();
+  if (pmem == false)
+    set_sds_at_create_func(true);
+
   /* Step2 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
@@ -202,7 +216,7 @@ void MovePoolDirty::SetUp() {
  * Check if pool moved between devices in a manner specified by test parameters
  * can be opened.
  * \test
- *          \li \c Step1. Create pool on device. / SUCCESS
+ *          \li \c Step1. Disable SDS. Create pool on device. Enable SDS. / SUCCESS
  *          \li \c Step2. Write pattern persistently to pool / SUCCESS
  *          \li \c Step3. Increment USC on DIMM specified by parameter, power cycle,
  *          confirm USC is incremented / SUCCESS
@@ -215,9 +229,13 @@ void MovePoolDirty::SetUp() {
  */
 TEST_P(MovePoolDirty, TC_MOVE_POOL_DIRTY_phase_1) {
   /* Step1 */
+  if (pmem == false)
+    set_sds_at_create_func(false);
   pop_ = pmemobj_create(src_pool_path_.c_str(), nullptr, PMEMOBJ_MIN_POOL, 0644);
   ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed" << std::endl
                                << pmemobj_errormsg();
+  if (pmem == false)
+    set_sds_at_create_func(true);
 
   /* Step2 */
   ObjData<int> pd{pop_};

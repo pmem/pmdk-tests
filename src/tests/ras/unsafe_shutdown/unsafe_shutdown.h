@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -79,5 +79,7 @@ class UnsafeShutdown : public ::testing::Test {
   }
   void StampPassedResult() const;
 };
+
+void set_sds_at_create_func(bool state);
 
 #endif  // UNSAFE_SHUTDOWN_H
