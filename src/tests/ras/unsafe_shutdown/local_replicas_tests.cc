@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -146,6 +146,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
            {"REPLICA", "9MB " + safe_dn[0].GetTestDir() + "tc1_replica.part0",
             "9MB " + safe_dn[0].GetTestDir() + "tc1_replica.part1"}}};
       tc.is_syncable = true;
+      tc.src_pool_dir_is_pmem = true;
     } else {
       tc.enough_dimms = false;
     }
@@ -153,28 +154,8 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
   }
 
   /* Master replica on unsafely shutdown DIMM, healthy secondary replica on
-   * non-pmem device. */
-  {
-    sync_local_replica_tc tc;
-    tc.description =
-        "Master replica on unsafely shutdown DIMM, healthy secondary replica "
-        "on non-pmem device.";
-    if (unsafe_dn.size() > 0) {
-      tc.enough_dimms = true;
-      tc.poolset = Poolset{
-          unsafe_dn[0].GetTestDir(),
-          "pool_tc2.set",
-          {{"PMEMPOOLSET",
-            "9MB " + unsafe_dn[0].GetTestDir() + "tc2_master.part0",
-            "9MB " + unsafe_dn[0].GetTestDir() + "tc2_master.part1"},
-           {"REPLICA", "9MB " + test_phase.GetTestDir() + "tc2_replica.part0",
-            "9MB " + test_phase.GetTestDir() + "tc2_replica.part1"}}};
-      tc.is_syncable = true;
-    } else {
-      tc.enough_dimms = false;
-    }
-    ret_vec.emplace_back(tc);
-  }
+   * non-pmem device.
+   * Note: The use case was deemed irrelevant and deleted. */
 
   /* Two local secodary replicas, one partially on unsafely shutdown DIMM, other
    * on safely shutdown DIMM.
@@ -198,6 +179,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
            {"REPLICA", "9MB " + safe_dn[0].GetTestDir() + "tc3_replica2.part0",
             "9MB " + safe_dn[0].GetTestDir() + "tc3_replica2.part1"}}};
       tc.is_syncable = true;
+      tc.src_pool_dir_is_pmem = true;
     } else {
       tc.enough_dimms = false;
     }
@@ -220,6 +202,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
            {"REPLICA", "9MB " + unsafe_dn[0].GetTestDir() + "replica1.part0",
             "18MB " + unsafe_dn[0].GetTestDir() + "replica1.part1"}}};
       tc.is_syncable = false;
+      tc.src_pool_dir_is_pmem = true;
     } else {
       tc.enough_dimms = false;
     }
@@ -243,6 +226,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
            {"REPLICA", "9MB " + safe_dn[0].GetTestDir() + "replica2.part0",
             "18MB " + unsafe_dn[0].GetTestDir() + "replica2.part1"}}};
       tc.is_syncable = false;
+      tc.src_pool_dir_is_pmem = true;
     } else {
       tc.enough_dimms = false;
     }
@@ -266,6 +250,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
            {"REPLICA", "9MB " + unsafe_dn[1].GetTestDir() + "replica3.part0",
             "18MB " + unsafe_dn[1].GetTestDir() + "replica3.part1"}}};
       tc.is_syncable = false;
+      tc.src_pool_dir_is_pmem = true;
     } else {
       tc.enough_dimms = false;
     }
@@ -291,6 +276,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
            {"REPLICA", "9MB " + unsafe_dn[1].GetTestDir() + "replica4.part0",
             "18MB " + unsafe_dn[0].GetTestDir() + "replica4.part1"}}};
       tc.is_syncable = false;
+      tc.src_pool_dir_is_pmem = true;
     } else {
       tc.enough_dimms = false;
     }
@@ -298,28 +284,8 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
   }
 
   /* Master replica and secondary replica partially on non-pmem,
-   * partially on two us-dimms. */
-  {
-    sync_local_replica_tc tc;
-    tc.description =
-        "Master and secondary replica partially on non-pmem, partially on two "
-        "unsafely shutdown dimms.";
-    if (unsafe_dn.size() >= 2) {
-      tc.enough_dimms = true;
-      tc.poolset = Poolset{
-          unsafe_dn[0].GetTestDir(),
-          "pool5.set",
-          {{"PMEMPOOLSET", "9MB " + unsafe_dn[0].GetTestDir() + "master5.part0",
-            "9MB " + test_phase.GetTestDir() + "master5.part1",
-            "9MB " + unsafe_dn[0].GetTestDir() + "master5.part2"},
-           {"REPLICA", "9MB " + unsafe_dn[1].GetTestDir() + "replica5.part0",
-            "18MB " + test_phase.GetTestDir() + "replica5.part1"}}};
-      tc.is_syncable = false;
-    } else {
-      tc.enough_dimms = false;
-    }
-    ret_vec.emplace_back(tc);
-  }
+   * partially on two us-dimms.
+   * Note: The use case was deemed irrelevant and deleted. */
 
   /* Master and two secondary replicas on unsafely shutdown DIMMs */
   {
@@ -341,6 +307,7 @@ std::vector<sync_local_replica_tc> GetSyncLocalReplicaParams() {
            {"REPLICA", "9MB " + unsafe_dn[0].GetTestDir() + "replica6b.part0",
             "18MB " + unsafe_dn[0].GetTestDir() + "replica6b.part1"}}};
       tc.is_syncable = false;
+      tc.src_pool_dir_is_pmem = true;
     } else {
       tc.enough_dimms = false;
     }
