@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,7 +48,7 @@ void UnsafeShutdown::StampPassedResult() const {
   }
 }
 
-bool UnsafeShutdown::PassedOnPreviousPhase() const {
+bool UnsafeShutdown:: PassedOnPreviousPhase() const {
   bool ret = ApiC::RegularFileExists(GetPassedStamp());
   if (ret) {
     ApiC::RemoveFile(GetPassedStamp());
@@ -85,4 +85,24 @@ int UnsafeShutdown::PmempoolRepair(std::string pool_file_path) const {
   }
 
   return pmempool_check_end(ppc);
+}
+
+void UnsafeShutdown::SetSdsAtCreate(bool state) const {
+  int ret = pmemobj_ctl_set(NULL, "sds.at_create", &state);
+  if (ret) {
+    std::cerr << "Failed to set sds.at_create: " << pmemobj_errormsg() << std::endl;
+    exit(1);
+  }
+}
+
+void UnsafeShutdown::SetUp() {
+  if (!create_on_pmem) {
+    SetSdsAtCreate(false);
+  }
+}
+
+void UnsafeShutdown::TearDown() {
+  if (!create_on_pmem) {
+    SetSdsAtCreate(true);
+  }
 }

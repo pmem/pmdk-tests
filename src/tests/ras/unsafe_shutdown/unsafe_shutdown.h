@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,6 +58,10 @@ class UnsafeShutdown : public ::testing::Test {
   std::string GetNormalizedTestName() const;
   int PmempoolRepair(std::string pool_file_path) const;
 
+
+  void SetUp() override;
+  void TearDown() override;
+
   ~UnsafeShutdown() {
     StampPassedResult();
     if (close_pools_at_end_) {
@@ -69,6 +73,7 @@ class UnsafeShutdown : public ::testing::Test {
 
  protected:
   bool close_pools_at_end_ = true;
+  bool create_on_pmem = true;
 
  private:
   const ::testing::TestInfo& GetTestInfo() const {
@@ -78,6 +83,7 @@ class UnsafeShutdown : public ::testing::Test {
     return test_phase_.GetTestDir() + GetNormalizedTestName() + "_passed";
   }
   void StampPassedResult() const;
+  void SetSdsAtCreate(bool state) const;
 };
 
 #endif  // UNSAFE_SHUTDOWN_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,7 @@ struct sync_local_replica_tc {
   Poolset poolset;
   bool enough_dimms;
   bool is_syncable;
+  bool is_pmem;
 };
 
 class SyncLocalReplica
