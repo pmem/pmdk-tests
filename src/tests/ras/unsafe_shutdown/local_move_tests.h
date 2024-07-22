@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Intel Corporation
+ * Copyright 2018-2024, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,7 @@ struct move_param {
   std::string src_pool_dir;
   std::string dest_pool_dir;
   bool enough_dimms;
+  bool src_pool_dir_is_pmem;
 };
 
 std::ostream& operator<<(std::ostream& stream, move_param const& m);
