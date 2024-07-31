@@ -106,8 +106,7 @@ const std::vector<Dimm> InjectManager::GetDimmsToInject(
 }
 
 bool InjectManager::CheckUSCDiff(
-    const std::vector<DimmNamespace> &dimm_namespaces,
-    std::function<bool(int, int)> compare) const {
+    const std::vector<DimmNamespace> &dimm_namespaces) const {
   for (const auto &dn : dimm_namespaces) {
     for (const auto &d : GetDimmsToInject(dn)) {
       int recorded_usc = ReadRecordedUSC(test_dir_ + d.GetUid());
@@ -118,7 +117,7 @@ bool InjectManager::CheckUSCDiff(
         return false;
       }
 
-      if (!compare(recorded_usc, d.GetShutdownCount())) {
+      if (recorded_usc != d.GetShutdownCount()) {
         std::cerr << "NVDIMM: " << d.GetUid()
                   << " (test dir: " << dn.GetTestDir()
                   << "). Current USC: " << d.GetShutdownCount()
@@ -151,7 +150,7 @@ bool InjectManager::IsLastShutdownUnsafe(
     return cur > rec;
   };
 
-  if (!CheckUSCDiff(dimm_namespaces, compare)) {
+  if (!CheckUSCDiff(dimm_namespaces)) {
     std::cerr << "Unexpected safe shutdown of NVDIMM" << std::endl;
     return false;
   }
@@ -164,7 +163,7 @@ bool InjectManager::IsLastShutdownSafe(
     return cur == rec;
   };
 
-  if (!CheckUSCDiff(dimm_namespaces, compare)) {
+  if (!CheckUSCDiff(dimm_namespaces)) {
     std::cerr << "Unexpected unsafe shutdown of NVDIMM" << std::endl;
     return false;
   }

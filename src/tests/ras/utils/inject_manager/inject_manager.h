@@ -58,8 +58,7 @@ class InjectManager {
  private:
   std::string test_dir_;
   InjectPolicy policy_;
-  bool CheckUSCDiff(const std::vector<DimmNamespace> &dimm_namespaces,
-                    std::function<bool(int, int)> compare) const;
+  bool CheckUSCDiff(const std::vector<DimmNamespace> &dimm_namespaces) const;
 
   int ReadRecordedUSC(const std::string &usc_file_path) const;
 
