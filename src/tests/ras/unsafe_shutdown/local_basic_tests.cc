@@ -38,6 +38,7 @@ void UnsafeShutdownBasic::SetUp() {
   us_dimm_pool_path_ = test_phase_.GetUnsafeDimmNamespaces()[0].GetTestDir() +
                        GetNormalizedTestName() + "_pool";
 }
+bool sds_state;
 
 /**
  * TRY_OPEN_OBJ
@@ -58,6 +59,9 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_OBJ_phase_1) {
   ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed. Errno: " << errno
                                << std::endl
                                << pmemobj_errormsg();
+  /* check SDS state */
+  pmemobj_ctl_get(pop_ , "sds.at_create", &sds_state);
+  std::cout << "1| SDS after create: " << sds_state << std::endl;
 
   /* Step2 */
   ObjData<int> pd{pop_};
@@ -108,6 +112,11 @@ TEST_F(UnsafeShutdownBasic, TC_TRY_OPEN_AFTER_DOUBLE_US_phase_1) {
   ASSERT_TRUE(pop_ != nullptr)
       << "Opening pool after shutdown failed. Errno: " << errno << std::endl
       << pmemobj_errormsg();
+
+  /* check SDS state */
+  pmemobj_ctl_get(pop_ , "sds.at_create", &sds_state);
+  std::cout << "2| SDS after create: " << sds_state << std::endl;
+
   /* Step2 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
@@ -162,6 +171,11 @@ TEST_F(UnsafeShutdownBasicClean, TC_OPEN_CLEAN_phase_1) {
   ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed. Errno: " << errno
                                << std::endl
                                << pmemobj_errormsg();
+
+  /* check SDS state */
+  pmemobj_ctl_get(pop_ , "sds.at_create", &sds_state);
+  std::cout << "3| SDS after create: " << sds_state << std::endl;
+
   /* Step2 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
@@ -205,6 +219,11 @@ TEST_F(UnsafeShutdownBasicWithoutUS, TC_OPEN_DIRTY_NO_US_phase_1) {
   ASSERT_TRUE(pop_ != nullptr) << "Pool creating failed. Errno: " << errno
                                << std::endl
                                << pmemobj_errormsg();
+
+  /* check SDS state */
+  pmemobj_ctl_get(pop_ , "sds.at_create", &sds_state);
+  std::cout << "4| SDS after create: " << sds_state << std::endl;
+
   /* Step2 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
