@@ -35,8 +35,9 @@ include_directories(src/tests/ras/utils)
 
 # UNSAFE_SHUTDOWN_LOCAL
 file(GLOB_RECURSE us_local_SRC
-    "${DIR}/local*.h"
-    "${DIR}/local*.cc"
+    "${DIR}/local_main.cc"
+    "${DIR}/local_basic_tests.h"
+    "${DIR}/local_basic_tests.cc"
     "${DIR}/unsafe_shutdown.cc"
     "${DIR}/unsafe_shutdown.h")
 
