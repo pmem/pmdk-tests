@@ -68,8 +68,11 @@ int Dimm::InjectUnsafeShutdown() const {
   }
 
   cmd = ndctl_dimm_cmd_new_smart_inject(dimm_);
+  std::cout << "CMD output: " << cmd << std::endl;
 
-  if (ndctl_cmd_smart_inject_unsafe_shutdown(cmd, true)) {
+  int ret = ndctl_cmd_smart_inject_unsafe_shutdown(cmd, true);
+  std::cout << "ndctl_cmd_smart_inject_unsafe_shutdown: " << ret << std::endl;
+  if (ret) {
     return -1;
   }
 
