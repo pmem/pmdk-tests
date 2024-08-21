@@ -2,5 +2,5 @@ certifi==2023.7.22
 chardet==3.0.4
 idna==3.7
 lxml==4.9.1
-requests==2.32.2
-urllib3==1.26.5
+requests==2.31.0
+urllib3==1.26.19
