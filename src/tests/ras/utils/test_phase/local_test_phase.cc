@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <ndctl/libdaxctl.h>
+#include <ndctl/libndctl.h>
 #include "local_test_phase.h"
 
 LocalTestPhase::LocalTestPhase() {
@@ -50,6 +52,23 @@ LocalTestPhase::LocalTestPhase() {
   std::copy_if(config_.begin(), config_.end(),
                std::back_inserter(safe_namespaces),
                [&i](DimmNamespace) -> bool { return i++ == 1; });
+
+  struct ndctl_ctx *ctx;
+  ndctl_new(&ctx);
+
+  struct ndctl_bus *bus;
+  ndctl_bus_foreach(ctx, bus) {
+    struct ndctl_region *region;
+    ndctl_region_foreach(bus, region) {
+      struct ndctl_dimm *dimm;
+      ndctl_dimm_foreach(bus, dimm) {
+        const char *devname = ndctl_dimm_get_devname(dimm);
+        int shutdown_state = ndctl_dimm_get_dirty_shutdown(dimm);
+        std::cout << "Device: " << devname << std::endl;
+        std::cout << "shutdown state: " << shutdown_state << std::endl;
+	}
+    }
+  }
 }
 
 int LocalTestPhase::Begin() const {
