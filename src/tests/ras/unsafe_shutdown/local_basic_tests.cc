@@ -66,6 +66,11 @@ TEST_F(UnsafeShutdownBasic, TRY_OPEN_OBJ_phase_1) {
   pmemobj_ctl_get(pop_ , "sds.at_create", &sds_state);
   std::cout << "1| SDS after create: " << sds_state << std::endl;
 
+  bool debugger_attached = false;
+  while (!debugger_attached) {
+    sleep(3);
+  }
+
   /* Step2 */
   ObjData<int> pd{pop_};
   ASSERT_EQ(0, pd.Write(obj_data_)) << "Writing to pool failed";
