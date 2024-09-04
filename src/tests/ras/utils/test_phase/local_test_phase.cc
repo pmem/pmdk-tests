@@ -106,5 +106,21 @@ int LocalTestPhase::End() const {
     ApiC::CleanDirectory(dimm_namespace.GetTestDir());
     ApiC::RemoveDirectoryT(dimm_namespace.GetTestDir());
   }
+  struct ndctl_ctx *ctx;
+  ndctl_new(&ctx);
+
+  struct ndctl_bus *bus;
+  ndctl_bus_foreach(ctx, bus) {
+    struct ndctl_region *region;
+    ndctl_region_foreach(bus, region) {
+      struct ndctl_dimm *dimm;
+      ndctl_dimm_foreach(bus, dimm) {
+        const char *devname = ndctl_dimm_get_devname(dimm);
+        int shutdown_state = ndctl_dimm_get_dirty_shutdown(dimm);
+        std::cout << "Device: " << devname << std::endl;
+        std::cout << "shutdown state: " << shutdown_state << std::endl;
+        }
+    }
+  }
   return 0;
 }
